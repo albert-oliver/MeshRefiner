@@ -16,6 +16,19 @@ function center_point(points)
     return mean
 end
 
+function get_hanging_node_between(g, v1, v2)
+    for neigh_1 in inneighbors(g, v1)
+        if get_prop(g, neigh_1, :type) == "hanging"
+            for neigh_2 in inneighbors(g, neigh_1)
+                if neigh_2 == v2
+                    return neigh_1
+                end
+            end
+        end
+    end
+    return nothing
+end
+
 distance(graph::AbstractMetaGraph, vertex_1::Integer, vertex_2::Integer) = cartesian_distance(props(graph, vertex_1), props(graph, vertex_2))
 
 cartesian_distance(p1, p2) = sqrt(sum(((p1[:x]-p2[:x])^2, (p1[:y]-p2[:y])^2, (p1[:z]-p2[:z])^2)))
