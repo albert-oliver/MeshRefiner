@@ -5,7 +5,7 @@ function check_P1(g, center)
         return nothing
     end
 
-    vertexes = inneighbors(g, center)
+    vertexes = neighbors(g, center)
 
     if !has_edge(g, vertexes[1], vertexes[2]) ||
        !has_edge(g, vertexes[1], vertexes[3]) ||
@@ -52,53 +52,19 @@ function transform_P1!(g, center)
     h, v1, v2 = mapping
     p1 = props(g, v1)
     p2 = props(g, v2)
-    ph = props(g, h)
     B1 = get_prop(g, v1, v2, :boundary)
     L1 = get_prop(g, v1, v2, :length)
 
     rem_edge!(g, v1, v2)
 
-    add_vertex!(g)
-    v4 = nv(g)
-    set_prop!(g, v4, :type, "vertex")
-    set_prop!(g, v4, :x, (p1[:x] + p2[:x])/2)
-    set_prop!(g, v4, :y, (p1[:y] + p2[:y])/2)
-    set_prop!(g, v4, :z, (p1[:z] + p2[:z])/2)
-    p4 = props(g, v4)
+    v4 = add_meta_vertex!(g, (p1[:x] + p2[:x])/2, (p1[:y] + p2[:y])/2, (p1[:z] + p2[:z])/2)
 
-    add_edge!(g, v4, v1)
-    set_prop!(g, v4, v1, :boundary, B1)
-    set_prop!(g, v4, v1, :length, L1/2)
+    add_meta_edge!(g, v4, v1, B1, L1/2)
+    add_meta_edge!(g, v4, v2, B1, L1/2)
+    add_meta_edge!(g, v4, h, false)
 
-    add_edge!(g, v4, v2)
-    set_prop!(g, v4, v2, :boundary, B1)
-    set_prop!(g, v4, v2, :length, L1/2)
-
-    add_edge!(g, v4, h)
-    set_prop!(g, v4, h, :boundary, false)
-    set_prop!(g, v4, h, :length, cartesian_distance(p4, ph))
-
-    add_vertex!(g)
-    x, y, z = center_point([p1, ph, p4])
-    set_prop!(g, nv(g), :type, "interior")
-    set_prop!(g, nv(g), :refine, false)
-    set_prop!(g, nv(g), :x, x)
-    set_prop!(g, nv(g), :y, y)
-    set_prop!(g, nv(g), :z, z)
-    add_edge!(g, nv(g), v1)
-    add_edge!(g, nv(g), h)
-    add_edge!(g, nv(g), v4)
-
-    add_vertex!(g)
-    x, y, z = center_point([p2, ph, p4])
-    set_prop!(g, nv(g), :type, "interior")
-    set_prop!(g, nv(g), :refine, false)
-    set_prop!(g, nv(g), :x, x)
-    set_prop!(g, nv(g), :y, y)
-    set_prop!(g, nv(g), :z, z)
-    add_edge!(g, nv(g), v2)
-    add_edge!(g, nv(g), h)
-    add_edge!(g, nv(g), v4)
+    add_interior!(g, v1, h, v4, false)
+    add_interior!(g, v2, h, v4, false)
 
     rem_vertex!(g, center)
 

@@ -3,7 +3,7 @@ function check_P4(g, center)
         return nothing
     end
 
-    vertexes = inneighbors(g, center)
+    vertexes = neighbors(g, center)
 
     v1 = nothing
     v2 = nothing
@@ -56,55 +56,21 @@ function transform_P4!(g, center)
 
     v1, v2, v3, h = mapping
     p1 = props(g, v1)
-    p2 = props(g, v2)
     p3 = props(g, v3)
 
     L4 = get_prop(g, v1, v3, :length)
     B4 = get_prop(g, v1, v3, :boundary)
 
-    add_vertex!(g)
-    v5 = nv(g)
-    set_prop!(g, v5, :type, "vertex")
-    set_prop!(g, v5, :x, (p1[:x] + p3[:x])/2)
-    set_prop!(g, v5, :y, (p1[:y] + p3[:y])/2)
-    set_prop!(g, v5, :z, (p1[:z] + p3[:z])/2)
-    p5 = props(g, v5)
+    v5 = add_meta_vertex!(g, (p1[:x] + p3[:x])/2, (p1[:y] + p3[:y])/2, (p1[:z] + p3[:z])/2)
 
     rem_edge!(g, v1, v3)
 
-    add_edge!(g, v1, v5)
-    set_prop!(g, v1, v5, :boundary, B4)
-    set_prop!(g, v1, v5, :length, L4/2)
+    add_meta_edge!(g, v1, v5, B4, L4/2)
+    add_meta_edge!(g, v3, v5, B4, L4/2)
+    add_meta_edge!(g, v2, v5, false)
 
-    add_edge!(g, v3, v5)
-    set_prop!(g, v3, v5, :boundary, B4)
-    set_prop!(g, v3, v5, :length, L4/2)
-
-    add_edge!(g, v2, v5)
-    set_prop!(g, v2, v5, :boundary, false)
-    set_prop!(g, v2, v5, :length, cartesian_distance(p2, p5))
-
-    add_vertex!(g)
-    x, y, z = center_point([p1, p2, p5])
-    set_prop!(g, nv(g), :type, "interior")
-    set_prop!(g, nv(g), :refine, false)
-    set_prop!(g, nv(g), :x, x)
-    set_prop!(g, nv(g), :y, y)
-    set_prop!(g, nv(g), :z, z)
-    add_edge!(g, nv(g), v1)
-    add_edge!(g, nv(g), v2)
-    add_edge!(g, nv(g), v5)
-
-    add_vertex!(g)
-    x, y, z = center_point([p2, p5, p3])
-    set_prop!(g, nv(g), :type, "interior")
-    set_prop!(g, nv(g), :refine, false)
-    set_prop!(g, nv(g), :x, x)
-    set_prop!(g, nv(g), :y, y)
-    set_prop!(g, nv(g), :z, z)
-    add_edge!(g, nv(g), v2)
-    add_edge!(g, nv(g), v5)
-    add_edge!(g, nv(g), v3)
+    add_interior!(g, v1, v2, v5, false)
+    add_interior!(g, v2, v5, v3, false)
 
     rem_vertex!(g, center)
 end
