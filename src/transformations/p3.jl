@@ -14,7 +14,7 @@ function check_P3(g, center)
         v2 = vertexes[(i+1)%3+1]
         v3 = vertexes[(i+2)%3+1]
         h = get_hanging_node_between(g, v1, v2)
-        if !isnothing(h)
+        if !isnothing(h) && h != v3
             break
         end
     end
@@ -41,7 +41,7 @@ end
 function transform_P3!(g, center)
     mapping = check_P3(g, center)
     if isnothing(mapping)
-        return
+        return false
     end
 
     v1, v2, v3, h = mapping
@@ -54,4 +54,6 @@ function transform_P3!(g, center)
     add_interior!(g, v2, v3, h, false)
 
     rem_vertex!(g, center)
+
+    return true
 end

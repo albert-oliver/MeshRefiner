@@ -19,6 +19,10 @@ function check_P9(g, center)
     hB = get_hanging_node_between(g, vA, vC)
     hC = get_hanging_node_between(g, vA, vB)
 
+    if hA == vA || hB == vB || hC == vC
+        return nothing
+    end
+
     if isnothing(hA) || isnothing(hB) || isnothing(hC)
         return nothing
     end
@@ -76,7 +80,7 @@ end
 function transform_P9!(g, center)
     mapping = check_P9(g, center)
     if isnothing(mapping)
-        return
+        return false
     end
 
     v1, v2, v3, h1, h2, h3 = mapping
@@ -89,4 +93,6 @@ function transform_P9!(g, center)
     add_interior!(g, h1, v2, v3, false)
 
     rem_vertex!(g, center)
+
+    return true
 end

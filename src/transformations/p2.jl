@@ -35,7 +35,7 @@ end
 function transform_P2!(g, center)
     mapping = check_P2(g, center)
     if isnothing(mapping)
-        return
+        return false
     end
 
     v1, v2, v3 = mapping
@@ -56,4 +56,6 @@ function transform_P2!(g, center)
     add_interior!(g, v2, v3, v4, false)
 
     rem_vertex!(g, center)
+
+    return true
 end

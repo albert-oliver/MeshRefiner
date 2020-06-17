@@ -17,6 +17,9 @@ function center_point(points)
 end
 
 function get_hanging_node_between(g, v1, v2)
+    if has_edge(g, v1, v2)
+        return nothing
+    end
     for neigh_1 in neighbors(g, v1)
         if get_prop(g, neigh_1, :type) == "hanging"
             for neigh_2 in neighbors(g, neigh_1)

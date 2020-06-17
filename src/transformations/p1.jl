@@ -46,7 +46,7 @@ end
 function transform_P1!(g, center)
     mapping = check_P1(g, center)
     if isnothing(mapping)
-        return
+        return false
     end
 
     h, v1, v2 = mapping
@@ -68,4 +68,5 @@ function transform_P1!(g, center)
 
     rem_vertex!(g, center)
 
+    return true
 end

@@ -17,7 +17,7 @@ function check_P6(g, center)
         v3 = vertexes[(i+2)%3+1]
         h1 = get_hanging_node_between(g, v1, v2)
         h2 = get_hanging_node_between(g, v2, v3)
-        if !isnothing(h1) && !isnothing(h2)
+        if !isnothing(h1) && !isnothing(h2) && h1 != v3 && h2 != v1
             break
         end
     end
@@ -45,7 +45,7 @@ end
 function transform_P6!(g, center)
     mapping = check_P6(g, center)
     if isnothing(mapping)
-        return
+        return false
     end
 
     v1, v2, v3, h1, h2 = mapping
@@ -60,4 +60,6 @@ function transform_P6!(g, center)
     add_interior!(g, h1, v2, v3, false)
 
     rem_vertex!(g, center)
+
+    return true
 end
