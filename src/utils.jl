@@ -157,51 +157,28 @@ z(graph::AbstractMetaGraph, vertex::Integer) = get_prop(g, vertex, :z)
 function draw_makie(g)
     labels = map((vertex) -> uppercase(get_prop(g, vertex, :type)[1]), 1:nv(g))
 
-    edge_labels = []
+    edge_coords = Pair{Point{3,Float32},Point{3,Float32}}[]
+
     for edge in edges(g)
-        if has_prop(g, edge, :length)
-            push!(edge_labels, @sprintf("%.2f", get_prop(g, edge, :length)))
-        else
-            push!(edge_labels, "")
+        p1 = edge.src
+        p2 = edge.dst
+        if get_prop(g, p1, :type) == "interior" || get_prop(g, p2, :type) == "interior"
+            continue
         end
+        push!(edge_coords, Point3f0(x(g, p1), y(g, p1), z(g, p1)) => Point3f0(x(g, p2), y(g, p2), z(g, p2)))
     end
+    println(edge_coords)
 
-    edge_colors = []
-    edge_width = []
-    for edge in edges(g)
-        if !has_prop(g, edge, :boundary)
-            push!(edge_colors, colorant"yellow")
-            push!(edge_width, 1.0)
-        elseif get_prop(g, edge, :boundary)
-            push!(edge_colors, colorant"lightgray")
-            push!(edge_width, 3.0)
-        else
-            push!(edge_colors, colorant"lightgray")
-            push!(edge_width, 1.0)
-        end
-    end
 
-    vertex_colors = []
-    for vertex in 1:nv(g)
-        if get_prop(g, vertex, :type) == "interior"
-            if get_prop(g, vertex, :refine)
-                push!(vertex_colors, colorant"orange")
-            else
-                push!(vertex_colors, colorant"yellow")
-            end
-        elseif get_prop(g, vertex, :type) == "vertex"
-                push!(vertex_colors, colorant"lightgray")
-        else
-                push!(vertex_colors, colorant"gray")
-        end
-    end
+    not_interior(g, v) = if get_prop(g, v, :type) == "interior" false else true end
 
-    xs(graph::AbstractMetaGraph) = map((v) -> x(g, v), vertices(graph))
-    ys(graph::AbstractMetaGraph) = map((v) -> y(g, v), vertices(graph))
-    zs(graph::AbstractMetaGraph) = map((v) -> z(g, v), vertices(graph))
+    xs(graph::AbstractMetaGraph) = map((v) -> x(g, v), filter_vertices(graph, not_interior))
+    ys(graph::AbstractMetaGraph) = map((v) -> y(g, v), filter_vertices(graph, not_interior))
+    zs(graph::AbstractMetaGraph) = map((v) -> z(g, v), filter_vertices(graph, not_interior))
 
     scene = scatter(xs(g), ys(g), zs(g), color = :black, markersize = 0.1)
-    # TODO: edges, proper coloring
+    linesegments!(scene, edge_coords)
+    # TODO: proper coloring
 
     scene
 end

@@ -51,3 +51,4 @@ end
 g = example_graph_2()
 run_transformations!(g)
 draw_graph(g)
+# draw_makie(g)
