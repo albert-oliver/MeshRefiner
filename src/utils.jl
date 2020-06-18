@@ -150,9 +150,9 @@ function draw_graph(g)
         nodesize=vertex_size)
 end
 
-x(graph::AbstractMetaGraph, vertex::Integer) = get_prop(g, vertex, :x)
-y(graph::AbstractMetaGraph, vertex::Integer) = get_prop(g, vertex, :y)
-z(graph::AbstractMetaGraph, vertex::Integer) = get_prop(g, vertex, :z)
+x(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :x)
+y(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :y)
+z(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :z)
 
 function draw_makie(g)
     labels = map((vertex) -> uppercase(get_prop(g, vertex, :type)[1]), 1:nv(g))
