@@ -15,6 +15,10 @@ include("transformations/p8.jl")
 include("transformations/p9.jl")
 include("graphs/example_graphs.jl")
 include("graphs/test_graphs.jl")
+include("io.jl")
+
+const TerrainMap = Array{<:Number, 2}
+const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
 
 function run_for_all_triangles!(g, fun)
     executed_sth = false
@@ -49,8 +53,7 @@ function run_transformations!(g)
     end
 end
 
-function load_data(path::String)::AbstractMetaGraph
-    map = Array{Int16, 2}[]
+function initial_graph(map::TerrainMap)::AbstractMetaGraph
     g = MetaGraph()
     add_meta_vertex!(g, 1, 1, map[1, 1])
     add_meta_vertex!(g, 1, size(map, 2), map[1, size(map, 2)])
@@ -66,9 +69,6 @@ function load_data(path::String)::AbstractMetaGraph
     add_interior!(g, 1, 3, 4, false)
     return g
 end
-
-const TerrainMap = Array{<:Number, 2}
-const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
 
 struct Plane
     a::Number
@@ -155,8 +155,17 @@ function mark_for_refinement(g::AbstractMetaGraph, map::TerrainMap, eps::Number)
     return to_refine
 end
 
-# g = example_graph_2()
-# run_transformations!(g)
-# draw_graph(g)
+t_map = load_data("src/poland100.data")
+g = initial_graph(t_map)
+
 # draw_makie(g)
-mark_for_refinement(example_graph_2(), Array{Int16}(undef, 100, 100), 0.1)
+mark_for_refinement(g, t_map, 0.1)
+run_transformations!(g)
+mark_for_refinement(g, t_map, 0.1)
+run_transformations!(g)
+mark_for_refinement(g, t_map, 0.1)
+run_transformations!(g)
+mark_for_refinement(g, t_map, 0.1)
+run_transformations!(g)
+
+draw_makie(g)
