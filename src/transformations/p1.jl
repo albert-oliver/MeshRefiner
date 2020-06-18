@@ -10,29 +10,28 @@ function check_P1(g, center)
     if !has_edge(g, vertexes[1], vertexes[2]) ||
        !has_edge(g, vertexes[1], vertexes[3]) ||
        !has_edge(g, vertexes[2], vertexes[3])
-
         return nothing
     end
 
-    h = nothing
-    v1 = nothing
-    v2 = nothing
-    if get_prop(g, vertexes[1], :type) == "hanging"
-        h = vertexes[1]
-        v1 = vertexes[2]
-        v2 = vertexes[3]
-    elseif get_prop(g, vertexes[2], :type) == "hanging"
-        h = vertexes[2]
-        v1 = vertexes[1]
-        v2 = vertexes[3]
-    elseif get_prop(g, vertexes[3], :type) == "hanging"
-        h = vertexes[3]
+    la = get_prop(g, vertexes[1], vertexes[2], :length)
+    lb = get_prop(g, vertexes[2], vertexes[3], :length)
+    lc = get_prop(g, vertexes[3], vertexes[1], :length)
+    longest = maximum([la, lb, lc])
+
+    if longest == la
         v1 = vertexes[1]
         v2 = vertexes[2]
+        h = vertexes[3]
+    elseif longest == lb
+        v1 = vertexes[2]
+        v2 = vertexes[3]
+        h = vertexes[1]
     else
-        return nothing
+        v1 = vertexes[1]
+        v2 = vertexes[3]
+        h = vertexes[2]
     end
-
+    
     B1 = get_prop(g, v1, v2, :boundary)
     L1 = get_prop(g, v1, v2, :length)
     L2 = get_prop(g, h, v1, :length)

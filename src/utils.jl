@@ -167,8 +167,6 @@ function draw_makie(g)
         end
         push!(edge_coords, Point3f0(x(g, p1), y(g, p1), z(g, p1)) => Point3f0(x(g, p2), y(g, p2), z(g, p2)))
     end
-    println(edge_coords)
-
 
     not_interior(g, v) = if get_prop(g, v, :type) == "interior" false else true end
 

@@ -36,8 +36,13 @@ function run_for_all_triangles!(g, fun)
 end
 
 function run_transformations!(g)
-    run_for_all_triangles!(g, transform_P1!)
-    run_for_all_triangles!(g, transform_P2!)
+    ran = false
+    ran |= run_for_all_triangles!(g, transform_P1!)
+    ran |= run_for_all_triangles!(g, transform_P2!)
+    if !ran
+        return false
+    end
+
     while true
         executed_sth = false
         executed_sth |= run_for_all_triangles!(g, transform_P3!)
@@ -48,7 +53,7 @@ function run_transformations!(g)
         executed_sth |= run_for_all_triangles!(g, transform_P8!)
         executed_sth |= run_for_all_triangles!(g, transform_P9!)
         if !executed_sth
-            return
+            return true
         end
     end
 end
@@ -117,8 +122,8 @@ function points_in_triangle(map::TerrainMap, t::Triangle)::Array{Tuple{Number, N
 
     points = Tuple{Number, Number}[]
 
-    for i in bb.min_x:bb.max_x
-        for j in bb.min_y:bb.max_y
+    for i in ceil(Int, bb.min_x):floor(Int, bb.max_x)
+        for j in ceil(Int, bb.min_y):floor(Int, bb.max_y)
             if point_in_triangle(t, (i, j))
                 push!(points, (i, j))
             end
@@ -136,6 +141,9 @@ function approx_error(g::AbstractMetaGraph, t_map::TerrainMap, interior::Number)
 
     points = points_in_triangle(t_map, triangle)
     square(x) = x * x
+    if isempty(points)
+        return 0
+    end
     square_diff = sum(map(coord -> square(t_map[coord[1], coord[2]] - z(p, (coord[1], coord[2]))), points))
     square_point = sum(map(coord -> square(t_map[coord[1], coord[2]]), points))
 
@@ -148,6 +156,7 @@ function mark_for_refinement(g::AbstractMetaGraph, map::TerrainMap, eps::Number)
     to_refine = []
     for interior in get_interiors(g)
         if approx_error(g, map, interior) > eps
+            println("To refine: ", interior)
             set_prop!(g, interior, :refine, true)
             push!(to_refine, interior)
         end
@@ -155,17 +164,19 @@ function mark_for_refinement(g::AbstractMetaGraph, map::TerrainMap, eps::Number)
     return to_refine
 end
 
-t_map = load_data("src/poland100.data")
+t_map = load_data("src/resources/poland100.data")
 g = initial_graph(t_map)
 
 # draw_makie(g)
 mark_for_refinement(g, t_map, 0.1)
 run_transformations!(g)
-mark_for_refinement(g, t_map, 0.1)
-run_transformations!(g)
-mark_for_refinement(g, t_map, 0.1)
-run_transformations!(g)
-mark_for_refinement(g, t_map, 0.1)
-run_transformations!(g)
+
+for i in 1:5
+    mark_for_refinement(g, t_map, 0.1)
+    a = run_transformations!(g)
+    if !a
+        return
+    end
+end
 
 draw_makie(g)
