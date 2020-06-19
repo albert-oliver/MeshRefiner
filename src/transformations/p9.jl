@@ -3,7 +3,7 @@ function check_P9(g, center)
         return nothing
     end
 
-    vertexes = neighbors(g, center)
+    vertexes = interior_vertices(g, center)
 
     vA = nothing
     vB = nothing
@@ -19,17 +19,13 @@ function check_P9(g, center)
     hB = get_hanging_node_between(g, vA, vC)
     hC = get_hanging_node_between(g, vA, vB)
 
-    if hA == vA || hB == vB || hC == vC
+    if isnothing(hA) || isnothing(hB) || isnothing(hC) || hA == vA || hB == vB || hC == vC
         return nothing
     end
 
-    if isnothing(hA) || isnothing(hB) || isnothing(hC)
-        return nothing
-    end
-
-    lA = get_prop(g, vB, hA, :length) + get_prop(g, vC, hA, :length)
-    lB = get_prop(g, vA, hB, :length) + get_prop(g, vC, hB, :length)
-    lC = get_prop(g, vA, hC, :length) + get_prop(g, vB, hC, :length)
+    lA = distance(g, vB, hA) + distance(g, vC, hA)
+    lB = distance(g, vA, hB) + distance(g, vC, hB)
+    lC = distance(g, vA, hC) + distance(g, vB, hC)
     max = maximum([lA, lB, lC])
 
     v1 = nothing
@@ -64,12 +60,12 @@ function check_P9(g, center)
         return nothing
     end
 
-    L1 = get_prop(g, v1, h1, :length)
-    L2 = get_prop(g, h1, v2, :length)
-    L3 = get_prop(g, v2, h2, :length)
-    L4 = get_prop(g, h2, v3, :length)
-    L5 = get_prop(g, v3, h3, :length)
-    L6 = get_prop(g, h3, v1, :length)
+    L1 = distance(g, v1, h1)
+    L2 = distance(g, h1, v2)
+    L3 = distance(g, v2, h2)
+    L4 = distance(g, h2, v3)
+    L5 = distance(g, v3, h3)
+    L6 = distance(g, h3, v1)
 
     if (L1 + L2) >= (L3 + L4) && (L1 + L2) >= (L5 + L6)
         return v1, v2, v3, h1, h2, h3

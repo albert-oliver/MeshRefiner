@@ -20,24 +20,23 @@ function get_hanging_node_between(g, v1, v2)
     if has_edge(g, v1, v2)
         return nothing
     end
-    for neigh_1 in neighbors(g, v1)
-        if get_prop(g, neigh_1, :type) == "hanging"
-            for neigh_2 in neighbors(g, neigh_1)
-                if neigh_2 == v2
-                    return neigh_1
-                end
-            end
-        end
+    nodes1 = filter(v -> get_prop(g, v, :type) == "hanging", neighbors(g, v1))
+    nodes2 = filter(v -> get_prop(g, v, :type) == "hanging", neighbors(g, v2))
+    nodes = intersect(nodes1, nodes2)
+
+    if size(nodes, 1) < 1
+        return nothing
     end
-    return nothing
+
+    return nodes[1]
 end
 
 function add_meta_vertex!(g, x, y, z)
     add_vertex!(g)
     set_prop!(g, nv(g), :type, "vertex")
-    set_prop!(g, nv(g), :x, x)
-    set_prop!(g, nv(g), :y, y)
-    set_prop!(g, nv(g), :z, z)
+    set_prop!(g, nv(g), :x, convert(Float64, x))
+    set_prop!(g, nv(g), :y, convert(Float64, y))
+    set_prop!(g, nv(g), :z, convert(Float64, z))
     return nv(g)
 end
 
@@ -54,27 +53,34 @@ function add_interior!(g, v1, v2, v3, refine)
     add_vertex!(g)
     set_prop!(g, nv(g), :type, "interior")
     set_prop!(g, nv(g), :refine, refine)
-    add_edge!(g, nv(g), v1)
-    add_edge!(g, nv(g), v2)
-    add_edge!(g, nv(g), v3)
+    set_prop!(g, nv(g), :v1, v1)
+    set_prop!(g, nv(g), :v2, v2)
+    set_prop!(g, nv(g), :v3, v3)
     return nv(g)
 end
+
+interior_vertices(g, i) = [get_prop(g, i, :v1), get_prop(g, i, :v2), get_prop(g, i, :v3)]
 
 function add_meta_edge!(g, v1, v2, boundary)
     add_edge!(g, v1, v2)
     set_prop!(g, v1, v2, :boundary, boundary)
-    set_prop!(g, v1, v2, :length, distance(g, v1, v2))
-end
-
-function add_meta_edge!(g, v1, v2, boundary, length)
-    add_edge!(g, v1, v2)
-    set_prop!(g, v1, v2, :boundary, boundary)
-    set_prop!(g, v1, v2, :length, length)
 end
 
 distance(graph::AbstractMetaGraph, vertex_1::Integer, vertex_2::Integer) = cartesian_distance(props(graph, vertex_1), props(graph, vertex_2))
 
-cartesian_distance(p1, p2) = sqrt(sum(((p1[:x]-p2[:x])^2, (p1[:y]-p2[:y])^2, (p1[:z]-p2[:z])^2)))
+function cartesian_distance(p1, p2)
+    # println("(x1-x2)^2: ", (convert(Float64, p1[:x])-convert(Float64, p2[:x]))^2)
+    # println("(y1-y2)^2: ", (convert(Float64, p1[:y])-convert(Float64, p2[:y]))^2)
+    # println("(z1-z2)^2: ", (convert(Float64, p1[:z])-convert(Float64, p2[:z]))^2)
+    x1 = convert(Float64, p1[:x])
+    x2 = convert(Float64, p2[:x])
+    y1 = convert(Float64, p1[:y])
+    y2 = convert(Float64, p2[:y])
+    z1 = convert(Float64, p1[:z])
+    z2 = convert(Float64, p2[:z])
+
+    return sqrt(sum([(x1-x2)^2, (y1-y2)^2, (z1-z2)^2]))
+end
 
 function draw_graph(g)
     function position_layout(g)
@@ -82,7 +88,7 @@ function draw_graph(g)
         y:: Array{Float64} = []
         for v in vertices(g)
             if get_prop(g, v, :type) == "interior"
-                neigh = neighbors(g, v)
+                neigh = interior_vertices(g, v)
                 center = center_point((props(g, neigh[1]), props(g, neigh[2]), props(g, neigh[3])))
                 push!(x, center[1])
                 push!(y, center[2])
@@ -150,9 +156,9 @@ function draw_graph(g)
         nodesize=vertex_size)
 end
 
-x(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :x)
-y(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :y)
-z(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :z)
+x(graph::AbstractMetaGraph, vertex::Integer)::Float64 = get_prop(graph, vertex, :x)
+y(graph::AbstractMetaGraph, vertex::Integer)::Float64 = get_prop(graph, vertex, :y)
+z(graph::AbstractMetaGraph, vertex::Integer)::Float64 = get_prop(graph, vertex, :z)
 
 function draw_makie(g)
     labels = map((vertex) -> uppercase(get_prop(g, vertex, :type)[1]), 1:nv(g))

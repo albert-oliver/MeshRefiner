@@ -3,7 +3,7 @@ function check_P4(g, center)
         return nothing
     end
 
-    vertexes = neighbors(g, center)
+    vertexes = interior_vertices(g, center)
 
     v1 = nothing
     v2 = nothing
@@ -14,7 +14,7 @@ function check_P4(g, center)
         v2 = vertexes[(i+1)%3+1]
         v3 = vertexes[(i+2)%3+1]
         h = get_hanging_node_between(g, v1, v2)
-        if !isnothing(h) && h != v3
+        if isnothing(h) || h == v3
             break
         end
     end
@@ -37,10 +37,10 @@ function check_P4(g, center)
         end
     end
 
-    L1 = get_prop(g, v1, h, :length)
-    L2 = get_prop(g, v2, h, :length)
-    L3 = get_prop(g, v2, v3, :length)
-    L4 = get_prop(g, v1, v3, :length)
+    L1 = distance(g, v1, h)
+    L2 = distance(g, v2, h)
+    L3 = distance(g, v2, v3)
+    L4 = distance(g, v1, v3)
 
     if L4 > (L1+L2) && L4 >= L3
         return v1, v2, v3, h
@@ -58,15 +58,15 @@ function transform_P4!(g, center)
     p1 = props(g, v1)
     p3 = props(g, v3)
 
-    L4 = get_prop(g, v1, v3, :length)
+    L4 = distance(g, v1, v3)
     B4 = get_prop(g, v1, v3, :boundary)
 
     v5 = add_meta_vertex!(g, (p1[:x] + p3[:x])/2, (p1[:y] + p3[:y])/2, (p1[:z] + p3[:z])/2)
 
     rem_edge!(g, v1, v3)
 
-    add_meta_edge!(g, v1, v5, B4, L4/2)
-    add_meta_edge!(g, v3, v5, B4, L4/2)
+    add_meta_edge!(g, v1, v5, B4)
+    add_meta_edge!(g, v3, v5, B4)
     add_meta_edge!(g, v2, v5, false)
 
     add_interior!(g, v1, v2, v5, false)

@@ -3,7 +3,7 @@ function check_P8(g, center)
         return nothing
     end
 
-    vertexes = neighbors(g, center)
+    vertexes = interior_vertices(g, center)
 
     v1 = nothing
     v2 = nothing
@@ -17,7 +17,7 @@ function check_P8(g, center)
         v3 = vertexes[(i+2)%3+1]
         h1 = get_hanging_node_between(g, v1, v2)
         h2 = get_hanging_node_between(g, v2, v3)
-        if !isnothing(h1) && !isnothing(h2) && h1 != v3 && h2 != v1
+        if isnothing(h1) || isnothing(h2) || h1 == v3 || h2 == v1
             break
         end
     end
@@ -30,11 +30,11 @@ function check_P8(g, center)
         return nothing
     end
 
-    L1 = get_prop(g, v1, h1, :length)
-    L2 = get_prop(g, h1, v2, :length)
-    L3 = get_prop(g, v2, h2, :length)
-    L4 = get_prop(g, h2, v3, :length)
-    L5 = get_prop(g, v1, v3, :length)
+    L1 = distance(g, v1, h1)
+    L2 = distance(g, h1, v2)
+    L3 = distance(g, v2, h2)
+    L4 = distance(g, h2, v3)
+    L5 = distance(g, v1, v3)
     B5 = get_prop(g, v1, v3, :boundary)
 
     if !B5 && L5 > (L1 + L2) && L5 > (L3+L4)

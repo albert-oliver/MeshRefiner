@@ -21,39 +21,34 @@ const TerrainMap = Array{<:Number, 2}
 const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
 
 function run_for_all_triangles!(g, fun)
-    executed_sth = false
-    for v in nv(g):-1:1
-        if get_prop(g, v, :type) == "interior"
-            # executed_sth |= fun(g, v)
-            ex = fun(g, v)
-            if ex
-                println("Executing: ", String(Symbol(fun)))
-            end
-            executed_sth |= ex
-        end
+    get_interiors(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "interior" true else false end))
+
+    ran = false
+    for v in get_interiors(g)
+        ex = fun(g, v)
+        # if ex
+        #     println("Executed: ", String(Symbol(fun)))
+        # end
+        ran |= ex
     end
-    return executed_sth
+    return ran
 end
 
 function run_transformations!(g)
-    ran = false
-    ran |= run_for_all_triangles!(g, transform_P1!)
-    ran |= run_for_all_triangles!(g, transform_P2!)
-    if !ran
-        return false
-    end
+    run_for_all_triangles!(g, transform_P1!)
+    run_for_all_triangles!(g, transform_P2!)
 
     while true
-        executed_sth = false
-        executed_sth |= run_for_all_triangles!(g, transform_P3!)
-        executed_sth |= run_for_all_triangles!(g, transform_P4!)
-        executed_sth |= run_for_all_triangles!(g, transform_P5!)
-        executed_sth |= run_for_all_triangles!(g, transform_P6!)
-        executed_sth |= run_for_all_triangles!(g, transform_P7!)
-        executed_sth |= run_for_all_triangles!(g, transform_P8!)
-        executed_sth |= run_for_all_triangles!(g, transform_P9!)
-        if !executed_sth
-            return true
+        ran = false
+        ran |= run_for_all_triangles!(g, transform_P3!)
+        ran |= run_for_all_triangles!(g, transform_P4!)
+        ran |= run_for_all_triangles!(g, transform_P5!)
+        ran |= run_for_all_triangles!(g, transform_P6!)
+        ran |= run_for_all_triangles!(g, transform_P7!)
+        ran |= run_for_all_triangles!(g, transform_P8!)
+        ran |= run_for_all_triangles!(g, transform_P9!)
+        if !ran
+            return false
         end
     end
 end
@@ -76,10 +71,10 @@ function initial_graph(map::TerrainMap)::AbstractMetaGraph
 end
 
 struct Plane
-    a::Number
-    b::Number
-    c::Number
-    d::Number
+    a::Float64
+    b::Float64
+    c::Float64
+    d::Float64
 end
 
 function plane(p1::Array{<:Number, 1}, p2::Array{<:Number, 1}, p3::Array{<:Number, 1})::Plane
@@ -93,7 +88,7 @@ function plane(p1::Array{<:Number, 1}, p2::Array{<:Number, 1}, p3::Array{<:Numbe
     return Plane(a, b, c, d)
 end
 
-z(plane::Plane, coord::Tuple{Number, Number}) = if plane.c == 0 0 else (plane.d - plane.a * coord[1] - plane.b * coord[2]) / plane.c end
+z(plane::Plane, coord::Tuple{Number, Number})::Float64 = if plane.c == 0 0 else (plane.d - plane.a * coord[1] - plane.b * coord[2]) / plane.c end
 
 function point_in_triangle(t::Triangle, coord::Tuple{Number, Number})
     x, y = coord
@@ -134,7 +129,7 @@ function points_in_triangle(map::TerrainMap, t::Triangle)::Array{Tuple{Number, N
 end
 
 function approx_error(g::AbstractMetaGraph, t_map::TerrainMap, interior::Number)::Number
-    triangle_points = neighbors(g, interior)
+    triangle_points = interior_vertices(g, interior)
     point(g::AbstractMetaGraph, v::Number) = [x(g, v), y(g, v), z(g, v)]
     triangle = (point(g, triangle_points[1]), point(g, triangle_points[2]), point(g, triangle_points[3]))
     p = plane(triangle[1], triangle[2], triangle[3])
@@ -142,41 +137,61 @@ function approx_error(g::AbstractMetaGraph, t_map::TerrainMap, interior::Number)
     points = points_in_triangle(t_map, triangle)
     square(x) = x * x
     if isempty(points)
-        return 0
+        return 0.0
     end
-    square_diff = sum(map(coord -> square(t_map[coord[1], coord[2]] - z(p, (coord[1], coord[2]))), points))
-    square_point = sum(map(coord -> square(t_map[coord[1], coord[2]]), points))
-
-    return square_diff/square_point
+    square_diff = sum(map(coord -> square(convert(Int128, t_map[coord[1], coord[2]]) - round(Int128, z(p, (coord[1], coord[2])))), points))
+    square_point = sum(map(coord -> square(convert(Int64, t_map[coord[1], coord[2]])), points))
+    # println("Square diff: ", square_diff)
+    # println("Square of points: ", square_point)
+    return square_diff #/square_point
 end
 
 function mark_for_refinement(g::AbstractMetaGraph, map::TerrainMap, eps::Number)::Array{Number, 1}
     get_interiors(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "interior" true else false end))
 
     to_refine = []
+    errors = []
     for interior in get_interiors(g)
-        if approx_error(g, map, interior) > eps
-            println("To refine: ", interior)
+        e = approx_error(g, map, interior)
+        # println("Error: ", e)
+        if e > eps
+            # println("To refine: ", interior)
             set_prop!(g, interior, :refine, true)
             push!(to_refine, interior)
+            push!(errors, e)
         end
+    end
+    if !isempty(errors)
+        println("Avg error: ", mean(errors))
     end
     return to_refine
 end
 
-t_map = load_data("src/resources/poland100.data")
-g = initial_graph(t_map)
+function adjust_heights(g::AbstractMetaGraph, map::TerrainMap)
+    get_vertices(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "vertex" true else false end))
 
-# draw_makie(g)
-mark_for_refinement(g, t_map, 0.1)
-run_transformations!(g)
-
-for i in 1:5
-    mark_for_refinement(g, t_map, 0.1)
-    a = run_transformations!(g)
-    if !a
-        return
+    for vertex in get_vertices(g)
+        set_prop!(g, vertex, :z, map[round(Int, x(g, vertex)), round(Int, y(g, vertex))])
     end
 end
+
+
+t_map = load_data("src/resources/poland500.data")
+g = initial_graph(t_map)
+
+accuracy = 500000
+# draw_makie(g)
+
+for i in 1:18
+    print(i, ": ")
+# while true
+    to_refine = mark_for_refinement(g, t_map, accuracy)
+    # if isempty(to_refine)
+    #     return
+    # end
+    run_transformations!(g)
+    adjust_heights(g, t_map)
+end
+
 
 draw_makie(g)
