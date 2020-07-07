@@ -84,7 +84,7 @@ function plane(p1::Array{<:Number, 1}, p2::Array{<:Number, 1}, p3::Array{<:Numbe
     a = vp[1]
     b = vp[2]
     c = vp[3]
-    d = dot(v1, p3)
+    d = dot(vp, p1)
     return Plane(a, b, c, d)
 end
 
@@ -96,12 +96,19 @@ function point_in_triangle(t::Triangle, coord::Tuple{Number, Number})
     x2, y2 = t[2]
     x3, y3 = t[3]
 
-    denominator = ((y2 - y3)*(x1 - x3) + (x3 - x2)*(y1 - y3))
-    a = ((y2 - y3)*(x - x3) + (x3 - x2)*(y - y3)) / denominator
-    b = ((y3 - y1)*(x - x3) + (x1 - x3)*(y - y3)) / denominator
-    c = 1 - a - b;
+    p1 = [x1-x, y1-y, 0]
+    p2 = [x2-x, y2-y, 0]
+    p3 = [x3-x, y3-y, 0]
 
-    return 0 <= a && a <= 1 && 0 <= b && b <= 1 && 0 <= c && c <= 1
+    x12 = [x2-x1, y2-y1, 0]
+    x23 = [x3-x2, y3-y2, 0]
+    x31 = [x1-x3, y1-y3, 0]
+
+    a = cross(p1, x12)
+    b = cross(p2, x23)
+    c = cross(p3, x31)
+
+    return (a[3] > 0 && b[3] > 0 && c[3] > 0) || (a[3] < 0 && b[3] < 0 && c[3] < 0)
 end
 
 struct BoundingBox
@@ -139,11 +146,8 @@ function approx_error(g::AbstractMetaGraph, t_map::TerrainMap, interior::Number)
     if isempty(points)
         return 0.0
     end
-    square_diff = sum(map(coord -> square(convert(Int128, t_map[coord[1], coord[2]]) - round(Int128, z(p, (coord[1], coord[2])))), points))
-    square_point = sum(map(coord -> square(convert(Int64, t_map[coord[1], coord[2]])), points))
-    # println("Square diff: ", square_diff)
-    # println("Square of points: ", square_point)
-    return square_diff #/square_point
+
+    return sum(map(coord -> abs(convert(Int128, t_map[coord[1], coord[2]]) - round(Int128, z(p, (coord[1], coord[2])))), points))
 end
 
 function mark_for_refinement(g::AbstractMetaGraph, map::TerrainMap, eps::Number)::Array{Number, 1}
@@ -179,16 +183,15 @@ end
 t_map = load_data("src/resources/poland500.data")
 g = initial_graph(t_map)
 
-accuracy = 500000
-# draw_makie(g)
+accuracy = 100
 
 for i in 1:18
     print(i, ": ")
 # while true
     to_refine = mark_for_refinement(g, t_map, accuracy)
-    # if isempty(to_refine)
-    #     return
-    # end
+    if isempty(to_refine)
+        return
+    end
     run_transformations!(g)
     adjust_heights(g, t_map)
 end
