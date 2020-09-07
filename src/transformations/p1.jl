@@ -33,13 +33,19 @@ function check_P1(g, center)
     end
 
     B1 = get_prop(g, v1, v2, :boundary)
+    B2 = get_prop(g, v2, h, :boundary)
+    B3 = get_prop(g, h, v1, :boundary)
     L1 = distance(g, v1, v2)
     L2 = distance(g, h, v1)
     L3 = distance(g, h, v2)
+    HN1 = get_prop(g, v1, :type) == "hanging" ? true : false
+    HN2 = get_prop(g, v2, :type) == "hanging" ? true : false
 
-    if B1 && (L1 >= L2) && (L1 >= L3)
+    if (L1 >= L2) && (L1 >= L3) && (B1 ||
+        (!B1 && (!HN1 && !HN2) && !((B2 && L2 == L1) || (B3 && L3==L1))) )
         return h, v1, v2
     end
+    return nothing
 end
 
 function transform_P1!(g, center)
@@ -57,6 +63,9 @@ function transform_P1!(g, center)
     rem_edge!(g, v1, v2)
 
     v4 = add_meta_vertex!(g, (p1[:x] + p2[:x])/2, (p1[:y] + p2[:y])/2, (p1[:z] + p2[:z])/2)
+    if !B1
+        set_prop!(g, v4, :type, "hanging")
+    end
 
     add_meta_edge!(g, v4, v1, B1)
     add_meta_edge!(g, v4, v2, B1)

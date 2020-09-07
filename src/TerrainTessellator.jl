@@ -10,9 +10,6 @@ include("transformations/p3.jl")
 include("transformations/p4.jl")
 include("transformations/p5.jl")
 include("transformations/p6.jl")
-include("transformations/p7.jl")
-include("transformations/p8.jl")
-include("transformations/p9.jl")
 include("graphs/example_graphs.jl")
 include("graphs/test_graphs.jl")
 include("io.jl")
@@ -35,18 +32,14 @@ function run_for_all_triangles!(g, fun)
 end
 
 function run_transformations!(g)
-    run_for_all_triangles!(g, transform_P1!)
-    run_for_all_triangles!(g, transform_P2!)
-
     while true
         ran = false
+        ran |= run_for_all_triangles!(g, transform_P1!)
+        ran |= run_for_all_triangles!(g, transform_P2!)
         ran |= run_for_all_triangles!(g, transform_P3!)
         ran |= run_for_all_triangles!(g, transform_P4!)
         ran |= run_for_all_triangles!(g, transform_P5!)
         ran |= run_for_all_triangles!(g, transform_P6!)
-        ran |= run_for_all_triangles!(g, transform_P7!)
-        ran |= run_for_all_triangles!(g, transform_P8!)
-        ran |= run_for_all_triangles!(g, transform_P9!)
         if !ran
             return false
         end

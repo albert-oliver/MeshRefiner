@@ -1,33 +1,57 @@
 function check_P2(g, center)
     if get_prop(g, center, :type) != "interior"
         return nothing
-    elseif !get_prop(g, center, :refine)
-        return nothing
     end
 
     vertexes = interior_vertices(g, center)
 
-    if !has_edge(g, vertexes[1], vertexes[2]) ||
-       !has_edge(g, vertexes[1], vertexes[3]) ||
-       !has_edge(g, vertexes[2], vertexes[3])
+    vA = vertexes[1]
+    vB = vertexes[2]
+    vC = vertexes[3]
+
+    lA = distance(g, vA, vB)
+    lB = distance(g, vB, vC)
+    lC = distance(g, vC, vA)
+    max = maximum([lA, lB, lC])
+
+    v1 = nothing
+    v2 = nothing
+    v3 = nothing
+    h = nothing
+
+    if max == lA
+        v1 = vA
+        v2 = vB
+        v3 = vC
+    elseif max == lB
+        v1 = vB
+        v2 = vC
+        v3 = vA
+    else
+        v1 = vC
+        v2 = vA
+        v3 = vB
+    end
+
+    h = get_hanging_node_between(g, v1, v2)
+
+    if isnothing(h)
         return nothing
     end
 
-    for i in 0:2
-        v1 = vertexes[i+1]
-        v2 = vertexes[(i+1)%3+1]
-        v3 = vertexes[(i+2)%3+1]
 
-        B1 = get_prop(g, v1, v2, :boundary)
-        B2 = get_prop(g, v2, v3, :boundary)
-        B3 = get_prop(g, v1, v3, :boundary)
-        L1 = distance(g, v1, v2)
-        L2 = distance(g, v2, v3)
-        L3 = distance(g, v1, v3)
+    if !has_edge(g, v1, v3) ||
+       !has_edge(g, v2, v3)
+        return nothing
+    end
 
-        if !B1 && L1>=L2 && L1>=L3 && !((B2 && L2==L1) || B3 && L3==L1)
-            return v1, v2, v3
-        end
+    L1 = distance(g, v1, h)
+    L2 = distance(g, v2, h)
+    L3 = distance(g, v2, v3)
+    L4 = distance(g, v1, v3)
+
+    if (L1+L2) >= L3 && (L1+L2) >= L4
+        return v1, v2, v3, h
     end
     return nothing
 end
@@ -38,22 +62,14 @@ function transform_P2!(g, center)
         return false
     end
 
-    v1, v2, v3 = mapping
-    p1 = props(g, v1)
-    p2 = props(g, v2)
-    B1 = get_prop(g, v1, v2, :boundary)
-    L1 = distance(g, v1, v2)
+    v1, v2, v3, h = mapping
 
-    rem_edge!(g, v1, v2)
+    set_prop!(g, h, :type, "vertex")
 
-    v4 = add_hanging!(g, (p1[:x] + p2[:x])/2, (p1[:y] + p2[:y])/2, (p1[:z] + p2[:z])/2)
+    add_meta_edge!(g, h, v3, false)
 
-    add_meta_edge!(g, v4, v1, B1)
-    add_meta_edge!(g, v4, v2, B1)
-    add_meta_edge!(g, v4, v3, false)
-
-    add_interior!(g, v1, v3, v4, false)
-    add_interior!(g, v2, v3, v4, false)
+    add_interior!(g, v1, v3, h, false)
+    add_interior!(g, v2, v3, h, false)
 
     rem_vertex!(g, center)
 

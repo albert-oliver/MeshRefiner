@@ -5,28 +5,58 @@ function check_P6(g, center)
 
     vertexes = interior_vertices(g, center)
 
+    vA = nothing
+    vB = nothing
+    vC = nothing
+    hA = nothing
+    hB = nothing
+    hC = nothing
+
+    vA = vertexes[1]
+    vB = vertexes[2]
+    vC = vertexes[3]
+    hA = get_hanging_node_between(g, vB, vC)
+    hB = get_hanging_node_between(g, vA, vC)
+    hC = get_hanging_node_between(g, vA, vB)
+
+    if isnothing(hA) || isnothing(hB) || isnothing(hC) || hA == vA || hB == vB || hC == vC
+        return nothing
+    end
+
+    lA = distance(g, vB, hA) + distance(g, vC, hA)
+    lB = distance(g, vA, hB) + distance(g, vC, hB)
+    lC = distance(g, vA, hC) + distance(g, vB, hC)
+    max = maximum([lA, lB, lC])
+
     v1 = nothing
     v2 = nothing
     v3 = nothing
     h1 = nothing
     h2 = nothing
+    h3 = nothing
 
-    for i in 0:2
-        v1 = vertexes[i+1]
-        v2 = vertexes[(i+1)%3+1]
-        v3 = vertexes[(i+2)%3+1]
-        h1 = get_hanging_node_between(g, v1, v2)
-        h2 = get_hanging_node_between(g, v2, v3)
-        if isnothing(h1) || isnothing(h2) || h1 == v3 || h2 == v1
-            break
-        end
-    end
-
-    if isnothing(h1) || isnothing(h2)
-        return nothing
-    end
-
-    if !has_edge(g, v1, v3)
+    if max == lA
+        v1 = vB
+        v2 = vC
+        v3 = vA
+        h1 = hA
+        h2 = hB
+        h3 = hB
+    elseif max == lB
+        v1 = vC
+        v2 = vA
+        v3 = vB
+        h1 = hB
+        h2 = hC
+        h3 = hA
+    elseif max == lC
+        v1 = vA
+        v2 = vB
+        v3 = vC
+        h1 = hC
+        h2 = hA
+        h3 = hB
+    else
         return nothing
     end
 
@@ -34,10 +64,11 @@ function check_P6(g, center)
     L2 = distance(g, h1, v2)
     L3 = distance(g, v2, h2)
     L4 = distance(g, h2, v3)
-    L5 = distance(g, v1, v3)
+    L5 = distance(g, v3, h3)
+    L6 = distance(g, h3, v1)
 
-    if (L1 + L2) >= (L3 + L4) && (L1 + L2) >= L5
-        return v1, v2, v3, h1, h2
+    if (L1 + L2) >= (L3 + L4) && (L1 + L2) >= (L5 + L6)
+        return v1, v2, v3, h1, h2, h3
     end
     return nothing
 end
@@ -48,13 +79,11 @@ function transform_P6!(g, center)
         return false
     end
 
-    v1, v2, v3, h1, h2 = mapping
+    v1, v2, v3, h1, h2, h3 = mapping
 
-    B1 = get_prop(g, v1, h1, :boundary)
-    B2 = get_prop(g, h1, v2, :boundary)
+    set_prop!(g, h1, :type, "vertex")
 
     add_meta_edge!(g, v3, h1, false)
-    set_prop!(g, h1, :type, "vertex")
 
     add_interior!(g, v1, h1, v3, false)
     add_interior!(g, h1, v2, v3, false)
