@@ -5,25 +5,43 @@ function check_P5(g, center)
 
     vertexes = interior_vertices(g, center)
 
+    vA = vertexes[1]
+    vB = vertexes[2]
+    vC = vertexes[3]
+    hA = get_hanging_node_between(g, vB, vC)
+    hB = get_hanging_node_between(g, vA, vC)
+    hC = get_hanging_node_between(g, vA, vB)
+
+    if count(x -> isnothing(x), [hA, hB, hC]) != 1 # Return if we don't have two hanging nodes
+        return nothing
+    end
+
     v1 = nothing
     v2 = nothing
     v3 = nothing
     h1 = nothing
     h2 = nothing
 
-    for i in 0:2
-        v1 = vertexes[i+1]
-        v2 = vertexes[(i+1)%3+1]
-        v3 = vertexes[(i+2)%3+1]
-        h1 = get_hanging_node_between(g, v1, v2)
-        h2 = get_hanging_node_between(g, v2, v3)
-        if !isnothing(h1) && !isnothing(h2) && h1 != v3 && h2 != v1
-            break
+    if !isnothing(hA)
+        if !isnothing(hB)
+            v1 = vB
+            v2 = vC
+            v3 = vA
+            h1 = hA
+            h2 = hB
+        else # hA and hC
+            v1 = vA
+            v2 = vB
+            v3 = vC
+            h1 = hC
+            h2 = hA
         end
-    end
-
-    if isnothing(h1) || isnothing(h2)
-        return nothing
+    else # hA is nothing so that leaves hB and hC as hanging nodes
+        v1 = vC
+        v2 = vA
+        v3 = vB
+        h1 = hB
+        h2 = hC
     end
 
     if !has_edge(g, v1, v3)
@@ -39,7 +57,7 @@ function check_P5(g, center)
     HN3 = get_prop(g, v3, :type) == "hanging" ? true : false
 
     if L5 > (L1+L2) && L5 > (L3+L4) && (!HN1 && !HN3)
-        return v1, v2, v3, h1, h2
+        return v1, v2, v3
     end
     return nothing
 end
@@ -50,7 +68,7 @@ function transform_P5!(g, center)
         return false
     end
 
-    v1, v2, v3, h1, h2 = mapping
+    v1, v2, v3 = mapping
     p1 = props(g, v1)
     p2 = props(g, v2)
     p3 = props(g, v3)

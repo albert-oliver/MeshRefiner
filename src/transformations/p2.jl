@@ -8,37 +8,35 @@ function check_P2(g, center)
     vA = vertexes[1]
     vB = vertexes[2]
     vC = vertexes[3]
+    hA = get_hanging_node_between(g, vB, vC)
+    hB = get_hanging_node_between(g, vA, vC)
+    hC = get_hanging_node_between(g, vA, vB)
 
-    lA = distance(g, vA, vB)
-    lB = distance(g, vB, vC)
-    lC = distance(g, vC, vA)
-    max = maximum([lA, lB, lC])
+    if count(x -> isnothing(x), [hA, hB, hC]) != 2 # Return if we don't have one hanging node
+        return nothing
+    end
 
     v1 = nothing
     v2 = nothing
     v3 = nothing
     h = nothing
 
-    if max == lA
-        v1 = vA
-        v2 = vB
-        v3 = vC
-    elseif max == lB
+    if !isnothing(hA)
         v1 = vB
         v2 = vC
         v3 = vA
-    else
-        v1 = vC
-        v2 = vA
+        h = hA
+    elseif !isnothing(hB)
+        v1 = vA
+        v2 = vC
         v3 = vB
+        h = hB
+    else
+        v1 = vA
+        v2 = vB
+        v3 = vC
+        h = hC
     end
-
-    h = get_hanging_node_between(g, v1, v2)
-
-    if isnothing(h)
-        return nothing
-    end
-
 
     if !has_edge(g, v1, v3) ||
        !has_edge(g, v2, v3)

@@ -5,13 +5,6 @@ function check_P6(g, center)
 
     vertexes = interior_vertices(g, center)
 
-    vA = nothing
-    vB = nothing
-    vC = nothing
-    hA = nothing
-    hB = nothing
-    hC = nothing
-
     vA = vertexes[1]
     vB = vertexes[2]
     vC = vertexes[3]

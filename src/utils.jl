@@ -76,10 +76,8 @@ function cartesian_distance(p1, p2)
     x2 = convert(Float64, p2[:x])
     y1 = convert(Float64, p1[:y])
     y2 = convert(Float64, p2[:y])
-    z1 = convert(Float64, p1[:z])
-    z2 = convert(Float64, p2[:z])
 
-    return sqrt(sum([(x1-x2)^2, (y1-y2)^2, (z1-z2)^2]))
+    return sqrt(sum([(x1-x2)^2, (y1-y2)^2]))
 end
 
 function draw_graph(g)

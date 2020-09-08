@@ -5,25 +5,37 @@ function check_P4(g, center)
 
     vertexes = interior_vertices(g, center)
 
-    v1 = nothing
-    v2 = nothing
-    v3 = nothing
-    h1 = nothing
-    h2 = nothing
+    vA = vertexes[1]
+    vB = vertexes[2]
+    vC = vertexes[3]
+    hA = get_hanging_node_between(g, vB, vC)
+    hB = get_hanging_node_between(g, vA, vC)
+    hC = get_hanging_node_between(g, vA, vB)
 
-    for i in 0:2
-        v1 = vertexes[i+1]
-        v2 = vertexes[(i+1)%3+1]
-        v3 = vertexes[(i+2)%3+1]
-        h1 = get_hanging_node_between(g, v1, v2)
-        h2 = get_hanging_node_between(g, v2, v3)
-        if !isnothing(h1) && !isnothing(h2) && h1 != v3 && h2 != v1
-            break
-        end
+    if count(x -> isnothing(x), [hA, hB, hC]) != 1 # Return if we don't have two hanging nodes
+        return nothing
     end
 
-    if isnothing(h1) || isnothing(h2)
-        return nothing
+    if !isnothing(hA)
+        if !isnothing(hB)
+            v1 = vB
+            v2 = vC
+            v3 = vA
+            h1 = hA
+            h2 = hB
+        else # hA and hC
+            v1 = vA
+            v2 = vB
+            v3 = vC
+            h1 = hC
+            h2 = hA
+        end
+    else # hA is nothing so that leaves hB and hC as hanging nodes
+        v1 = vC
+        v2 = vA
+        v3 = vB
+        h1 = hB
+        h2 = hC
     end
 
     if !has_edge(g, v1, v3)
@@ -39,7 +51,7 @@ function check_P4(g, center)
     if (L1 + L2) >= (L3 + L4) && (L1 + L2) >= L5
         return v1, v2, v3, h1, h2
     elseif (L3 + L4) >= (L1 + L2) && (L3 + L4) >= L5
-        return v2, v3, v1, h2, h1
+        return v3, v2, v1, h2, h1
     end
     return nothing
 end

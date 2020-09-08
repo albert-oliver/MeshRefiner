@@ -7,6 +7,17 @@ function check_P1(g, center)
 
     vertexes = interior_vertices(g, center)
 
+    vA = vertexes[1]
+    vB = vertexes[2]
+    vC = vertexes[3]
+    hA = get_hanging_node_between(g, vB, vC)
+    hB = get_hanging_node_between(g, vA, vC)
+    hC = get_hanging_node_between(g, vA, vB)
+
+    if count(x -> isnothing(x), [hA, hB, hC]) != 3 # Return if we have a hanging node
+        return nothing
+    end
+
     if !has_edge(g, vertexes[1], vertexes[2]) ||
        !has_edge(g, vertexes[1], vertexes[3]) ||
        !has_edge(g, vertexes[2], vertexes[3])

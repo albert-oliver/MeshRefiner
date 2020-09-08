@@ -173,10 +173,10 @@ function adjust_heights(g::AbstractMetaGraph, map::TerrainMap)
 end
 
 
-t_map = load_data("src/resources/poland500.data")
+t_map = load_data("src/resources/poland500_fixed.data")
 g = initial_graph(t_map)
 
-accuracy = 100
+accuracy = 1000
 
 for i in 1:18
     print(i, ": ")
@@ -189,5 +189,5 @@ for i in 1:18
     adjust_heights(g, t_map)
 end
 
-
+println("Visualizing...")
 draw_makie(g)
