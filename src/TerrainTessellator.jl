@@ -1,9 +1,9 @@
+
 using LightGraphs
 using MetaGraphs
 using Statistics
 using LinearAlgebra
 
-include("utils.jl")
 include("transformations/p1.jl")
 include("transformations/p2.jl")
 include("transformations/p3.jl")
@@ -13,6 +13,8 @@ include("transformations/p6.jl")
 include("graphs/example_graphs.jl")
 include("graphs/test_graphs.jl")
 include("io.jl")
+include("visualization/draw_makie.jl")
+include("visualization/draw_graphplot")
 
 const TerrainMap = Array{<:Number, 2}
 const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
@@ -173,21 +175,30 @@ function adjust_heights(g::AbstractMetaGraph, map::TerrainMap)
 end
 
 
-t_map = load_data("src/resources/poland500_fixed.data")
-g = initial_graph(t_map)
+# ----------------- START --------------------------
+function start():
+    t_map = load_data("src/resources/poland500_fixed.data")
+    g = initial_graph(t_map)
 
-accuracy = 1000
+    accuracy = 1000
 
-for i in 1:18
-    print(i, ": ")
-# while true
-    to_refine = mark_for_refinement(g, t_map, accuracy)
-    if isempty(to_refine)
-        return
+    for i in 1:18
+        print(i, ": ")
+    # while true
+        to_refine = mark_for_refinement(g, t_map, accuracy)
+        if isempty(to_refine)
+            return
+        end
+        run_transformations!(g)
+        adjust_heights(g, t_map)
     end
-    run_transformations!(g)
-    adjust_heights(g, t_map)
+
+    println("Visualizing...")
+    draw_makie(g)
 end
 
-println("Visualizing...")
-draw_makie(g)
+# ------------------- END OF START -----------
+
+function interactive_test():
+    
+end
