@@ -97,3 +97,46 @@ function example_graph_2()
 
     return g
 end
+
+function example_graph_3()
+    g = MetaGraph()
+
+    add_meta_vertex!(g, 0.0, 0.0, 0.0)  # 1
+    add_meta_vertex!(g, 1.0, 0.0, 0.0)  # 2
+    add_meta_vertex!(g, 2.0, 0.0, 0.0)  # 3
+    add_meta_vertex!(g, 0.0, 1.0, 0.0)  # 4
+    add_meta_vertex!(g, 1.0, 1.0, 0.0)  # 5
+    add_meta_vertex!(g, 2.0, 1.0, 0.0)  # 6
+    add_meta_vertex!(g, 0.0, 2.0, 0.0)  # 7
+    add_meta_vertex!(g, 1.0, 2.0, 0.0)  # 8
+    add_meta_vertex!(g, 2.0, 2.0, 0.0)  # 9
+
+    add_interior!(g, 1, 2, 4, true)
+    add_interior!(g, 4, 5, 2, true)
+    add_interior!(g, 2, 3, 6, false)
+    add_interior!(g, 2, 5, 6, false)
+    add_interior!(g, 4, 5, 8, false)
+    add_interior!(g, 4, 7, 8, true)
+    add_interior!(g, 5, 6, 8, false)
+    add_interior!(g, 6, 8, 9, false)
+
+    add_meta_edge!(g, 1, 2, true)
+    add_meta_edge!(g, 2, 3, true)
+    add_meta_edge!(g, 3, 6, true)
+    add_meta_edge!(g, 6, 9, true)
+    add_meta_edge!(g, 9, 8, true)
+    add_meta_edge!(g, 8, 7, true)
+    add_meta_edge!(g, 7, 4, true)
+    add_meta_edge!(g, 4, 1, true)
+    add_meta_edge!(g, 4, 2, false)
+    add_meta_edge!(g, 2, 6, false)
+    add_meta_edge!(g, 4, 5, false)
+    add_meta_edge!(g, 5, 6, false)
+    add_meta_edge!(g, 4, 8, false)
+    add_meta_edge!(g, 8, 6, false)
+    add_meta_edge!(g, 2, 5, false)
+    add_meta_edge!(g, 5, 8, false)
+
+    return g
+
+end

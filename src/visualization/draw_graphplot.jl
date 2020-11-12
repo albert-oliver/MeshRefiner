@@ -1,3 +1,7 @@
+using Colors
+using Printf
+using GraphPlot
+
 function draw_graph(g, vid=false)
     function position_layout(g)
         x:: Array{Float64} = []
@@ -18,9 +22,9 @@ function draw_graph(g, vid=false)
     # position_layout(g) = map((v) -> get_prop(g, v, :x), vertices(g)), map((v) -> get_prop(g, v, :y), vertices(g))
 
     if vid
-        labels = map((vertex) -> uppercase(get_prop(g, vertex, :type)[1]), 1:nv(g))
-    else
         labels = 1:nv(g)
+    else
+        labels = map((vertex) -> uppercase(get_prop(g, vertex, :type)[1]), 1:nv(g))
     end
 
     edge_labels = []
@@ -51,7 +55,7 @@ function draw_graph(g, vid=false)
     vertex_colors = []
     for vertex in 1:nv(g)
         if get_prop(g, vertex, :type) == "interior"
-            push!(vertex_size, 0.6)
+            push!(vertex_size, 1.0)
             if get_prop(g, vertex, :refine)
                 push!(vertex_colors, colorant"orange")
             else

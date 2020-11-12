@@ -3,6 +3,9 @@ using LightGraphs
 using MetaGraphs
 using Statistics
 using LinearAlgebra
+using GraphPlot
+using Compose
+import Cairo, Fontconfig
 
 include("transformations/p1.jl")
 include("transformations/p2.jl")
@@ -14,34 +17,35 @@ include("graphs/example_graphs.jl")
 include("graphs/test_graphs.jl")
 include("io.jl")
 include("visualization/draw_makie.jl")
-include("visualization/draw_graphplot")
+include("visualization/draw_graphplot.jl")
+include("utils.jl")
 
 const TerrainMap = Array{<:Number, 2}
 const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
 
-function run_for_all_triangles!(g, fun)
+function run_for_all_triangles!(g, fun, log=false)
     get_interiors(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "interior" true else false end))
 
     ran = false
     for v in get_interiors(g)
         ex = fun(g, v)
-        # if ex
-        #     println("Executed: ", String(Symbol(fun)))
-        # end
+        if ex && log
+            println("Executed: ", String(Symbol(fun)), " on ", v)
+        end
         ran |= ex
     end
     return ran
 end
 
-function run_transformations!(g)
+function run_transformations!(g, log=false)
     while true
         ran = false
-        ran |= run_for_all_triangles!(g, transform_P1!)
-        ran |= run_for_all_triangles!(g, transform_P2!)
-        ran |= run_for_all_triangles!(g, transform_P3!)
-        ran |= run_for_all_triangles!(g, transform_P4!)
-        ran |= run_for_all_triangles!(g, transform_P5!)
-        ran |= run_for_all_triangles!(g, transform_P6!)
+        ran |= run_for_all_triangles!(g, transform_P1!, log)
+        ran |= run_for_all_triangles!(g, transform_P2!, log)
+        ran |= run_for_all_triangles!(g, transform_P3!, log)
+        ran |= run_for_all_triangles!(g, transform_P4!, log)
+        ran |= run_for_all_triangles!(g, transform_P5!, log)
+        ran |= run_for_all_triangles!(g, transform_P6!, log)
         if !ran
             return false
         end
@@ -176,7 +180,7 @@ end
 
 
 # ----------------- START --------------------------
-function start():
+function start()
     t_map = load_data("src/resources/poland500_fixed.data")
     g = initial_graph(t_map)
 
@@ -199,6 +203,28 @@ end
 
 # ------------------- END OF START -----------
 
-function interactive_test():
-    
+function interactive_test()
+    g = example_graph_3()
+    i = 1
+    while true
+        draw(PNG(string("src/resources/testgraph", i, ".png"), 16cm, 16cm), draw_graph(g, true))
+        print("To refine (q to quit): ")
+        s = readline()
+        if (s == "q")
+            break
+        end
+        splitted = split(s)
+        for svertex in splitted
+            v = parse(Int64, svertex)
+            set_prop!(g, v, :refine, true)
+        end
+        run_transformations!(g, true)
+        i += 1
+    end
+end
+
+function f()
+    g = example_graph_3()
+    draw_graph(g)
+    print("Not nice :(")
 end
