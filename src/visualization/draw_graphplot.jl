@@ -2,7 +2,7 @@ using Colors
 using Printf
 using GraphPlot
 
-function draw_graph(g, vid=false)
+function draw_graphplot(g, vid=false)
     function position_layout(g)
         x:: Array{Float64} = []
         y:: Array{Float64} = []

@@ -1,4 +1,4 @@
-function P1_graph_1()
+function p1_graph_1()
     g = MetaGraph()
 
     add_hanging!(g, 0.0, 0.0, 0.0)
@@ -14,7 +14,7 @@ function P1_graph_1()
     return g
 end
 
-function P1_graph_2()
+function p1_graph_2()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -30,7 +30,7 @@ function P1_graph_2()
     return g
 end
 
-function P2_graph_1()
+function p2_graph_1()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -48,7 +48,7 @@ function P2_graph_1()
     return g
 end
 
-function P3_graph_1()
+function p3_graph_1()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -66,7 +66,7 @@ function P3_graph_1()
     return g
 end
 
-function P3_graph_2()
+function p3_graph_2()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -84,7 +84,7 @@ function P3_graph_2()
     return g
 end
 
-function P4_graph_1()
+function p4_graph_1()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -105,7 +105,7 @@ function P4_graph_1()
     return g
 end
 
-function P4_graph_2()
+function p4_graph_2()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -126,7 +126,7 @@ function P4_graph_2()
     return g
 end
 
-function P5_graph_1()
+function p5_graph_1()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -147,7 +147,7 @@ function P5_graph_1()
     return g
 end
 
-function P5_graph_2()
+function p5_graph_2()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)
@@ -168,7 +168,7 @@ function P5_graph_2()
     return g
 end
 
-function P6_graph_1()
+function p6_graph_1()
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)

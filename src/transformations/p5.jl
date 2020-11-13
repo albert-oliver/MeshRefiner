@@ -1,4 +1,4 @@
-function check_P5(g, center)
+function check_p5(g, center)
     if get_prop(g, center, :type) != "interior"
         return nothing
     end
@@ -62,8 +62,8 @@ function check_P5(g, center)
     return nothing
 end
 
-function transform_P5!(g, center)
-    mapping = check_P5(g, center)
+function transform_p5!(g, center)
+    mapping = check_p5(g, center)
     if isnothing(mapping)
         return false
     end

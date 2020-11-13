@@ -1,3 +1,6 @@
+using Makie
+using MetaGraphs
+
 function draw_makie(g)
     labels = map((vertex) -> uppercase(get_prop(g, vertex, :type)[1]), 1:nv(g))
 

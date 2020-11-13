@@ -1,5 +1,6 @@
 using Colors
 
+
 function center_point(points)
     mean = [0.0, 0.0, 0.0]
     for point in points

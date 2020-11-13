@@ -1,4 +1,4 @@
-function check_P1(g, center)
+function check_p1(g, center)
     if get_prop(g, center, :type) != "interior"
         return nothing
     elseif !get_prop(g, center, :refine)
@@ -59,8 +59,8 @@ function check_P1(g, center)
     return nothing
 end
 
-function transform_P1!(g, center)
-    mapping = check_P1(g, center)
+function transform_p1!(g, center)
+    mapping = check_p1(g, center)
     if isnothing(mapping)
         return false
     end

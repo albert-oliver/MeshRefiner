@@ -1,55 +1,50 @@
+module MeshRefiner
 
-using LightGraphs
-using MetaGraphs
-using Statistics
-using LinearAlgebra
-using GraphPlot
-using Compose
-import Cairo, Fontconfig
-
+include("io.jl")
+include("graphs/example_graphs.jl")
+include("graphs/test_graphs.jl")
+include("visualization/draw_makie.jl")
+include("visualization/draw_graphplot.jl")
 include("transformations/p1.jl")
 include("transformations/p2.jl")
 include("transformations/p3.jl")
 include("transformations/p4.jl")
 include("transformations/p5.jl")
 include("transformations/p6.jl")
-include("graphs/example_graphs.jl")
-include("graphs/test_graphs.jl")
-include("io.jl")
-include("visualization/draw_makie.jl")
-include("visualization/draw_graphplot.jl")
 include("utils.jl")
+
+using LightGraphs
+using MetaGraphs
+using LinearAlgebra
+using Statistics
 
 const TerrainMap = Array{<:Number, 2}
 const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
 
-function run_for_all_triangles!(g, fun, log=false)
-    get_interiors(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "interior" true else false end))
-
-    ran = false
-    for v in get_interiors(g)
-        ex = fun(g, v)
-        if ex && log
-            println("Executed: ", String(Symbol(fun)), " on ", v)
-        end
-        ran |= ex
-    end
-    return ran
+struct Plane
+    a::Float64
+    b::Float64
+    c::Float64
+    d::Float64
 end
 
-function run_transformations!(g, log=false)
-    while true
-        ran = false
-        ran |= run_for_all_triangles!(g, transform_P1!, log)
-        ran |= run_for_all_triangles!(g, transform_P2!, log)
-        ran |= run_for_all_triangles!(g, transform_P3!, log)
-        ran |= run_for_all_triangles!(g, transform_P4!, log)
-        ran |= run_for_all_triangles!(g, transform_P5!, log)
-        ran |= run_for_all_triangles!(g, transform_P6!, log)
-        if !ran
-            return false
-        end
-    end
+function plane(p1::Array{<:Number, 1}, p2::Array{<:Number, 1}, p3::Array{<:Number, 1})::Plane
+
+    v1 = p1 - p2
+    v2 = p1 - p3
+    vp = cross(v1, v2)
+    a = vp[1]
+    b = vp[2]
+    c = vp[3]
+    d = dot(vp, p1)
+    return Plane(a, b, c, d)
+end
+
+struct BoundingBox
+    min_x::Number
+    max_x::Number
+    min_y::Number
+    max_y::Number
 end
 
 function initial_graph(map::TerrainMap)::AbstractMetaGraph
@@ -69,22 +64,37 @@ function initial_graph(map::TerrainMap)::AbstractMetaGraph
     return g
 end
 
-struct Plane
-    a::Float64
-    b::Float64
-    c::Float64
-    d::Float64
+function run_for_all_triangles!(g, fun, log=false)
+    get_interiors(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "interior" true else false end))
+
+    ran = false
+    for v in get_interiors(g)
+        ex = fun(g, v)
+        if ex && log
+            println("Executed: ", String(Symbol(fun)), " on ", v)
+        end
+        ran |= ex
+    end
+    return ran
 end
 
-function plane(p1::Array{<:Number, 1}, p2::Array{<:Number, 1}, p3::Array{<:Number, 1})::Plane
-    v1 = p1 - p2
-    v2 = p1 - p3
-    vp = cross(v1, v2)
-    a = vp[1]
-    b = vp[2]
-    c = vp[3]
-    d = dot(vp, p1)
-    return Plane(a, b, c, d)
+"""
+Execute all transformations (P1-P6) on all interiors of graph `g`. Stop when no
+transfomrations where executed.
+"""
+function run_transformations!(g, log=false)
+    while true
+        ran = false
+        ran |= run_for_all_triangles!(g, transform_p1!, log)
+        ran |= run_for_all_triangles!(g, transform_p2!, log)
+        ran |= run_for_all_triangles!(g, transform_p3!, log)
+        ran |= run_for_all_triangles!(g, transform_p4!, log)
+        ran |= run_for_all_triangles!(g, transform_p5!, log)
+        ran |= run_for_all_triangles!(g, transform_p6!, log)
+        if !ran
+            return false
+        end
+    end
 end
 
 z(plane::Plane, coord::Tuple{Number, Number})::Float64 = if plane.c == 0 0 else (plane.d - plane.a * coord[1] - plane.b * coord[2]) / plane.c end
@@ -109,14 +119,6 @@ function point_in_triangle(t::Triangle, coord::Tuple{Number, Number})
 
     return (a[3] > 0 && b[3] > 0 && c[3] > 0) || (a[3] < 0 && b[3] < 0 && c[3] < 0)
 end
-
-struct BoundingBox
-    min_x::Number
-    max_x::Number
-    min_y::Number
-    max_y::Number
-end
-
 
 function points_in_triangle(map::TerrainMap, t::Triangle)::Array{Tuple{Number, Number}, 1}
     bb = BoundingBox(minimum([t[1][1], t[2][1], t[3][1]]), maximum([t[1][1], t[2][1], t[3][1]]), minimum([t[1][2], t[2][2], t[3][2]]), maximum([t[1][2], t[2][2], t[3][2]]))
@@ -179,9 +181,8 @@ function adjust_heights(g::AbstractMetaGraph, map::TerrainMap)
 end
 
 
-# ----------------- START --------------------------
 function start()
-    t_map = load_data("src/resources/poland500_fixed.data")
+    t_map = load_data("resources/poland500_fixed.data")
     g = initial_graph(t_map)
 
     accuracy = 1000
@@ -191,7 +192,7 @@ function start()
     # while true
         to_refine = mark_for_refinement(g, t_map, accuracy)
         if isempty(to_refine)
-            return
+            break
         end
         run_transformations!(g)
         adjust_heights(g, t_map)
@@ -201,13 +202,11 @@ function start()
     draw_makie(g)
 end
 
-# ------------------- END OF START -----------
-
 function interactive_test()
     g = example_graph_3()
     i = 1
     while true
-        draw(PNG(string("src/resources/testgraph", i, ".png"), 16cm, 16cm), draw_graph(g, true))
+        draw(PNG(string("resources/testgraph", i, ".png"), 16cm, 16cm), draw_graphplot(g, true))
         print("To refine (q to quit): ")
         s = readline()
         if (s == "q")
@@ -223,8 +222,4 @@ function interactive_test()
     end
 end
 
-function f()
-    g = example_graph_3()
-    draw_graph(g)
-    print("Not nice :(")
-end
+end # module

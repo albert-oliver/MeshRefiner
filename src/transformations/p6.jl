@@ -1,4 +1,4 @@
-function check_P6(g, center)
+function check_p6(g, center)
     if get_prop(g, center, :type) != "interior"
         return nothing
     end
@@ -66,8 +66,8 @@ function check_P6(g, center)
     return nothing
 end
 
-function transform_P6!(g, center)
-    mapping = check_P6(g, center)
+function transform_p6!(g, center)
+    mapping = check_p6(g, center)
     if isnothing(mapping)
         return false
     end
