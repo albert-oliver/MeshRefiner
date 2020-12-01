@@ -17,6 +17,8 @@ using LightGraphs
 using MetaGraphs
 using LinearAlgebra
 using Statistics
+using Compose
+import Cairo, Fontconfig
 
 const TerrainMap = Array{<:Number, 2}
 const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
@@ -203,7 +205,7 @@ function start()
 end
 
 function interactive_test()
-    g = example_graph_3()
+    g = simple_graph()
     i = 1
     while true
         draw(PNG(string("resources/testgraph", i, ".png"), 16cm, 16cm), draw_graphplot(g, true))
