@@ -22,11 +22,28 @@ function get_hanging_node_between(g, v1, v2)
     nodes2 = filter(v -> get_prop(g, v, :type) == "hanging", neighbors(g, v2))
     nodes = intersect(nodes1, nodes2)
 
-    if size(nodes, 1) < 1
-        return nothing
+    for node in nodes
+        x1 = get_prop(g, v1, :x)
+        y1 = get_prop(g, v1, :y)
+        x2 = get_prop(g, v2, :x)
+        y2 = get_prop(g, v2, :y)
+        xh = get_prop(g, node, :x)
+        yh = get_prop(g, node, :y)
+        if xh == (x1+x2)/2.0 && yh ==(y1+y2)/2.0
+            return node
+        end
     end
 
-    return nodes[1]
+    return nothing
+
+    # TODO code below might not be working correctly
+    # Above is possible fix
+    # DELETE if true
+    # if size(nodes, 1) < 1
+    #     return nothing
+    # end
+    #
+    # return nodes[1]
 end
 
 function add_meta_vertex!(g, x, y, z)
