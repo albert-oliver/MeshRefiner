@@ -1,3 +1,8 @@
+using ..Utils
+
+using MetaGraphs
+using LightGraphs
+
 function check_p3(g, center)
     if get_prop(g, center, :type) != "interior"
         return nothing

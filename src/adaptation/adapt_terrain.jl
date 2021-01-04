@@ -1,3 +1,8 @@
+using ..Utils
+using ..Transformations
+
+using Statistics
+
 const TerrainMap = Array{<:Number, 2}
 const Triangle = Tuple{Array{<:Number, 1}, Array{<:Number, 1}, Array{<:Number, 1}}
 
@@ -118,7 +123,7 @@ end
 
 function approx_error(g::AbstractMetaGraph, t_map::TerrainMap, interior::Number)::Number
     triangle_points = interior_vertices(g, interior)
-    point(g::AbstractMetaGraph, v::Number) = [x(g, v), y(g, v), z(g, v)]
+    point(g::AbstractMetaGraph, v::Number) = [x(g, v), y(g, v), funny(g, v)]
     triangle = (point(g, triangle_points[1]), point(g, triangle_points[2]), point(g, triangle_points[3]))
     p = plane(triangle[1], triangle[2], triangle[3])
 

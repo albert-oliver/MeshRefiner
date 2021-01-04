@@ -1,3 +1,7 @@
+using ..Utils
+
+using MetaGraphs
+
 function simple_graph()
     g = MetaGraph()
 

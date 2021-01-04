@@ -1,5 +1,18 @@
-using Colors
+module Utils
+export center_point,
+    get_hanging_node_between,
+    add_meta_vertex!,
+    add_hanging!,
+    add_interior!,
+    interior_vertices,
+    add_meta_edge!,
+    distance,
+    cartesian_distance,
+    x, y, z, funny
 
+using Colors
+using MetaGraphs
+using LightGraphs
 
 function center_point(points)
     mean = [0.0, 0.0, 0.0]
@@ -89,3 +102,6 @@ end
 x(graph::AbstractMetaGraph, vertex::Integer)::Float64 = get_prop(graph, vertex, :x)
 y(graph::AbstractMetaGraph, vertex::Integer)::Float64 = get_prop(graph, vertex, :y)
 z(graph::AbstractMetaGraph, vertex::Integer)::Float64 = get_prop(graph, vertex, :z)
+funny = z
+
+end
