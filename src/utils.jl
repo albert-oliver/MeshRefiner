@@ -35,15 +35,6 @@ function get_hanging_node_between(g, v1, v2)
     end
 
     return nothing
-
-    # TODO code below might not be working correctly
-    # Above is possible fix
-    # DELETE if true
-    # if size(nodes, 1) < 1
-    #     return nothing
-    # end
-    #
-    # return nodes[1]
 end
 
 function add_meta_vertex!(g, x, y, z)
