@@ -1,6 +1,9 @@
 module Adaptation
 
-export adapt_fun!, adapt_terrain!, initial_graph, mark_for_refinement, run_transformations!, adjust_heights
+export
+    adapt_fun!,
+    adapt_terrain!,
+    generate_terrain_mesh
 
 include("adapt_fun.jl")
 include("adapt_terrain.jl")

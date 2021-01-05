@@ -14,7 +14,6 @@ struct Plane
 end
 
 function plane(p1::Array{<:Number, 1}, p2::Array{<:Number, 1}, p3::Array{<:Number, 1})::Plane
-
     v1 = p1 - p2
     v2 = p1 - p3
     vp = cross(v1, v2)
@@ -47,39 +46,6 @@ function initial_graph(map::TerrainMap)::AbstractMetaGraph
     add_interior!(g, 1, 2, 3, false)
     add_interior!(g, 1, 3, 4, false)
     return g
-end
-
-function run_for_all_triangles!(g, fun, log=false)
-    get_interiors(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "interior" true else false end))
-
-    ran = false
-    for v in get_interiors(g)
-        ex = fun(g, v)
-        if ex && log
-            println("Executed: ", String(Symbol(fun)), " on ", v)
-        end
-        ran |= ex
-    end
-    return ran
-end
-
-"""
-Execute all transformations (P1-P6) on all interiors of graph `g`. Stop when no
-more transformations can be executed.
-"""
-function run_transformations!(g, log=false)
-    while true
-        ran = false
-        ran |= run_for_all_triangles!(g, transform_p1!, log)
-        ran |= run_for_all_triangles!(g, transform_p2!, log)
-        ran |= run_for_all_triangles!(g, transform_p3!, log)
-        ran |= run_for_all_triangles!(g, transform_p4!, log)
-        ran |= run_for_all_triangles!(g, transform_p5!, log)
-        ran |= run_for_all_triangles!(g, transform_p6!, log)
-        if !ran
-            return false
-        end
-    end
 end
 
 z(plane::Plane, coord::Tuple{Number, Number})::Float64 = if plane.c == 0 0 else (plane.d - plane.a * coord[1] - plane.b * coord[2]) / plane.c end
@@ -163,4 +129,25 @@ function adjust_heights(g::AbstractMetaGraph, map::TerrainMap)
     for vertex in get_vertices(g)
         set_prop!(g, vertex, :z, map[round(Int, x(g, vertex)), round(Int, y(g, vertex))])
     end
+end
+
+function adapt_terrain!(g, terrain, ϵ)
+    i = 1
+    while true
+        print(i, ": ")
+        to_refine = mark_for_refinement(g, terrain, ϵ)
+        if isempty(to_refine)
+            break
+        end
+        run_transformations!(g)
+        adjust_heights(g, terrain)
+
+        i += 1
+    end
+    return g
+end
+
+function generate_terrain_mesh(terrain, ϵ)
+    g = initial_graph(terrain)
+    return adapt_terrain!(g, terrain, ϵ)
 end

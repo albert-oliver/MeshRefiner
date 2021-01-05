@@ -34,20 +34,10 @@ end
 function start()
     # t_map = load_data("resources/poland500_fixed.data")
     t_map = load_heightmap("resources/heightmap.png")
-    g = initial_graph(t_map)
 
-    accuracy = 1000
+    ϵ = 10000
 
-    for i in 1:18
-        print(i, ": ")
-    # while true
-        to_refine = mark_for_refinement(g, t_map, accuracy)
-        if isempty(to_refine)
-            break
-        end
-        run_transformations!(g)
-        adjust_heights(g, t_map)
-    end
+    g = generate_terrain_mesh(t_map, ϵ)
 
     println("Visualizing...")
     draw_makie(g)
@@ -73,5 +63,4 @@ function interactive_test()
     end
 end
 
-start()
 end
