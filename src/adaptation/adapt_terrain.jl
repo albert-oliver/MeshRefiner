@@ -3,43 +3,6 @@ using ..Transformations
 
 using Statistics
 
-struct TerrainMap
-    M::Array{Real, 2}
-    width::Int
-    height::Int
-end
-
-function elevation(terrain::TerrainMap, x::Real, y::Real)
-    i, j = point_to_index(terrain, x, y)
-    return terrain.M[i, j]
-end
-
-function index_to_point(terrain::TerrainMap, i::Integer, j::Integer)
-    i -= 1
-    j -= 1
-    x = j * terrain.width / size(terrain.M)[2] + terrain.width / (2.0 * size(terrain.M)[2])
-    y = i * terrain.height / size(terrain.M)[1] + terrain.height / (2.0 * size(terrain.M)[1])
-    return [x, y]
-end
-
-function point_to_index(terrain::TerrainMap, x::Real, y::Real)
-    if x == terrain.width
-        x = terrain.width - 1
-    end
-    if y == terrain.height
-        y = terrain.height - 1
-    end
-    i = Int(trunc(y * size(terrain.M)[1] / terrain.height))
-    j = Int(trunc(x * size(terrain.M)[2] / terrain.width))
-    return [i + 1, j + 1]
-end
-
-function point_to_index_coords(terrain::TerrainMap, x::Real, y::Real)
-    x_i = y * size(terrain.M)[1] / terrain.height
-    y_i = x * size(terrain.M)[2] / terrain.width
-    return [x_i + 1, y_i + 1]
-end
-
 struct BoundingBox
     min_x::Number
     max_x::Number
@@ -49,10 +12,12 @@ end
 
 function initial_graph(terrain::TerrainMap)::AbstractMetaGraph
     g = MetaGraph()
-    add_meta_vertex!(g, 1, 1, terrain.M[1, 1])
-    add_meta_vertex!(g, 1, terrain.height, terrain.M[1, size(terrain.M, 2)])
-    add_meta_vertex!(g, terrain.width, terrain.height, terrain.M[size(terrain.M, 1), size(terrain.M, 2)])
-    add_meta_vertex!(g, terrain.width, 1, terrain.M[size(terrain.M, 1), 1])
+    min_x, min_y = index_to_point(terrain, 1, 1)
+    max_x, max_y = index_to_point(terrain, size(terrain.M, 1), size(terrain.M, 2))
+    add_meta_vertex!(g, min_x, min_y, elevation_norm(terrain, min_x, min_y))
+    add_meta_vertex!(g, min_x, max_y, elevation_norm(terrain, min_x, max_y))
+    add_meta_vertex!(g, max_x, max_y, elevation_norm(terrain, max_x, max_y))
+    add_meta_vertex!(g, max_x, min_y, elevation_norm(terrain, max_x, min_y))
     add_meta_edge!(g, 1, 2, true)
     add_meta_edge!(g, 2, 3, true)
     add_meta_edge!(g, 3, 4, true)
@@ -66,7 +31,7 @@ end
 
 function point_in_triangle(p, M)
     bc = barycentric(M, p)
-    return bc[1] >= 0 && bc[2] >= 0 && 1 - bc[1] - bc[2] >= 0
+    return bc[1] > 0 && bc[2] > 0 && 1 - bc[1] - bc[2] > 0
 end
 
 function point_in_triangle(p, t::Triangle)
@@ -74,7 +39,7 @@ function point_in_triangle(p, t::Triangle)
     point_in_triangle(p, t, M)
 end
 
-function points_in_triangle(t::Triangle, terrain::TerrainMap)
+function indexes_in_triangle(t::Triangle, terrain::TerrainMap)
     t_i = map(p -> point_to_index_coords(terrain, p[1], p[2]), t)
 
     bb = BoundingBox(
@@ -97,16 +62,9 @@ function points_in_triangle(t::Triangle, terrain::TerrainMap)
     return indexes
 end
 
-function approx_in_triangle(p, M)
-    v1, v2, v3 = interior_vertices(g, interior)
-    br = barycentric(M, p)
-
-    uh = *ϕ1(center_t) + a2*ϕ2(center_t) + a3*ϕ3(center_t)
-end
-
 function approx_error(g::AbstractMetaGraph, interior::Integer, terrain::TerrainMap)::Real
     v1, v2, v3 = interior_vertices(g, interior)
-    triangle = ([x(v1), y(v1)], [x(v2), y(v2)], [x(v3), y(v3)])
+    triangle = ([x(g, v1), y(g, v1)], [x(g, v2), y(g, v2)], [x(g, v3), y(g, v3)])
 
     indexes = indexes_in_triangle(triangle, terrain)
     if isempty(indexes)
@@ -117,9 +75,9 @@ function approx_error(g::AbstractMetaGraph, interior::Integer, terrain::TerrainM
     M = barycentric_matrix(triangle)
     points_br = map(p -> barycentric(M, p), points)
 
-    approx(p) = z(v1)*p[1] + z(v2)*p[2] + z(v3)*(1 - p[1] - p[2])
+    approx(p) = z(g, v1)*p[1] + z(g, v2)*p[2] + z(g, v3)*(1 - p[1] - p[2])
     approx_elev = map(approx, points_br)
-    real_elev = map(i -> terrain.M[i[0], j[1]], indexes)
+    real_elev = map(i -> terrain.M[i[1], i[2]], indexes)
 
     error = sum(map(x -> x^2, approx_elev - real_elev))
     error_rel = error / sum(map(x -> x^2, real_elev))
@@ -131,7 +89,7 @@ function mark_for_refinement(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Numb
     to_refine = []
     errors = []     # Only used for logging
     for interior in interiors(g)
-        e = approx_error(g, terrain, interior)
+        e = approx_error(g, interior, terrain)
         if e > ϵ
             set_prop!(g, interior, :refine, true)
             push!(to_refine, interior)
@@ -146,29 +104,35 @@ function mark_for_refinement(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Numb
     return to_refine
 end
 
-function adjust_heights(g::AbstractMetaGraph, terrain::TerrainMap)
+function adjust_elevations!(g::AbstractMetaGraph, terrain::TerrainMap)
     for vertex in normal_vertices(g)
-        set_prop!(g, vertex, :z, elevation(x(vertex), y(vertex)))
+        set_prop!(g, vertex, :z, elevation_norm(terrain, x(g, vertex), y(g, vertex)))
     end
 end
 
-function adapt_terrain!(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Real)
-    i = 1
-    while true
-        print(i, ": ")
+function scale_elevations!(g, terrain)
+    for vertex in normal_vertices(g)
+        elev = get_prop(g, vertex, :z)
+        set_prop!(g, vertex, :z, elev * terrain.scale)
+    end
+end
+
+function adapt_terrain!(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Real, max_iters::Integer)
+    for i in 1:max_iters
+        print("Iteration ", i, ": ")
         to_refine = mark_for_refinement(g, terrain, ϵ)
         if isempty(to_refine)
             break
         end
         run_transformations!(g)
-        adjust_heights(g, terrain)
-
-        i += 1
+        adjust_elevations!(g, terrain)
     end
     return g
 end
 
-function generate_terrain_mesh(terrain::TerrainMap, ϵ::Real)
+function generate_terrain_mesh(terrain::TerrainMap, ϵ::Real, max_iters::Integer = 20)
     g = initial_graph(terrain)
-    return adapt_terrain!(g, terrain, ϵ)
+    adapt_terrain!(g, terrain, ϵ, max_iters)
+    scale_elevations!(g, terrain)
+    return g
 end

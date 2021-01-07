@@ -88,7 +88,7 @@ end
 
 center_point(points::Array{Array{<:Real, 1}, 1}) = mean(points)
 
-center_point(g, points::Array{Array{<:Integer, 1}, 1})
+function center_point(g, points::Array{Array{<:Integer, 1}, 1})
     center_point(map(x -> coords(g, x), points))
 end
 
@@ -98,15 +98,15 @@ function vertices_with_type(g::AbstractMetaGraph, type::String)
 end
 
 function interiors(g::AbstractMetaGraph)
-    with_type(g, "interior")
+    vertices_with_type(g, "interior")
 end
 
 function hanging_nodes(g::AbstractMetaGraph)
-    with_type(g, "hanging")
+    vertices_with_type(g, "hanging")
 end
 
 function normal_vertices(g::AbstractMetaGraph)
-    with_type(g, "vertex")
+    vertices_with_type(g, "vertex")
 end
 
 function get_hanging_node_between(g::AbstractMetaGraph, v1::Integer, v2::Integer)

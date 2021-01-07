@@ -1,11 +1,11 @@
 module Derivations
 
-include("../io.jl")
 include("../utils.jl")
 include("../transformations/transformations.jl")
 include("../adaptation/adaptation.jl")
 include("../graph_creator/graph_creator.jl")
 include("../visualization/visualization.jl")
+include("../io.jl")
 
 using .ProjectIO
 using .Utils
@@ -31,13 +31,11 @@ function test_adapt_fun()
     draw_makie(g)
 end
 
-function start()
+function start(ϵ)
     # t_map = load_data("resources/poland500_fixed.data")
-    t_map = load_heightmap("resources/heightmap.png")
+    terrain = load_heightmap("resources/heightmap.png", (5,5), 1)
 
-    ϵ = 1000
-
-    g = generate_terrain_mesh(t_map, ϵ)
+    g = generate_terrain_mesh(terrain, ϵ, 15)
 
     println("Visualizing...")
     draw_makie(g)
