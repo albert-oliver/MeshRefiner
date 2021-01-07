@@ -35,7 +35,7 @@ function start()
     # t_map = load_data("resources/poland500_fixed.data")
     t_map = load_heightmap("resources/heightmap.png")
 
-    ϵ = 10000
+    ϵ = 1000
 
     g = generate_terrain_mesh(t_map, ϵ)
 

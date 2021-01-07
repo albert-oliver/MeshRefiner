@@ -2,9 +2,9 @@ module MeshRefiner
 
 include("io.jl")
 include("utils.jl")
+include("transformations/transformations.jl")
 include("adaptation/adaptation.jl")
 include("graph_creator/graph_creator.jl")
-include("transformations/transformations.jl")
 include("visualization/visualization.jl")
 
 using .ProjectIO
