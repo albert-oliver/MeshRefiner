@@ -113,7 +113,7 @@ end
 function scale_elevations!(g, terrain)
     for vertex in normal_vertices(g)
         elev = get_prop(g, vertex, :z)
-        set_prop!(g, vertex, :z, elev * terrain.scale)
+        set_prop!(g, vertex, :z, (elev - 1) * terrain.scale + terrain.offset)
     end
 end
 

@@ -31,11 +31,11 @@ function test_adapt_fun()
     draw_makie(g)
 end
 
-function start(ϵ)
+function start(ϵ, iters=15)
     # t_map = load_data("resources/poland500_fixed.data")
-    terrain = load_heightmap("resources/heightmap.png", (5,5), 1)
+    terrain = load_heightmap("resources/poland.png", (10,10), 1.0)
 
-    g = generate_terrain_mesh(terrain, ϵ, 15)
+    g = generate_terrain_mesh(terrain, ϵ, iters)
 
     println("Visualizing...")
     draw_makie(g)

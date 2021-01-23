@@ -12,6 +12,7 @@ export
         width::Int
         height::Int
         scale::Real
+        offset::Real
     end
 
     function elevation_norm(terrain::TerrainMap, x::Real, y::Real)
@@ -20,7 +21,7 @@ export
     end
 
     function elevation(terrain::TerrainMap, x::Real, y::Real)
-        return elevation_norm(terrain, x, y) * scale
+        return (elevation_norm(terrain, x, y) - 1) * terrain.scale + terrain.offset
     end
 
     function index_to_point(terrain::TerrainMap, i::Integer, j::Integer)
