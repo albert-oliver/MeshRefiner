@@ -10,6 +10,7 @@ struct BoundingBox
     max_y::Number
 end
 
+
 function initial_graph(terrain::TerrainMap)::AbstractMetaGraph
     g = MetaGraph()
     min_x, min_y = index_to_point(terrain, 1, 1)
@@ -29,6 +30,19 @@ function initial_graph(terrain::TerrainMap)::AbstractMetaGraph
     return g
 end
 
+"""
+    point_in_triangle(p, M)
+    point_in_triangle(p, t)
+
+Is point `p` inside triangle represented as:
+- matrix `M`, see [`barycentric_matrix`](@ref)
+- Triangle `t`, see [`Triangle`](@ref)
+
+Note that second method is ineffective when used repeatedly on the same
+triangle.
+"""
+function point_in_triangle end
+
 function point_in_triangle(p, M)
     bc = barycentric(M, p)
     return bc[1] > 0 && bc[2] > 0 && 1 - bc[1] - bc[2] > 0
@@ -39,6 +53,7 @@ function point_in_triangle(p, t::Triangle)
     point_in_triangle(p, t, M)
 end
 
+"Return all indexes of matrix (field of `terrain`) that are inside triangle `t`"
 function indexes_in_triangle(t::Triangle, terrain::TerrainMap)
     t_i = map(p -> point_to_index_coords(terrain, p[1], p[2]), t)
 
@@ -62,6 +77,7 @@ function indexes_in_triangle(t::Triangle, terrain::TerrainMap)
     return indexes
 end
 
+"Return approximate error of traingle represented by interior `interior`."
 function approx_error(g::AbstractMetaGraph, interior::Integer, terrain::TerrainMap)::Real
     v1, v2, v3 = interior_vertices(g, interior)
     triangle = ([x(g, v1), y(g, v1)], [x(g, v2), y(g, v2)], [x(g, v3), y(g, v3)])
@@ -85,6 +101,7 @@ function approx_error(g::AbstractMetaGraph, interior::Integer, terrain::TerrainM
     return error_rel
 end
 
+"Mark all traingles where error is larger than `ϵ` for refinement."
 function mark_for_refinement(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Number)::Array{Number, 1}
     to_refine = []
     errors = []     # Only used for logging
@@ -104,12 +121,23 @@ function mark_for_refinement(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Numb
     return to_refine
 end
 
+"Adjust elevations of all vertices to fit proper values."
 function adjust_elevations!(g::AbstractMetaGraph, terrain::TerrainMap)
     for vertex in normal_vertices(g)
         set_prop!(g, vertex, :z, elevation_norm(terrain, x(g, vertex), y(g, vertex)))
     end
 end
 
+"""
+Scale all elevations in graph `g` to real values.
+
+*Note* that it is called only *once* - after adaptation and graph
+should *not* be adapted any further as it will not work properly.
+
+Before calling this function all elevations are in range [0, 1].
+Real life values cause overflow when calculating error for large triangles (as
+it is relative error it requires division by sum of squeres of elevations).
+"""
 function scale_elevations!(g, terrain)
     for vertex in normal_vertices(g)
         elev = get_prop(g, vertex, :z)
@@ -117,6 +145,14 @@ function scale_elevations!(g, terrain)
     end
 end
 
+"""
+    adapt_terrain!(g, terrain, ϵ, max_iters)
+
+Adapt graph `g` to terrain map `terrain`. Stop when error is lesser than ϵ, or
+after `max_iters` iterations.
+
+See also: [`generate_terrain_mesh`](@ref)
+"""
 function adapt_terrain!(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Real, max_iters::Integer)
     for i in 1:max_iters
         print("Iteration ", i, ": ")
@@ -130,6 +166,13 @@ function adapt_terrain!(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Real, max
     return g
 end
 
+"""
+    generate_terrain_mesh(terrain, ϵ, max_iters=20)
+
+Generate graph (terrain mesh), based on terrain map `terrain`.
+
+See also: [`adapt_terrain`](@ref)
+"""
 function generate_terrain_mesh(terrain::TerrainMap, ϵ::Real, max_iters::Integer = 20)
     g = initial_graph(terrain)
     adapt_terrain!(g, terrain, ϵ, max_iters)

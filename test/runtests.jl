@@ -1,6 +1,11 @@
 using MeshRefiner
 using Test
 
-@testset "MeshRefiner.jl" begin
-    # Write your tests here.
+include("utils.jl")
+include("transformations/transformations.jl")
+
+function main_test()
+    @testset "MeshRefiner.jl" begin
+        # Write your tests here.
+    end
 end

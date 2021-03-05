@@ -2,6 +2,16 @@ using Colors
 using Printf
 using GraphPlot
 
+"""
+    draw_graphplot(g, vid=false)
+
+Draws 2D view of graph using `GraphPlot.jl`.
+
+Not recommended for large graphs.
+
+If `vid` (vertex id) is set to true each vertex is labeled after it's id. If not
+label represents vertex type ('V', 'H', or 'I')
+"""
 function draw_graphplot(g, vid=false)
     function position_layout(g)
         x:: Array{Float64} = []
@@ -9,7 +19,7 @@ function draw_graphplot(g, vid=false)
         for v in vertices(g)
             if get_prop(g, v, :type) == "interior"
                 neigh = interior_vertices(g, v)
-                center = center_point((props(g, neigh[1]), props(g, neigh[2]), props(g, neigh[3])))
+                center = center_point([coords(g, neigh[1]), coords(g, neigh[2]), coords(g, neigh[3])])
                 push!(x, center[1])
                 push!(y, center[2])
             else

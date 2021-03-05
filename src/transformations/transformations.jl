@@ -1,3 +1,5 @@
+"Module that contains all transformations responsible for breaking marked
+traingles and removing hanging nodes."
 module Transformations
 
 export
