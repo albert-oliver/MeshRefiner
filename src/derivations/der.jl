@@ -27,15 +27,15 @@ function test_adapt_fun()
     u(x, y) = (x + (ℯ^(ρ*x)-1) / (1-ℯ^ρ))*(y + (ℯ^(ρ*y)-1) / (1-ℯ^ρ))
     u(vec) = u(vec[1], vec[2])
 
-    adapt_fun(g, u, 10)
+    adapt_fun!(g, u, 10)
     draw_makie(g)
 end
 
-function start(ϵ)
+function start(ϵ, iters=15)
     # t_map = load_data("resources/poland500_fixed.data")
-    terrain = load_heightmap("resources/heightmap.png", (5,5), 1)
+    terrain = load_heightmap("resources/poland.png", (100,100), 10.0)
 
-    g = generate_terrain_mesh(terrain, ϵ, 15)
+    g = generate_terrain_mesh(terrain, ϵ, iters)
 
     println("Visualizing...")
     draw_makie(g)

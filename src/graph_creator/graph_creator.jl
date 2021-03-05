@@ -1,3 +1,4 @@
+"Module that contains functions that create graphs for various purposes."
 module GraphCreator
 
 export simple_graph, example_graph1, example_graph2, example_graph3
