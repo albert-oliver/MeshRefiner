@@ -59,6 +59,24 @@ function check_p2(g, center)
     return nothing
 end
 
+"""
+    transform_p2!(g, center)
+
+Run transgormation P2 on triangle represented by interior `center`.
+
+One edge with hanging node that is the longest edge.
+
+```text
+     v                v
+    / \\              /|\\
+   /   \\     =>     / | \\
+  /     \\          /  |  \\
+ v---h---v        v---h---v
+```
+
+Conditions:
+- Breaks triangle if hanging node is on the longes edge
+"""
 function transform_p2!(g, center)
     mapping = check_p2(g, center)
     if isnothing(mapping)

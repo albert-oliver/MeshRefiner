@@ -64,6 +64,26 @@ function check_p1(g, center)
     return nothing
 end
 
+"""
+    transform_p1!(g, center)
+
+Run transgormation P1 on triangle represented by interior `center`.
+
+```text
+     v                v
+    / \\              /|\\
+   /   \\     =>     / | \\
+  /     \\          /  |  \\
+ v-------v        v---h---v
+```
+
+Conditions:
+- Trinalge is marked to be refined (`:refined` property is set to `true`)
+- Breaks *longest edge*, if either is true:
+    - It is on the boundary (`:boundary` property is set to `true`), **OR**
+    - It's vertices are not hanging nodes **AND** other two egdes are not same
+    length and on the boundary
+"""
 function transform_p1!(g, center)
     mapping = check_p1(g, center)
     if isnothing(mapping)

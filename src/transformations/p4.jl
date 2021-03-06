@@ -61,6 +61,24 @@ function check_p4(g, center)
     return nothing
 end
 
+"""
+    transform_p4!(g, center)
+
+Run transgormation P4 on triangle represented by interior `center`.
+
+Two edges with hanging node, one of them is the longest edge.
+
+```text
+     v                v
+    / \\              /|\\
+   h   \\     =>     h | \\
+  /     \\          /  |  \\
+ v---h---v        v---h---v
+```
+
+Conditions:
+- Breaks triangle if hanging node is on the longes edge
+"""
 function transform_p4!(g, center)
     mapping = check_p4(g, center)
     if isnothing(mapping)

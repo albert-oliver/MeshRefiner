@@ -71,6 +71,24 @@ function check_p6(g, center)
     return nothing
 end
 
+"""
+    transform_p6!(g, center)
+
+Run transgormation P6 on triangle represented by interior `center`.
+
+Three hanging nodes, any edge can be the longest-edge.
+
+```text
+     v                v
+    / \\              /|\\
+   h   h     =>     h | h
+  /     \\          /  |  \\
+ v---h---v        v---h---v
+```
+
+Conditions:
+- Breaks *longest edge*
+"""
 function transform_p6!(g, center)
     mapping = check_p6(g, center)
     if isnothing(mapping)

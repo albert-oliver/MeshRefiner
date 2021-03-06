@@ -1,3 +1,4 @@
+"Return graph on which production P1 should run."
 function p1_graph_1()
     g = MetaGraph()
 
@@ -14,6 +15,7 @@ function p1_graph_1()
     return g
 end
 
+"Return graph on which production P2 should run."
 function p1_graph_2()
     g = MetaGraph()
 
@@ -30,6 +32,7 @@ function p1_graph_2()
     return g
 end
 
+"Return graph on which production P2 should run."
 function p2_graph_1()
     g = MetaGraph()
 
@@ -48,6 +51,7 @@ function p2_graph_1()
     return g
 end
 
+"Return graph on which production P3 should run."
 function p3_graph_1()
     g = MetaGraph()
 
@@ -66,6 +70,7 @@ function p3_graph_1()
     return g
 end
 
+"Return graph on which production P3 should run."
 function p3_graph_2()
     g = MetaGraph()
 
@@ -84,6 +89,7 @@ function p3_graph_2()
     return g
 end
 
+"Return graph on which production P4 should run."
 function p4_graph_1()
     g = MetaGraph()
 
@@ -105,6 +111,7 @@ function p4_graph_1()
     return g
 end
 
+"Return graph on which production P4 should run."
 function p4_graph_2()
     g = MetaGraph()
 
@@ -126,6 +133,7 @@ function p4_graph_2()
     return g
 end
 
+"Return graph on which production P5 should run."
 function p5_graph_1()
     g = MetaGraph()
 
@@ -147,6 +155,7 @@ function p5_graph_1()
     return g
 end
 
+"Return graph on which production P5 should run."
 function p5_graph_2()
     g = MetaGraph()
 
@@ -168,6 +177,7 @@ function p5_graph_2()
     return g
 end
 
+"Return graph on which production P6 should run."
 function p6_graph_1()
     g = MetaGraph()
 

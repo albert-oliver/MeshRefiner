@@ -98,6 +98,27 @@ function check_p3(g, center)
     return nothing
 end
 
+"""
+    transform_p3!(g, center)
+
+Run transgormation P3 on triangle represented by interior `center`.
+
+One edge with hanging node that is not the longest edge.
+
+```text
+     v                v
+    / \\              /|\\
+   h   \\     =>     h | \\
+  /     \\          /  |  \\
+ v-------v        v---h---v
+```
+
+Conditions:
+- Breaks *longest edge* (note that hanging node is not on it) if eiter is true:
+    - It is on the boundary (`:boundary` property is set to `true`), **OR**
+    - It's vertices are not hanging nodes **AND** other egde is not same
+    length and on the boundary
+"""
 function transform_p3!(g, center)
     mapping = check_p3(g, center)
     if isnothing(mapping)

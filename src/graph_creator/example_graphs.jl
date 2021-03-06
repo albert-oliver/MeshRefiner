@@ -2,6 +2,15 @@ using ..Utils
 
 using MetaGraphs
 
+"""
+Square made of two triangles
+
+v---v
+|\\  |
+| \\ |
+|  \\|
+v---v
+"""
 function simple_graph()
     g = MetaGraph()
 
@@ -22,6 +31,20 @@ function simple_graph()
     return g
 end
 
+"""
+Retrun graph as below with interiors. Interior of top triangle is set to be
+refinded.
+
+```text
+   v
+  / \\
+ v---v--v
+ |  /|\\ |
+ | / | v
+ |/  |/
+ v---v
+```
+"""
 function example_graph_1()
     g = MetaGraph()
 
@@ -57,6 +80,29 @@ function example_graph_1()
     return g
 end
 
+"""
+Return graph as below with interiors. Note hanging node on the right.
+
+```text
+v---------------v
+|\\             /|
+| \\           / |
+|  \\         /  |
+|   \\       /   |
+|    \\     /    |
+|     \\   /     |
+|      \\ /      |
+v-------v-------v
+|\\     / \\     /|
+| \\   /   \\   h |
+|  \\ /     \\ / \\|
+v---v-------v---v
+|  / \\     / \\  |
+| /   \\   /   \\ |
+|/     \\ /     \\|
+v-------v-------v
+```
+"""
 function example_graph_2()
     g = MetaGraph()
 
@@ -122,6 +168,21 @@ function example_graph_2()
     return g
 end
 
+"""
+Return graph as below with interiors.
+
+```text
+v---v---v
+|  /|\\  |
+| / | \\ |
+|/  |  \\|
+v---v---v
+|\\  |  /|
+| \\ | / |
+|  \\|/  |
+v---v---v
+```
+"""
 function example_graph_3()
     g = MetaGraph()
 

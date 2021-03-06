@@ -18,6 +18,11 @@ include("p4.jl")
 include("p5.jl")
 include("p6.jl")
 
+"""
+    run_for_all_triangles!(g, fun, log=false)
+
+Run function `fun(g, i)` on all interiors `i` of graph `g`
+"""
 function run_for_all_triangles!(g, fun, log=false)
     get_interiors(graph) = filter_vertices(g, (g, v) -> (if get_prop(g, v, :type) == "interior" true else false end))
 
@@ -33,8 +38,12 @@ function run_for_all_triangles!(g, fun, log=false)
 end
 
 """
+    run_transformations!(g, log=false)
+
 Execute all transformations (P1-P6) on all interiors of graph `g`. Stop when no
 more transformations can be executed.
+
+`log` flag tells wheter to log what transformation was executed on which vertex
 """
 function run_transformations!(g, log=false)
     while true

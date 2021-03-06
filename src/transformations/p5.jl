@@ -67,6 +67,25 @@ function check_p5(g, center)
     return nothing
 end
 
+"""
+    transform_p5!(g, center)
+
+Run transgormation P5 on triangle represented by interior `center`.
+
+Two edges with hanging node, none of them is the longest edge.
+
+```text
+     v                v
+    / \\              /|\\
+   h   h     =>     h | h
+  /     \\          /  |  \\
+ v-------v        v---h---v
+```
+
+Conditions:
+- Breaks *longest edge* (note that it is the one without hanging node)
+- It's vertices are not hanging nodes
+"""
 function transform_p5!(g, center)
     mapping = check_p5(g, center)
     if isnothing(mapping)
