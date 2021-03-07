@@ -21,6 +21,11 @@ using Statistics
 using Compose
 import Cairo, Fontconfig
 
+function test_save()
+    g = simple_graph()
+    saveGML(g, "a.gml")
+end
+
 function test_adapt_fun()
     g = simple_graph()
     ρ = 100
@@ -28,6 +33,7 @@ function test_adapt_fun()
     u(vec) = u(vec[1], vec[2])
 
     adapt_fun!(g, u, 10)
+    export_obj(g, "a.obj")
     draw_makie(g)
 end
 
