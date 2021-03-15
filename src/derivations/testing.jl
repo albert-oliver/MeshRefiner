@@ -1,7 +1,13 @@
 using GLMakie
 
-g = SimpleGraph()
-save_GML
+ρ = 30
+u(x, y) = (x + (ℯ^(ρ*x)-1) / (1-ℯ^ρ))*(y + (ℯ^(ρ*y)-1) / (1-ℯ^ρ))
+fun(x, y) = u(x/100, y/100) * 30 - 10
+xs = LinRange(0, 100, 100)
+ys = LinRange(0, 100, 100)
+zs = [fun(x, y) for x in xs, y in ys]
+
+surface(xs, ys, zs)
 
 # x=range(-2,stop=2,length=100)
 # y=range(sqrt(2),stop=2,length=100)

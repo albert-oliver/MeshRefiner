@@ -88,8 +88,9 @@ function saveGML(g, filename)
     end
 end
 
-"Export graph (and function) as OBJ"
-function export_obj(g, filename)
+"Export graph as OBJ. If flag `include_fun` is set also export function that mesh
+approximates (requires `value` property set)."
+function export_obj(g, filename, include_fun=false)
     open(filename, "w") do io
         v_id = 1
         t_map = Dict()
@@ -100,36 +101,20 @@ function export_obj(g, filename)
             v_id += 1
         end
 
-        for v in normal_vertices(g)
-            write(io, @sprintf("v %f %f %f\n", x(g, v), y(g, v), get_prop(g, v, :value)))
-            fun_map[v] = v_id
-            v_id += 1
+        if include_fun
+            for v in normal_vertices(g)
+                write(io, @sprintf("v %f %f %f\n", x(g, v), y(g, v), z(g, v) + get_prop(g, v, :value)))
+                fun_map[v] = v_id
+                v_id += 1
+            end
         end
-
-        # for i in interiors(g)
-        #     v1, v2, v3 = interior_vertices(g, i)
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v1), y(g, v1), z(g, v1)))
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v2), y(g, v2), z(g, v2)))
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v3), y(g, v3), z(g, v3)))
-        #     write(io, @sprintf("f %d %d %d\n", -3, -2, -1))
-        #
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v1), y(g, v1), get_prop(g, v1, :value)))
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v2), y(g, v2), get_prop(g, v2, :value)))
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v3), y(g, v3), get_prop(g, v3, :value)))
-        #     write(io, @sprintf("f %d %d %d\n", -3, -2, -1))
-        # end
-        #
-        # for i in interiors(g)
-        #     v1, v2, v3 = interior_vertices(g, i)
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v1), y(g, v1), get_prop(g, v1, :value)))
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v1), y(g, v1), get_prop(g, v2, :value)))
-        #     write(io, @sprintf("v %f %f %f\n", x(g, v1), y(g, v1), get_prop(g, v3, :value)))
-        # end
 
         for i in interiors(g)
             v1, v2, v3 = interior_vertices(g, i)
             write(io, @sprintf("f %d %d %d\n", t_map[v1], t_map[v2], t_map[v3]))
-            write(io, @sprintf("f %d %d %d\n", fun_map[v1], fun_map[v2], fun_map[v3]))
+            if include_fun
+                write(io, @sprintf("f %d %d %d\n", fun_map[v1], fun_map[v2], fun_map[v3]))
+            end
         end
     end
 end

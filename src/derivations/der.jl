@@ -37,6 +37,21 @@ function test_adapt_fun()
     draw_makie(g)
 end
 
+function test_adapt_both()
+    terrain = load_heightmap("resources/poland.png", (100,100), 10.0)
+    g = generate_terrain_mesh(terrain, 0.005, 15)
+    export_obj(g, "terrain1.obj")
+    println("Terrain done!")
+
+    ρ = 30
+    u(x, y) = (x + (ℯ^(ρ*x)-1) / (1-ℯ^ρ))*(y + (ℯ^(ρ*y)-1) / (1-ℯ^ρ))
+    fun(x, y) = u(x/100, y/100) * 30
+    fun(vec) = fun(vec[1], vec[2])
+    adapt_fun!(g, fun, 15)
+    export_obj(g, "fun1.obj")
+    export_obj(g, "both1.obj", true)
+end
+
 function start(ϵ, iters=15)
     # t_map = load_data("resources/poland500_fixed.data")
     terrain = load_heightmap("resources/poland.png", (100,100), 10.0)
