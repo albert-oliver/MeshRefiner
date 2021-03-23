@@ -9,14 +9,16 @@ export
     transform_p4!,
     transform_p5!,
     transform_p6!,
-    run_transformations!
+    run_transformations!,
+    subdivie!,
+    points_in_subdivided
 
-include("p1.jl")
-include("p2.jl")
-include("p3.jl")
-include("p4.jl")
-include("p5.jl")
-include("p6.jl")
+include("rivara/p1.jl")
+include("rivara/p2.jl")
+include("rivara/p3.jl")
+include("rivara/p4.jl")
+include("rivara/p5.jl")
+include("rivara/p6.jl")
 
 """
     run_for_all_triangles!(g, fun, log=false)
@@ -58,6 +60,31 @@ function run_transformations!(g, log=false)
             return false
         end
     end
+end
+
+"""
+    subdivie!(g, iters)
+
+Subdivides graph `g`, `iters` times.
+
+```text
+v                 v
+|\\                |\\
+| \\               | \\
+|  \\      =>      v--v
+|   \\             |\\ |\\
+|    \\            | \\| \\
+v-----v           v--v--v
+```
+"""
+function subdivie(g, iters)
+    for _ in 1:iters
+
+    end
+end
+
+function points_in_subdivided(g, interior, iters)
+
 end
 
 end
