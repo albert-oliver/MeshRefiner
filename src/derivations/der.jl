@@ -6,6 +6,7 @@ include("../adaptation/adaptation.jl")
 include("../graph_creator/graph_creator.jl")
 include("../visualization/visualization.jl")
 include("../io.jl")
+include("../simulation/sim.jl")
 
 using .ProjectIO
 using .Utils
@@ -13,6 +14,7 @@ using .Adaptation
 using .GraphCreator
 using .Transformations
 using .Visualization
+using .Simulation
 
 using LightGraphs
 using MetaGraphs
@@ -20,6 +22,32 @@ using LinearAlgebra
 using Statistics
 using Compose
 import Cairo, Fontconfig
+
+function test_sim(steps=4, adapt_steps=10, dt=0.1)
+    size = 100
+    half = size/2
+    g = simple_graph(size)
+    for step in 1:adapt_steps
+        for i in interiors(g)
+            set_prop!(g, i, :refine, true)
+        end
+        run_transformations!(g)
+    end
+    best_v = 0
+    best_x = 1
+    best_y = 1
+    for v in normal_vertices(g)
+        if abs(x(g, v) - half) < best_x && abs(y(g, v) - half) < best_y
+            best_x = abs(x(g, v) - half)
+            best_y = abs(y(g, v) - half)
+            best_v = v
+        end
+        set_prop!(g, v, :value, 1)
+    end
+    set_prop!(g, best_v, :value, 100)
+    # draw_graphplot(g)
+    simulate(g, steps, dt)
+end
 
 function test_save()
     g = simple_graph()

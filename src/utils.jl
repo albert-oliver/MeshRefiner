@@ -18,12 +18,19 @@ export
     vertices_with_type,
     normal_vertices,
     hanging_nodes,
-    interiors
+    interiors,
+    is_hanging,
+    is_vertex,
+    is_interior,
+    projection_area,
+    approx_function,
+    pyramid_function
 
 using Colors
 using MetaGraphs
 using LightGraphs
 using Statistics
+using LinearAlgebra
 
 "Holds three 3-elemnt arrays [x, y, z] that represent each vertex of triangle"
 const Triangle = Tuple{Array{<:Real, 1}, Array{<:Real, 1}, Array{<:Real, 1}}
@@ -64,7 +71,7 @@ end
 function barycentric_matrix(g::AbstractMetaGraph, interior::Integer)
     v1, v2, v3 = interior_vertices(g, interior)
 
-    barycentric_matrix(coords(v1), coords(v2), coords(v3))
+    barycentric_matrix(coords(g, v1), coords(g, v2), coords(g, v3))
 end
 
 """
@@ -73,7 +80,8 @@ end
     barycentric(triangle, p)
     barycentric(g, interior, p)
 
-Return coordinates of point in barcycentric coordinate system.
+Return first two coordinates of point in barcycentric coordinate system. Third
+coordinate can be easily calculated: `λ₃ = 1 - λ₁ - λ₂`
 
 Note that using this function many times on single triangle will effect in many
 unnecessary computations. It is recommended to first compute matrix using
@@ -100,6 +108,47 @@ end
 function barycentric(g::AbstractMetaGraph, interior::Integer, p::Array{<:Real, 1})
     M = barycentric_matrix(g, interior)
     (M*vcat(p,1))[1:2]
+end
+
+"""
+    approx_function(g, interior)
+
+Return approximated function over triangle.
+
+See also: [`barycentric_matrix`](@ref), [`barycentric`](@ref)
+"""
+function approx_function end
+
+function approx_function(g, interior)
+    M = barycentric_matrix(g, interior)
+    v1, v2, v3 = interior_vertices(g, interior)
+    val1, val2, val3 = map(v -> get_prop(g, v, :value), [v1, v2, v3])
+    u(λ₁, λ₂) = val1 * λ₁ + val2 * λ₂ + val3 * (1 -  λ₁ - λ₂)
+    function f(p)
+        bp = barycentric(M, p)
+        u(bp[1], bp[2])
+    end
+    f
+end
+
+"""
+    pyramid_function(g, interior, summit)
+
+Return pyramid-like function that has value 1 in `summit` vertex and 0 in
+every other. It lineary decreases from 1 to 0 to neighbour vertices.
+
+`interior` is the only triangle where this function will return proper value
+"""
+function pyramid_function(g, interior, summit)
+    M = barycentric_matrix(g, interior)
+    v1, v2, v3 = interior_vertices(g, interior)
+    val1, val2, val3 = map(v -> Int(summit == v), [v1, v2, v3])
+    u(λ₁, λ₂) = val1 * λ₁ + val2 * λ₂ + val3 * (1 -  λ₁ - λ₂)
+    function f(p)
+        bp = barycentric(M, p)
+        u(bp[1], bp[2])
+    end
+    f
 end
 
 """
@@ -236,9 +285,12 @@ function add_interior!(g, v1, v2, v3, refine)
     add_vertex!(g)
     set_prop!(g, nv(g), :type, "interior")
     set_prop!(g, nv(g), :refine, refine)
-    set_prop!(g, nv(g), :v1, v1)
-    set_prop!(g, nv(g), :v2, v2)
-    set_prop!(g, nv(g), :v3, v3)
+    # set_prop!(g, nv(g), :v1, v1)
+    # set_prop!(g, nv(g), :v2, v2)
+    # set_prop!(g, nv(g), :v3, v3)
+    add_edge!(g, nv(g), v1)
+    add_edge!(g, nv(g), v2)
+    add_edge!(g, nv(g), v3)
     return nv(g)
 end
 
@@ -252,8 +304,13 @@ end
 "Return vertices of triangle, that is represented by interior `i` as 3-element
 Array."
 function interior_vertices(g::AbstractMetaGraph, i::Integer)
-    [get_prop(g, i, :v1), get_prop(g, i, :v2), get_prop(g, i, :v3)]
+    # [get_prop(g, i, :v1), get_prop(g, i, :v2), get_prop(g, i, :v3)]
+    neighbors(g, i)
 end
+
+is_hanging(g, v) = get_prop(g, v, :type) == "hanging"
+is_vertex(g, v) = get_prop(g, v, :type) == "vertex"
+is_interior(g, v) = get_prop(g, v, :type) == "interior"
 
 """
     distance(p1, p2)
@@ -323,5 +380,29 @@ Return [x,y,z] coords of node `v` in graph `g` as 3-element Array.
 See also: [`x`](@ref), [`y`](@ref), [`z`](@ref)
 """
 coords(g, v) = [get_prop(g, v, :x), get_prop(g, v, :y), get_prop(g, v, :z)]
+
+"""
+    projection_area(g, i)
+    projection_area(triangle)
+    projection_area(a, b, c)
+
+Calculate area of rectangular projection of triangle along z axis.
+"""
+function projection_area end
+function projection_area(a::Array{<:Real, 1}, b::Array{<:Real, 1}, c::Array{<:Real, 1})
+    ab = a[1:2] - b[1:2]
+    ac = a[1:2] - c[1:2]
+    abs(det(vcat(ab', ac'))) / 2
+end
+
+function projection_area(triangle::Triangle)
+    a, b, c = triangle
+    projection_area(a, b, c)
+end
+
+function projection_area(g::AbstractMetaGraph, i::Integer)
+    a, b, c = interior_vertices(g, i)
+    projection_area(coords(g, a), coords(g, b), coords(g, c))
+end
 
 end

@@ -31,6 +31,12 @@ function f(x)
 end
 plot(f, -a, b)
 
+function factory(val)
+    u(x) = x+2
+    f(x) = val * u(x)
+    return f
+end
+
 # x=range(-2,stop=2,length=100)
 # y=range(sqrt(2),stop=2,length=100)
 # f(x,y) = x*y-x-y+1

@@ -11,13 +11,13 @@ v---v
 |  \\|
 v---v
 """
-function simple_graph()
+function simple_graph(size = 1.0)
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)  # 1
-    add_meta_vertex!(g, 1.0, 0.0, 0.0)  # 2
-    add_meta_vertex!(g, 0.0, 1.0, 0.0)  # 3
-    add_meta_vertex!(g, 1.0, 1.0, 0.0)  # 4
+    add_meta_vertex!(g, 1.0*size, 0.0, 0.0)  # 2
+    add_meta_vertex!(g, 0.0, 1.0*size, 0.0)  # 3
+    add_meta_vertex!(g, 1.0*size, 1.0*size, 0.0)  # 4
 
     add_interior!(g, 1, 3, 4, false)
     add_interior!(g, 1, 2, 4, false)

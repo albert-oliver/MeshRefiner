@@ -6,6 +6,7 @@ include("adaptation/adaptation.jl")
 include("graph_creator/graph_creator.jl")
 include("visualization/visualization.jl")
 include("io.jl")
+include("simulation/sim.jl")
 
 # using .ProjectIO
 # using .Utils
@@ -13,5 +14,6 @@ include("io.jl")
 # using .GraphCreator
 # using .Transformations
 # using .Visualization
+# using .Simulation
 
 end # module
