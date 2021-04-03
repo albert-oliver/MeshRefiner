@@ -78,6 +78,7 @@ function test_adapt_both()
     adapt_fun!(g, fun, 15)
     export_obj(g, "fun1.obj")
     export_obj(g, "both1.obj", true)
+    draw_makie(g, include_fun=true)
 end
 
 function start(ϵ, iters=15)

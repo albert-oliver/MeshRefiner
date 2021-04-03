@@ -24,7 +24,8 @@ export
     is_interior,
     projection_area,
     approx_function,
-    pyramid_function
+    pyramid_function,
+    vertex_map
 
 using Colors
 using MetaGraphs
@@ -154,6 +155,7 @@ end
 """
     center_point(points)
     center_point(g, vertices)
+    center_point(g, interior)
 
 Return center of mass of delivered points, or vertices in graph
 
@@ -176,10 +178,14 @@ function center_point(points::Array{<:Dict, 1})
     return mean
 end
 
-center_point(points::Array) = mean(points)
+center_point(points::Array) = mean(points, dims=1)
 
 function center_point(g, vertices::Array)
     center_point(map(x -> coords(g, x), vertices))
+end
+
+function center_point(g, interior::Integer)
+    center_point(g, interior_vertices(g, interior))
 end
 
 """
@@ -404,5 +410,9 @@ function projection_area(g::AbstractMetaGraph, i::Integer)
     a, b, c = interior_vertices(g, i)
     projection_area(coords(g, a), coords(g, b), coords(g, c))
 end
+
+"Return dictionary that maps id's of all vertices with type `vertex` to number
+starting at 1."
+vertex_map(g) = Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
 
 end

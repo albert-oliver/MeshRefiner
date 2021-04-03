@@ -40,42 +40,33 @@ step is `dt`.
 Note that graph `g` should have been adapted to function representing starting
 water level using `adapt_fun!`.
 """
-function simulate(g, steps, dt)
-    v_map::Dict{Integer, Integer} = Dict()
-    for (index, v) in enumerate(normal_vertices(g))
-        v_map[v] = index
-    end
-
+function simulate(g, steps, dt, f)
+    v_map = vertex_map(g)
     vertices_count = length(v_map)
     M = zeros((vertices_count, vertices_count))
 
     for step in 1:steps
         export_obj(g, string("sim", step, ".obj"), true)
 
-        for vᵢ in normal_vertices(g)
-            for vⱼ in filter(v -> get_prop(g, v, :type) == "vertex", neighbors(g, vᵢ))
-                i = v_map[vᵢ]
-                j = v_map[vⱼ]
-                M[i, j] = sum(interior -> (1/12) * projection_area(g, interior), common_triangles(g, vᵢ, vⱼ))
+        for interior in interiors(g)
+            for vᵢ in interior_vertices(g, interior)
+                for vⱼ in interior_vertices(g, interior)
+                    i = v_map[vᵢ]
+                    j = v_map[vⱼ]
+                    area = projection_area(g, interior)
+                    if i == j
+                        M[i, j] += (1/6) * area
+                    else
+                        M[i, j] += (1/12) * area
+                    end
+                end
             end
         end
 
         # RHS
         # (1)
         aᵗ = map(v -> get_prop(g, v, :value), normal_vertices(g))
-        # first = M*aᵗ
-
-        first = zeros(vertices_count)
-        for vᵢ in normal_vertices(g)
-            i = v_map[vᵢ]
-            for interior in triangles_with_vertex(g, vᵢ)
-                a, b, c = map(v -> coords(g, v), interior_vertices(g, interior))
-                xs, ys = center_point([a,b,c])[1:2]
-                e = pyramid_function(g, interior, vᵢ)
-                first[i] += e([xs, ys]) * (1/2) * projection_area(g, interior)
-            end
-            first[i] = dt * first[i]
-        end
+        first = M*aᵗ
 
         # (2)
         second = zeros(vertices_count)
@@ -98,7 +89,19 @@ function simulate(g, steps, dt)
             second[i] = -dt * second[i]
         end
 
-        RHS = first + second
+        # 3
+        third = zeros(vertices_count)
+        for interior in interiors(g)
+            for vᵢ in interior_vertices(g, interior)
+                i = v_map[vᵢ]
+                area = projection_area(g, interior)
+                xs, ys = center_point(g, interior)[1:2]
+                third[i] += f(xs, ys) * (1/3) * area
+            end
+        end
+        third *= dt
+
+        RHS = first + second + third
         aᵗ⁺¹ = M \ RHS
         set_values!(g, aᵗ⁺¹)
     end
