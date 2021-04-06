@@ -25,7 +25,8 @@ export
     projection_area,
     approx_function,
     pyramid_function,
-    vertex_map
+    vertex_map,
+    set_values!
 
 using Colors
 using MetaGraphs
@@ -414,5 +415,13 @@ end
 "Return dictionary that maps id's of all vertices with type `vertex` to number
 starting at 1."
 vertex_map(g) = Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
+
+"Set `:value` property for all vertexes with type `vertex` in graph `g`. Vertex
+with smalles `id` will receive value `a[1]``, next one `a[2]` and so on"
+function set_values!(g, a)
+    for (i, v) in enumerate(normal_vertices(g))
+        set_prop!(g, v, :value, a[i])
+    end
+end
 
 end

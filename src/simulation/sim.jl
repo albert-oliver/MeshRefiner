@@ -25,14 +25,8 @@ function triangles_with_vertex(g, i)
     filter(v -> get_prop(g, v, :type) == "interior", neighbors(g, i))
 end
 
-function set_values!(g, a)
-    for (i, v) in enumerate(normal_vertices(g))
-        set_prop!(g, v, :value, a[i])
-    end
-end
-
 """
-    simulate(g, steps, dt)
+    simulate!(g, steps, dt, f)
 
 Perform flood simulation on previously generated mesh `g`. Length of each time
 step is `dt`.
@@ -40,7 +34,8 @@ step is `dt`.
 Note that graph `g` should have been adapted to function representing starting
 water level using `adapt_fun!`.
 """
-function simulate(g, steps, dt, f)
+function simulate!(g, steps, dt, f)
+    result = reshape(map(v -> get_prop(g, v, :value), normal_vertices(g)), 1, :)
     v_map = vertex_map(g)
     vertices_count = length(v_map)
     M = zeros((vertices_count, vertices_count))
@@ -103,8 +98,11 @@ function simulate(g, steps, dt, f)
 
         RHS = first + second + third
         aᵗ⁺¹ = M \ RHS
+        result = vcat(result, aᵗ⁺¹')
         set_values!(g, aᵗ⁺¹)
     end
+
+    result
 end
 
 end

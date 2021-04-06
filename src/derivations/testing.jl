@@ -71,15 +71,46 @@ using GLMakie
 # surface!(xs, ys, zs)
 #
 vertices = [
-    [0.0, 0.0, 0.0],
-    [1.0, 0.0, 0.0],
-    [1.0, 1.0, 0.0],
-    [0.0, 1.0, 0.5],
+    0.0 0.0 0.0;
+    1.0 0.0 0.0;
+    1.0 1.0 0.0;
+    0.0 1.0 1.0;
+]
+
+vertices2 = [
+    0.0 0.0 1.0;
+    1.0 0.0 1.0;
+    1.0 1.0 1.0;
+    0.0 1.0 2.0;
 ]
 
 faces = [
-    [1, 2, 3],
-    [3, 4, 1],
+    1 2 3;
+    3 4 1;
 ]
-scene = mesh(vertices, faces, color=:red, shading=true)
-scene
+
+faces2 = [
+    1 2 3;
+    3 4 1;
+]
+
+iter = [(vertices, faces), (vertices2, faces2)]
+
+fig, ax, sth = mesh(vertices, faces, color=:red, shading=true)
+# mesh!(vertices2, faces2, color=:lightblue, shading=true, transparency=true)
+
+# animation settings
+n_frames = 2
+framerate = 1
+
+record(fig, "color_animation.mp4", iter; framerate = framerate) do thing
+    v,f = thing
+    sth[1] = v
+    sth[2] = f
+end
+
+
+function fun()
+    M::Matrix = [1, 2, 3]
+    M
+end
