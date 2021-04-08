@@ -3,13 +3,13 @@ module GraphCreator
 
 export
     simple_graph,
-    example_graph_1,
-    example_graph_2,
-    example_graph_3,
-    full_graph_1
+    full_graph_1,
+    sim_values_1
+
 
 include("example_graphs.jl")
 include("test_graphs.jl")
 include("full_graphs.jl")
+include("adapted_graphs.jl")
 
 end

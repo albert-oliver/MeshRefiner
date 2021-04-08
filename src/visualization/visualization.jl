@@ -36,16 +36,17 @@ graph `g` and its id `v`.
 vertex ids.
 """
 function custom_z_mesh(g, z_fun, face_filter)
+    vmap = vertex_map(g)
+    vmapf(x) = vmap[x]
+
     xyz(g, v) = [x(g, v), y(g, v), z_fun(g, v)]
     vertices = hcat([xyz(g, v) for v in normal_vertices(g)]...)'
 
     triangles = [interior_vertices(g, i) for i in interiors(g)]
-    sorted = map(vs -> sort_cclockwise(vs, vertices[vs, :]), triangles)
+    sorted = map(vs -> sort_cclockwise(vs, vertices[vmapf.(vs), :]), triangles)
     pa_filter(x) = face_filter(g, x)
     filtered_triangles = filter(pa_filter, sorted)
     matrix_triangles = hcat(filtered_triangles...)'
-    vmap = vertex_map(g)
-    vmapf(x) = vmap[x]
     faces = map(vmapf, matrix_triangles)
 
     (vertices, faces)

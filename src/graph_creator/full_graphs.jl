@@ -155,6 +155,10 @@ function full_graph_1()
     return g
 end
 
+"""
+Matrix of values for each vertex over time for graph [`full_graph_1`](@ref).
+Each row is one time step.
+"""
 function sim_values_1()
     [
         0.0 0.0 1.5 1.5 2.0 0.0 1.5 2.7 2.5 1.5 0.0 0.0 1.5 1.5 1.5 0.0 1.5 0.0 0.0 0.0 0.0;

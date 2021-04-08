@@ -6,7 +6,8 @@ export
     adapt_terrain!,
     generate_terrain_mesh,
     TerrainMap,
-    elevation
+    elevation,
+    match_to_fun!
 
 """
 Struct that represents terrain map with real elevations as matrix.

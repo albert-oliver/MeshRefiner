@@ -59,12 +59,18 @@ using GLMakie
 #     color="#00FF00F0"
 # )
 
-# xs = LinRange(0, 10, 100)
-# ys = LinRange(0, 15, 100)
-# zs = [cos(x) * sin(y) for x in xs, y in ys]
-#
-# fig = surface(xs, ys, zs)
-#
+xs = LinRange(0, 1, 100)
+ys = LinRange(0, 1, 100)
+function hat_fun(x, y; center=(0.5, 0.5))
+    xp = center[1]
+    yp = center[2]
+    r=((x-xp)^2+(y-yp)^2)^0.5
+    f(r) = r < 0.25 ? cos(2*π*r) : 0.0
+    f(r)
+end
+zs = [hat_fun(x, y; center=(0.5, 0.5)) for x in xs, y in ys]
+surface(xs, ys, zs)
+
 # xs = LinRange(10, 30, 150)
 # ys = LinRange(0, 15, 100)
 # zs = [cos(x) * sin(y) for x in xs, y in ys]

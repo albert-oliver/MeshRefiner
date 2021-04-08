@@ -3,7 +3,13 @@ using ..Utils
 using MetaGraphs
 
 """
-Square made of two triangles
+    simple_graph(dims = (1.0, 1.0))
+
+Rectangle made of two triangles.
+
+# Arguments
+- `dims`: Dimensions of rectangle .Is either number or tuple of two dimensions.
+Single number `num` is equivalent to tuple `(num, num)`.
 
 v---v
 |\\  |
@@ -11,13 +17,17 @@ v---v
 |  \\|
 v---v
 """
-function simple_graph(size = 1.0)
+function simple_graph(dims::Union{Real, Tuple{<:Real, <:Real}} = (1.0, 1.0))
+    if typeof(dims) <: Real
+        dims = (dims, dims)
+    end
+
     g = MetaGraph()
 
     add_meta_vertex!(g, 0.0, 0.0, 0.0)  # 1
-    add_meta_vertex!(g, 1.0*size, 0.0, 0.0)  # 2
-    add_meta_vertex!(g, 0.0, 1.0*size, 0.0)  # 3
-    add_meta_vertex!(g, 1.0*size, 1.0*size, 0.0)  # 4
+    add_meta_vertex!(g, 1.0*dims[1], 0.0, 0.0)  # 2
+    add_meta_vertex!(g, 0.0, 1.0*dims[2], 0.0)  # 3
+    add_meta_vertex!(g, 1.0*dims[1], 1.0*dims[2], 0.0)  # 4
 
     add_interior!(g, 1, 3, 4, false)
     add_interior!(g, 1, 2, 4, false)
@@ -223,5 +233,4 @@ function example_graph_3()
     add_meta_edge!(g, 5, 8, false)
 
     return g
-
 end

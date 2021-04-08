@@ -179,7 +179,9 @@ function center_point(points::Array{<:Dict, 1})
     return mean
 end
 
-center_point(points::Array) = mean(points, dims=1)
+center_point(points::Matrix) = mean(points, dims=1)
+
+center_point(points::Array{<:Array, 1}) = mean(points)
 
 function center_point(g, vertices::Array)
     center_point(map(x -> coords(g, x), vertices))
