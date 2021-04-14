@@ -22,12 +22,12 @@ using GLMakie
 # Plots.plot(xs,ys,u,st=:surface)
 
 
-# xs = LinRange(0, 1, 100)
-# ys = LinRange(0, 1, 100)
-# fun(x,y) = x*(1-x-y)
-# zs = [fun(x, y) for x in xs, y in ys]
-#
-# surface(xs, ys, zs)
+xs = LinRange(0, 1, 100)
+ys = LinRange(0, 1, 100)
+f = Derivations.GraphCreator.block_fun([0.5, 0.25], [0.25, 0.5], 1.0)
+zs = [f(x, y) for x in xs, y in ys]
+
+fig = surface(xs, ys, zs)
 
 # using Plots
 # a = 0.5
@@ -113,10 +113,4 @@ record(fig, "color_animation.mp4", iter; framerate = framerate) do thing
     v,f = thing
     sth[1] = v
     sth[2] = f
-end
-
-
-function fun()
-    M::Matrix = [1, 2, 3]
-    M
 end

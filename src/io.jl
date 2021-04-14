@@ -129,14 +129,26 @@ Export simulation as video. Values is matrix returned from [`simulate`](@ref).
 """
 function export_simulation(g, values; filename="sim.mp4", fps=24)
     set_values!(g, values[1,:])
-    fig, _ = draw_makie(g; include_fun=false)
+    scene = draw_makie(g; include_fun=false)
     vertices, faces = function_mesh(g)
-    current_mesh = mesh!(vertices, faces, color=:lightblue, shading=true, transparency=true)
-    record(fig, filename, 1:size(values)[1]; framerate = fps) do i
+
+    # Makie can't draw empty meshes - so if it should I just draw single trinagle
+    if isempty(faces)
+        faces = [1 2 3]
+    end
+    current_mesh = mesh!(vertices, faces, color=:lightblue, shading=true, transparency=false)
+
+    record(scene, filename, 1:size(values)[1]; framerate=fps) do i
         set_values!(g, values[i,:])
         vertices, faces = function_mesh(g)
         current_mesh[1] = vertices
-        current_mesh[2] = faces
+
+        # Same here
+        if !isempty(faces)
+            current_mesh[2] = faces
+        else
+            current_mesh[2] = [1 2 3]
+        end
     end
 end
 
