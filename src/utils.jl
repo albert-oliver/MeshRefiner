@@ -113,7 +113,7 @@ function barycentric(g::AbstractMetaGraph, interior::Integer, p::Array{<:Real, 1
 end
 
 """
-    approx_function(g, interior)
+    approx_function(g, interior [, val_fun])
 
 Return approximated function over triangle.
 
@@ -121,10 +121,10 @@ See also: [`barycentric_matrix`](@ref), [`barycentric`](@ref)
 """
 function approx_function end
 
-function approx_function(g, interior)
+function approx_function(g, interior, val_fun=(g, v)->get_prop(g, v, :value))
     M = barycentric_matrix(g, interior)
     v1, v2, v3 = interior_vertices(g, interior)
-    val1, val2, val3 = map(v -> get_prop(g, v, :value), [v1, v2, v3])
+    val1, val2, val3 = map(v -> val_fun(g, v), [v1, v2, v3])
     u(λ₁, λ₂) = val1 * λ₁ + val2 * λ₂ + val3 * (1 -  λ₁ - λ₂)
     function f(p)
         bp = barycentric(M, p)

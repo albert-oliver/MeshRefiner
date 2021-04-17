@@ -114,3 +114,18 @@ record(fig, "color_animation.mp4", iter; framerate = framerate) do thing
     sth[1] = v
     sth[2] = f
 end
+
+
+function abc(iters)
+    x = zeros(iters)
+    for i in 1:iters
+        x[i] = i*2+1-20
+    end
+end
+
+function def(iters)
+    x = zeros(iters)
+    Threads.@threads for i in 1:iters
+        x[i] = i*2+1-20
+    end
+end

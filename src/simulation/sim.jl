@@ -5,6 +5,7 @@ export simulate!
 
 using LightGraphs
 using MetaGraphs
+using LinearAlgebra
 
 using ..Utils
 using ..ProjectIO
@@ -83,8 +84,11 @@ function simulate!(g, steps, dt, f; γ=1.0, α=0.5, β=0.5)
                 area = projection_area(g, interior)
 
                 # Part that includes terrain to calculatin
-                z_center = (z(a) + z(b) + z(c)) / 3.0
-                k = γ * ((u([xs, ys])^α) / (abs(z_center + u([xs, ys])))^β)
+                u_plus_z_val(g, v) = get_prop(g, v, :value) + z(g, v)
+                u2 = approx_function(g, interior, u_plus_z_val)
+                ∂u2∂x = (u2([xs + hx, ys]) - u2([xs - hx, ys])) / (2 * hx)
+                ∂u2∂y = (u2([xs, ys + hy]) - u2([xs, ys - hy])) / (2 * hy)
+                k = γ * ((u([xs, ys])^α) / (norm([∂u2∂x, ∂u2∂y]))^β)
 
                 second[i] += k * (∂u∂x * ∂e∂x + ∂u∂y * ∂e∂y) * area
             end
