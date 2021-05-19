@@ -12,7 +12,10 @@ Draws 3D view of graph using `Makie.jl`
 It doesn't contain any interior vertices or labels (for clarity as graphs can
 be quite big).
 """
-function draw_makie(g; wireframe=false, include_fun=false, transparent_fun=true, show_axis=false)
+function draw_makie(g;
+    wireframe=false, include_fun=false,
+    transparent_fun=true, shading_fun=false, show_axis=false)
+
     # edges
     src_dest = map(e -> [e.src, e.dst], edges(g))
     is_proper(x) = !is_interior(g, x[1]) & !is_interior(g, x[2])
@@ -38,7 +41,7 @@ function draw_makie(g; wireframe=false, include_fun=false, transparent_fun=true,
         vertices, faces = function_mesh(g)
         if !isempty(faces)
             mesh!(vertices, faces, color=:lightblue,
-                shading=!transparent_fun, transparency=transparent_fun)
+                shading=shading_fun, transparency=transparent_fun)
         end
     end
 

@@ -8,7 +8,7 @@ include("../visualization/visualization.jl")
 include("../io.jl")
 include("../simulation/sim.jl")
 
-using .ProjectIO
+# using .ProjectIO
 using .Utils
 using .Adaptation
 using .GraphCreator

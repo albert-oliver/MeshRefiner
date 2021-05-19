@@ -8,12 +8,37 @@ include("visualization/visualization.jl")
 include("io.jl")
 include("simulation/sim.jl")
 
-# using .ProjectIO
-# using .Utils
-# using .Adaptation
-# using .GraphCreator
-# using .Transformations
-# using .Visualization
-# using .Simulation
+export
+    # Terrain adaptation
+    generate_terrain_mesh,
+    adapt_terrain!,
+    TerrainMap,
+    check_mesh,
+
+    # Function adaptation
+    match_to_fun!,
+    adapt_fun!,
+
+    # IO
+    load_data,
+    load_heightmap,
+    saveGML,
+    export_obj,
+    export_simulation,
+
+    # Simulation
+    simulate!,
+
+    # Visualization
+    draw_makie,
+    draw_graphplot,
+
+    # Ready graphs and water functions
+    simple_graph,
+    full_graph_1,
+    sim_values_1,
+    regular_flat_mesh,
+    hat_fun,
+    block_fun
 
 end # module

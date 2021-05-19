@@ -6,7 +6,8 @@ export
     full_graph_1,
     sim_values_1,
     regular_flat_mesh,
-    mesh_hat_fun,
+    regular_slope_mesh,
+    regular_channel_mesh,
     hat_fun,
     block_fun
 

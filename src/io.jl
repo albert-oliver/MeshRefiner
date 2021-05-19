@@ -6,7 +6,12 @@ using ..Adaptation
 using ..Utils
 using ..Visualization
 
-export load_data, load_heightmap, saveGML, export_obj
+export
+    load_data,
+    load_heightmap,
+    saveGML,
+    export_obj,
+    export_simulation
 
 using LightGraphs
 using MetaGraphs
@@ -127,16 +132,17 @@ end
 
 Export simulation as video. Values is matrix returned from [`simulate`](@ref).
 """
-function export_simulation(g, values; filename="sim.mp4", fps=24)
+function export_simulation(g, values; filename="sim.mp4", fps=24,
+    transparent_fun=false, shading_fun=true, show_axis=false)
     set_values!(g, values[1,:])
-    scene = draw_makie(g; include_fun=false)
+    scene = draw_makie(g; include_fun=false, show_axis=show_axis)
     vertices, faces = function_mesh(g)
 
     # Makie can't draw empty meshes - so if it should I just draw single trinagle
     if isempty(faces)
         faces = [1 2 3]
     end
-    current_mesh = mesh!(vertices, faces, color=:lightblue, shading=true, transparency=false)
+    current_mesh = mesh!(vertices, faces, color=:lightblue, shading=shading_fun, transparency=transparent_fun)
 
     record(scene, filename, 1:size(values)[1]; framerate=fps) do i
         set_values!(g, values[i,:])

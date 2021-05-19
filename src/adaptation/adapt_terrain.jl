@@ -166,6 +166,15 @@ function adapt_terrain!(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Real, max
     return g
 end
 
+function check_mesh(g)
+    for v in 1:nv(g)
+        if get_prop(g, v, :type) == "hanging"
+            return false
+        end
+    end
+    return true
+end
+
 """
     generate_terrain_mesh(terrain, ϵ, max_iters=20)
 
