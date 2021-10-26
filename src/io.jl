@@ -11,9 +11,10 @@ export
     load_heightmap,
     saveGML,
     export_obj,
-    export_simulation
+    export_simulation,
+    load_vtu
 
-using LightGraphs
+using Graphs
 using MetaGraphs
 using Printf
 using GLMakie
@@ -183,6 +184,19 @@ function load_vtu(filename::String)::AbstractMetaGraph
 
     # Create graph
     g = MetaGraph()
+
+    for point in eachcol(points)
+        add_meta_vertex!(g, point[1], point[2], point[3])
+    end
+
+    for cell in eachcol(cells)
+        add_meta_edge!(g, cell[1], cell[2], true)
+        add_meta_edge!(g, cell[1], cell[3], true)
+        add_meta_edge!(g, cell[2], cell[3], true)
+        add_interior!(g, cell[1], cell[2], cell[3], false)
+    end
+
+    return g
 end
 
 end

@@ -16,7 +16,7 @@ using .Transformations
 using .Visualization
 using .Simulation
 
-using LightGraphs
+using Graphs
 using MetaGraphs
 using LinearAlgebra
 using Statistics

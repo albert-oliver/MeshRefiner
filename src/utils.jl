@@ -30,7 +30,7 @@ export
 
 using Colors
 using MetaGraphs
-using LightGraphs
+using Graphs
 using Statistics
 using LinearAlgebra
 

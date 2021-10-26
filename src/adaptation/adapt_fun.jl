@@ -2,7 +2,7 @@ using ..Utils
 using ..Transformations
 
 using LinearAlgebra
-using LightGraphs, MetaGraphs
+using Graphs, MetaGraphs
 
 "Return relative error of approximation of traingle represented by interior `i`
 to function `fun`"

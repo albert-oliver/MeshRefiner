@@ -2,7 +2,7 @@ using ..Utils
 
 using GLMakie
 using MetaGraphs
-using LightGraphs
+using Graphs
 
 """
     draw_makie(g; wireframe=false, include_fun=false, transparent_fun=false, show_axis=false)

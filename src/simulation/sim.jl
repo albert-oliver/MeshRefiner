@@ -3,7 +3,7 @@ module Simulation
 
 export simulate!
 
-using LightGraphs
+using Graphs
 using MetaGraphs
 using LinearAlgebra
 

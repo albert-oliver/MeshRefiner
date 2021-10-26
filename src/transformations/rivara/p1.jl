@@ -1,7 +1,7 @@
 using ..Utils
 
 using MetaGraphs
-using LightGraphs
+using Graphs
 
 function check_p1(g, center)
     if get_prop(g, center, :type) != "interior"

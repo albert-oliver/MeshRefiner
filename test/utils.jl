@@ -1,7 +1,7 @@
 using MeshRefiner.Utils
 
 using MetaGraphs
-using LightGraphs
+using Graphs
 
 function triangle_graph()
     g = MetaGraph()
