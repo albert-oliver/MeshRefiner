@@ -17,6 +17,7 @@ using LightGraphs
 using MetaGraphs
 using Printf
 using GLMakie
+using LightXML
 
 import Images
 
@@ -156,6 +157,32 @@ function export_simulation(g, values; filename="sim.mp4", fps=24,
             current_mesh[2] = [1 2 3]
         end
     end
+end
+"""
+    load_vtu(filename)
+
+Loads vtu file as graph.
+"""
+function load_vtu(filename::String)::AbstractMetaGraph
+    xdoc = parse_file(filename)
+    xroot = root(xdoc)
+    piece = xroot["UnstructuredGrid"][1]["Piece"][1]
+    points_count = parse(Int64, attribute(piece, "NumberOfPoints"))
+    cells_count = parse(Int64, attribute(piece, "NumberOfCells"))
+
+    points_node = piece["Points"][1]["DataArray"][1]
+    parse_float(x) = parse(Float64, x)
+    points = reshape(map(parse_float, split(string(first(child_nodes(points_node))))), 3, :)
+
+    cells_node = piece["Cells"][1]["DataArray"][1]
+    parse_int(x) = parse(Int64, x)
+    cells = reshape(map(parse_int, split(string(first(child_nodes(cells_node))))), 3, :)
+    cells = map(x -> x + 1, cells)
+
+    free(xdoc)
+
+    # Create graph
+    g = MetaGraph()
 end
 
 end
