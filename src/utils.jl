@@ -269,9 +269,13 @@ function get_hanging_node_between(g::AbstractMetaGraph, v1::Integer, v2::Integer
 end
 
 "Add vertex to graph `g` with properties `x`, `y` and `z`"
+# TODO change signature to g, lat, lon
 function add_meta_vertex!(g, x, y, z)
     add_vertex!(g)
+    # TODO compute height (?)
+    # TODO set prop lat, lon, h
     set_prop!(g, nv(g), :type, "vertex")
+    # TODO compute x,y,z from lat, lon, h
     set_prop!(g, nv(g), :x, convert(Float64, x))
     set_prop!(g, nv(g), :y, convert(Float64, y))
     set_prop!(g, nv(g), :z, convert(Float64, z))
@@ -285,6 +289,7 @@ function add_hanging!(g, x, y, z)
     set_prop!(g, nv(g), :x, x)
     set_prop!(g, nv(g), :y, y)
     set_prop!(g, nv(g), :z, z)
+    # TODO lat, lon, h
     return nv(g)
 end
 
@@ -294,6 +299,7 @@ function add_interior!(g, v1, v2, v3, refine)
     add_vertex!(g)
     set_prop!(g, nv(g), :type, "interior")
     set_prop!(g, nv(g), :refine, refine)
+    # TODO set_prop!(g, nv(g), :points, fun_with_view() )
     # set_prop!(g, nv(g), :v1, v1)
     # set_prop!(g, nv(g), :v2, v2)
     # set_prop!(g, nv(g), :v3, v3)

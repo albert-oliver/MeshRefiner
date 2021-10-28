@@ -89,6 +89,7 @@ function transform_p2!(g, center)
 
     add_meta_edge!(g, h, v3, false)
 
+    # TODO view of center to add_interior to split points 
     add_interior!(g, v1, v3, h, false)
     add_interior!(g, v2, v3, h, false)
 
