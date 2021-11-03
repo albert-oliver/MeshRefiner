@@ -21,6 +21,7 @@ using GLMakie
 using LightXML
 
 import Images
+import ArchGDAL; const AG = ArchGDAL
 
 "Load terrain data (in bytes) as `TerrainMap`"
 function load_data(filename, dims, type=Float64)::TerrainMap
@@ -111,6 +112,13 @@ function export_obj(g, filename, include_fun=false)
             v_id += 1
         end
 
+        # TODO remove
+        for v in hanging_nodes(g)
+            write(io, @sprintf("v %f %f %f\n", x(g, v), y(g, v), z(g, v)))
+            t_map[v] = v_id
+            v_id += 1
+        end
+
         if include_fun
             for v in normal_vertices(g)
                 write(io, @sprintf("v %f %f %f\n", x(g, v), y(g, v), z(g, v) + get_prop(g, v, :value)))
@@ -159,6 +167,31 @@ function export_simulation(g, values; filename="sim.mp4", fps=24,
         end
     end
 end
+
+"""
+    load_tiff(filename)
+
+Loads tiff file as TerrainMap.
+"""
+function load_tiff(filename::String)::TerrainMap
+    dataset = AG.readraster(filename)
+    band = AG.getband(dataset, 1)
+    nan_to_0(M) = map(x -> isnan(x) ? zero(x) : x, M)
+    band = nan_to_0(band)
+    gt = AG.getgeotransform(dataset)
+    start_x = gt[1]
+    start_y = gt[4]
+    step_x = gt[2]
+    step_y = gt[6]
+    width = AG.width(dataset)
+    height = AG.height(dataset)
+    scale = maximum(band) - minimum(band)
+    offset = minimum(band)
+    M = (band .- offset) ./ scale .+ 1
+    M = reverse(transpose(M), dims=1)
+    TerrainMap(M, step_x * height, step_y * width, scale, offset)
+end
+
 """
     load_vtu(filename)
 

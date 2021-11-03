@@ -15,8 +15,8 @@ Struct that represents terrain map with real elevations as matrix.
 """
 struct TerrainMap
     M::Array{Real, 2}
-    width::Int
-    height::Int
+    width::Real
+    height::Real
     scale::Real
     offset::Real
 end
