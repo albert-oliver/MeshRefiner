@@ -2,8 +2,13 @@ import Graphsl; const Gr = Graphs
 import MetaGraphs; const MG = MetaGraphs
 using LinearAlgebra
 
+# -----------------------------------------------------------------------------
+# ------ SphereGraph type definition and constructors -------------------------
+# -----------------------------------------------------------------------------
+
 """
-`HyperGraph` whose vertices are on sphere with radius `radius`.
+`SphereGraph` is a`HyperGraph` whose vertices are on sphere with radius
+`radius`.
 
 Can represent Earth's surface where elevation above (or below) sea level is
 set using `elevation` property.
@@ -48,6 +53,10 @@ end
 
 SphereGraph() = SphereGraph(6371000)     # Earth's radius
 
+# -----------------------------------------------------------------------------
+# ------ Functions specific for SphereGraph -----------------------------------
+# -----------------------------------------------------------------------------
+
 function cartesian_to_spherical(coords::Vector{<:Real})
     x = coords[1]
     y = coords[2]
@@ -80,6 +89,8 @@ Return latitude and longtitude of vertex `v` (in geographic coordinate system).
 See also: [`SphereGraph`](@ref)
 """
 function gcs(g::SphereGraph, v) = MG.get_prop(g.graph, v, :gcs)
+function lat(g::SphereGraph, v) = gcs(g, v)[1]
+function lon(g::SphereGraph, v) = gcs(g, v)[2]
 
 "Return vector `[r, lat, lon]` with spherical coordinates of vertex `v`."
 function get_spherical(g::SphereGraph, v)
@@ -101,6 +112,10 @@ function recalculate_spherical!(g::SphereGraph, v)
     MG.set_prop!(g.graph, v, :elevation, spherical[1] - g.radius)
     MG.set_prop!(g.graph, v, :gcs, spherical[2:3])
 end
+
+# -----------------------------------------------------------------------------
+# ------ Methods for HyperGraph functions -------------------------------------
+# -----------------------------------------------------------------------------
 
 function add_vertex!(g::SphereGraph, coords::Vector{Real}; value::Real = 0.0)
     Gr.add_vertex!(g.graph)

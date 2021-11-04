@@ -26,6 +26,13 @@ export
     normal_vertices,
     hanging_nodes,
     interiors,
+    neighbors,
+    neighbors_with_type,
+    neighbors_except_type,
+    vertex_neighbors,
+    hanging_neighbors,
+    interior_neighbors,
+    interiors_vertices,
 
     # Vertex properties
     unset_hanging!,
@@ -55,12 +62,18 @@ export
     get_hanging_node_between,
     vertex_map
 
-    # SpherGraph only
+    # SphereGraph only
     gcs,
-    get_spherical
+    get_spherical,
+    lat,
+    lon
 
 import MetaGraphs; const MG = MetaGraphs
 import Graphs; const Gr = Graphs
+
+# -----------------------------------------------------------------------------
+# ------ HyperGraph type definition -------------------------------------------
+# -----------------------------------------------------------------------------
 
 """
 Abstract type that holds hypergraph.
@@ -87,6 +100,11 @@ Two concrete subtypes of `HyperGraph` are `FlatGraph` and `SphereGraph`.
 See also: [`FlatGraph`](@ref), [`SphereGraph`](@ref)
 """
 abstract type HyperGraph end
+
+
+# -----------------------------------------------------------------------------
+# ------ Functions for adding and removing vertices and edges -----------------
+# -----------------------------------------------------------------------------
 
 """
     add_vertex!(g, coords; value=0)
@@ -173,11 +191,28 @@ end
 "Remove edge from `v1` to `v2` from graph."
 function rem_edge!(g, v1, v2) = Gr.rem_vertex!(g, v1, v2)
 
+# -----------------------------------------------------------------------------
+# ------ Functions counting elements fo graph  --------------------------------
+# -----------------------------------------------------------------------------
+
 "Number of **all** vertices in graph `g`. Alias: [`nv`](@ref)"
 all_vertex_count(g) = Gr.nv(g)
 
 "Number of **all** vertices in graph `g`. Alias of [`vertex_count`](@ref)"
 nv = all_vertex_count
+
+"Number of normal vertices in graph `g`"
+vertex_count(g) = g.vertex_count
+
+"Number of hanging nodes in graph `g`"
+hanging_count(g) = g.hanging_count
+
+"Number of interiors in graph `g`"
+interior_count(g) = g.interior_count
+
+# -----------------------------------------------------------------------------
+# ------ Iterators over vertices ----------------------------------------------
+# -----------------------------------------------------------------------------
 
 "Return vector of all vertices with type `type`"
 function vertices_with_type(g, type::String)
@@ -191,15 +226,6 @@ function vertices_except_type(g, type::String)
     Gr.filter_vertices(g, filter_fun)
 end
 
-"Number of normal vertices in graph `g`"
-vertex_count(g) = g.vertex_count
-
-"Number of hanging nodes in graph `g`"
-hanging_count(g) = g.hanging_count
-
-"Number of interiors in graph `g`"
-interior_count(g) = g.interior_count
-
 "Return all vertices with type `vertex`"
 normal_vertices(g) = vertices_with_type(g, "vertex")
 
@@ -209,11 +235,40 @@ hanging_nodes(g) = vertices_with_type(g, "hanging")
 "Return all vertices with type `interior`"
 interiors(g) = vertices_with_type(g, "interior")
 
+"Return neighbors with all types of vertex `v`"
+neighbors(g, v) = Gr.neighbors(g.graph, v)
+
+"Return neighbors with type `type` of vertex `v`"
+function neighbors_with_type(g, v, type)
+    filter(u -> MG.get_prop(g.graph, u, :type) == type, neighbors(g, v))
+end
+
+"Return neighbors with type different than `type` of vertex `v`"
+function neighbors_except_type(g, v, type)
+    filter(u -> MG.get_prop(g.graph, u, :type) != type, neighbors(g, v))
+end
+
+"Return neighbors with type `vertex` of vertex `v`"
+vertex_neighbors(g, v) = neighbors_with_type(g, v, "vertex")
+
+"Return neighbors with type `hanging` of vertex `v`"
+hanging_neighbors(g, v) = neighbors_with_type(g, v, "hanging")
+
+"Return neighbors with type `interior` of vertex `v`"
+interior_neighbors(g, v) = neighbors_with_type(g, v, "interior")
+
+"Return three vertices that make triangle represented by interior `i`"
+interiors_vertices(g, i) = neighbors(g, i)
+
+# -----------------------------------------------------------------------------
+# ------ Functions handling vertex properties  --------------------------------
+# -----------------------------------------------------------------------------
+
 "Changes type of vertex to `vertex` from `hanging`"
 function unset_hanging!(g, v)
-    MG.set_prop!(g, v, :type, "vertex")
-    MG.rem_prop!(g, v, :v1)
-    MG.rem_prop!(g, v, :v2)
+    MG.set_prop!(g.graph, v, :type, "vertex")
+    MG.rem_prop!(g.graph, v, :v1)
+    MG.rem_prop!(g.graph, v, :v2)
     g.hanging_count -= 1
     g.vertex_count += 1
 end
@@ -225,13 +280,13 @@ function get_cartesian(g::SphereGraph, v) = MG.get_prop(g.graph, v, :xyz)
 [`get_cartesian`](@ref)"
 xyz = get_cartesian
 
-function is_hanging(g, v) = MG.get_prop(g, v, :type) == "hanging"
-function is_vertex(g, v) = MG.get_prop(g, v, :type) == "vertex"
-function is_interior(g, v) = MG.get_prop(g, v, :type) == "interior"
+function is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == "hanging"
+function is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == "vertex"
+function is_interior(g, v) = MG.get_prop(g.graph, v, :type) == "interior"
 function get_elevation end
 function set_elevation! end
-function get_value(g, v) = MG.get_prop(g, v, :value)
-function set_value!(g, v, value) = MG.set_prop!(g, v, :value, value)
+function get_value(g, v) = MG.get_prop(g.graph, v, :value)
+function set_value!(g, v, value) = MG.set_prop!(g.graph, v, :value, value)
 
 """
     get_all_values(g)
@@ -244,7 +299,7 @@ using [`vertex_map`](@ref).
 See also: [`set_all_values!`](@ref), [`vertex_map`](@ref)
 """
 function get_all_values(g)
-    [MG.get_prop(g, v, :value) for v in normal_vertices(g)]
+    [MG.get_prop(g.graph, v, :value) for v in normal_vertices(g)]
 end
 
 """
@@ -262,34 +317,42 @@ function set_all_values!(g, values)
     end
 end
 
-function should_refine(g, i) = MG.get_prop!(g, i, :refine)
-function set_refine!(g, i) = MG.set_prop!(g, i, :refine, true)
-function unset_refine!(g, i) = MG.set_prop!(g, i, :refine, false)
+function should_refine(g, i) = MG.get_prop!(g.graph, i, :refine)
+function set_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, true)
+function unset_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, false)
+
+# -----------------------------------------------------------------------------
+# ------ Functions handling edge properties -----------------------------------
+# -----------------------------------------------------------------------------
 
 "Is edge between `v1` and `v2` on boundary"
-function is_on_boundary(g, v1, v2) = MG.get_prop(g, v1, v2, :boundary)
+function is_on_boundary(g, v1, v2) = MG.get_prop(g.graph, v1, v2, :boundary)
 
-function set_boundary!(g, v1, v2) = MG.set_prop!(g, v1,v2, :boundary, true)
-function unset_boundary!(g, v1, v2) = MG.set_prop!(g, v1,v2, :boundary, true)
+function set_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
+function unset_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
 
 "Return length of edge as euclidean distance between cartesian coordiantes of
 its vertices"
 function edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
+
+# -----------------------------------------------------------------------------
+# ------ Ther functions -------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 "Whether graph `g` has any hanging nodes"
 has_hanging_nodes(g) = hanging_count(g) != 0
 
 "Get hanging node between normal vertices `v1` and `v2` in graph `g`"
 function get_hanging_node_between(g, v1, v2)
-    if Gr.has_edge(g, v1, v2)
+    if Gr.has_edge(g.graph, v1, v2)
         return nothing
     end
-    hnodes1 = filter(v -> is_hanging(v), Gr.neighbors(g, v1))
-    hnodes2 = filter(v -> is_hanging(v), Gr.neighbors(g, v2))
+    hnodes1 = filter(v -> is_hanging(v), neighbors(g, v1))
+    hnodes2 = filter(v -> is_hanging(v), neighbors(g, v2))
     hnodes_all = intersect(hnodes1, hnodes2)
 
     for h in hnodes_all
-        h_is_between = [MG.get_prop(g, h, :v1), MG.get_prop(g, h, :v1)]
+        h_is_between = [MG.get_prop(g.graph, h, :v1), MG.get_prop(g.graph, h, :v1)]
         if v1 in h_is_between && v2 in h_is_between
             return h
         end

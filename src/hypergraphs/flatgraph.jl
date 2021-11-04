@@ -2,9 +2,13 @@ import Graphsl; const Gr = Graphs
 import MetaGraphs; const MG = MetaGraphs
 using LinearAlgebra
 
+# -----------------------------------------------------------------------------
+# ------ FlatGraph type definition and constructors ---------------------------
+# -----------------------------------------------------------------------------
+
 """
-`HyperGraph` whose vertices are on flat surface but can be moved up and down
-with `elevation` property.
+`FlatGraph` is a `HyperGraph` whose vertices are on flat surface but can be
+moved up and down with `elevation` property.
 
 Can represent samll part Earth's surface, where curvature is negligible.
 
@@ -27,6 +31,10 @@ function FlatGraph()
     graph = MG.MetaGraph()
     FlatGraph(graph, 0, 0, 0)
 end
+
+# -----------------------------------------------------------------------------
+# ------ Methods for HyperGraph functions -------------------------------------
+# -----------------------------------------------------------------------------
 
 function add_vertex!(g::FlatGraph, coords::Vector{Real}; value::Real = 0.0)
     Gr.add_vertex!(g.graph)
