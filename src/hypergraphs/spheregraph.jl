@@ -136,8 +136,8 @@ function add_hanging!(g::SphereGraph, v1, v2)
     return nv(g)
 end
 
-function get_elevation(g, v) MG.get_prop(g, v, :elevation)
-function set_elevation!(g, v, elevation)
+function get_elevation(g::SphereGraph, v) MG.get_prop(g, v, :elevation)
+function set_elevation!(g::SphereGraph, v, elevation)
     MG.set_prop!(g, v, :elevation, elevation)
     recalculate_cartesian!(g, v)
 end

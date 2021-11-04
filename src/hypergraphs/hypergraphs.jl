@@ -56,6 +56,8 @@ export
     vertex_map
 
     # SpherGraph only
+    gcs,
+    get_spherical
 
 import MetaGraphs; const MG = MetaGraphs
 import Graphs; const Gr = Graphs
@@ -279,7 +281,21 @@ has_hanging_nodes(g) = hanging_count(g) != 0
 
 "Get hanging node between normal vertices `v1` and `v2` in graph `g`"
 function get_hanging_node_between(g, v1, v2)
-    # TODO
+    if Gr.has_edge(g, v1, v2)
+        return nothing
+    end
+    hnodes1 = filter(v -> is_hanging(v), Gr.neighbors(g, v1))
+    hnodes2 = filter(v -> is_hanging(v), Gr.neighbors(g, v2))
+    hnodes_all = intersect(hnodes1, hnodes2)
+
+    for h in hnodes_all
+        h_is_between = [MG.get_prop(g, h, :v1), MG.get_prop(g, h, :v1)]
+        if v1 in h_is_between && v2 in h_is_between
+            return h
+        end
+    end
+
+    return nothing
 end
 
 """

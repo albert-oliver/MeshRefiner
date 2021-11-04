@@ -61,7 +61,7 @@ end
 
 function get_elevation(g::FlatGraph, v) MG.get_prop(g, v, :xyz)[3]
 
-function set_elevation!(g, v, elevation)
+function set_elevation!(g::FlatGraph, v, elevation)
     xyz = MG.get_prop(g, v, :xyz)
     xyz[3] = elevation
     MG.set_prop!(g, v, :xyz, xyz)
