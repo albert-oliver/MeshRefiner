@@ -5,7 +5,6 @@ export
     FlatGraph,
     SphereGraph,
 
-    # Functions on HyperGraphs
     # Adding / removing
     add_vertex!,
     add_hangign!,
@@ -26,7 +25,7 @@ export
     vertices_except_type,
     normal_vertices,
     hanging_nodes,
-    interiors
+    interiors,
 
     # Vertex properties
     unset_hanging!,
@@ -43,18 +42,20 @@ export
     set_all_values!,
     should_refine,
     set_refine!,
-    unset_refine!
+    unset_refine!,
 
     # Edge properties
     is_on_boundary,
     set_boundary!,
     unset_boundary!,
-    edge_length
+    edge_length,
 
     # Other
     has_hanging_nodes,
     get_hanging_node_between,
     vertex_map
+
+    # SpherGraph only
 
 import MetaGraphs; const MG = MetaGraphs
 import Graphs; const Gr = Graphs
@@ -134,62 +135,101 @@ This will **not** create any edges betwwen those vertices.
 """
 function add_interior! end
 
+function add_interior!(g, v1, v2, v3; refine=false)
+    Gr.add_vertex!(g)
+    MG.set_prop!(g, nv(g), :type, "interior")
+    MG.set_prop!(g, nv(g), :refine, refine)
+    Gr.add_edge!(g, nv(g), v1)
+    Gr.add_edge!(g, nv(g), v2)
+    Gr.add_edge!(g, nv(g), v3)
+    g.interior_count += 1
+    return nv(g)
+end
+
+function add_interior!(g, vs; refine=false)
+    add_interior!(vs[v1], vs[v2], vs[v3]; value=value)
+end
+
 "Add edge between vertices `v1` and `v2`."
-function add_edge! end
+function add_edge!(g, v1, v2,; boundary=false)
+    Gr.add_edge!(g, v1, v2)
+    MG.set_prop!(g, v1, v2, :boundary, boundary)
+end
 
 "Remove vertex `v` of any type from graph."
-function rem_vertex! end
+function rem_vertex!(g, v)
+    if is_vertex(g, v)
+        g.vertex_count -= 1
+    elseif is_hanging(g, v)
+        g.hanging_count -= 1
+    else
+        g.interior_count -=1
+    end
+    Gr.rem_vertex!(g, v)
+end
 
 "Remove edge from `v1` to `v2` from graph."
-function rem_edge! end
+function rem_edge!(g, v1, v2) = Gr.rem_vertex!(g, v1, v2)
 
 "Number of **all** vertices in graph `g`. Alias: [`nv`](@ref)"
-function all_vertex_count end
+all_vertex_count(g) = Gr.nv(g)
 
 "Number of **all** vertices in graph `g`. Alias of [`vertex_count`](@ref)"
 nv = all_vertex_count
 
-"Number of normal vertices in graph `g`"
-function vertex_count end
-
-"Number of hanging nodes in graph `g`"
-function hanging_count end
-
-"Number of interiors in graph `g`"
-function interior_count end
-
 "Return vector of all vertices with type `type`"
-function vertices_with_type end
+function vertices_with_type(g, type::String)
+    filter_fun(g, v) = if get_prop(g.graph, v, :type) == type true else false end
+    Gr.filter_vertices(g, filter_fun)
+end
 
 "Return vector of all vertices with type different from `type`"
-function vertices_except_type end
+function vertices_except_type(g, type::String)
+    filter_fun(g, v) = if get_prop(g.graph, v, :type) != type true else false end
+    Gr.filter_vertices(g, filter_fun)
+end
+
+"Number of normal vertices in graph `g`"
+vertex_count(g) = g.vertex_count
+
+"Number of hanging nodes in graph `g`"
+hanging_count(g) = g.hanging_count
+
+"Number of interiors in graph `g`"
+interior_count(g) = g.interior_count
 
 "Return all vertices with type `vertex`"
-function normal_vertices end
+normal_vertices(g) = vertices_with_type(g, "vertex")
 
 "Return all vertices with type `hanging`"
-function hanging_nodes end
+hanging_nodes(g) = vertices_with_type(g, "hanging")
 
 "Return all vertices with type `interior`"
-function interiors end
+interiors(g) = vertices_with_type(g, "interior")
 
 "Changes type of vertex to `vertex` from `hanging`"
-function unset_hanging! end
+function unset_hanging!(g, v)
+    MG.set_prop!(g, v, :type, "vertex")
+    MG.rem_prop!(g, v, :v1)
+    MG.rem_prop!(g, v, :v2)
+    g.hanging_count -= 1
+    g.vertex_count += 1
+end
 
 "Return vector with cartesian coordinates of vertex `v`. Alias: [`xyz`](@ref)"
-function get_cartesian end
+function get_cartesian(g::SphereGraph, v) = MG.get_prop(g.graph, v, :xyz)
 
 "Return vector with cartesian coordinates of vertex `v`. Alias of:
 [`get_cartesian`](@ref)"
 xyz = get_cartesian
 
-function is_hanging end
-function is_vertex end
-function is_interior end
+function is_hanging(g, v) = MG.get_prop(g, v, :type) == "hanging"
+function is_vertex(g, v) = MG.get_prop(g, v, :type) == "vertex"
+function is_interior(g, v) = MG.get_prop(g, v, :type) == "interior"
 function get_elevation end
 function set_elevation! end
-function get_value end
-function set_value! end
+function get_value(g, v) = MG.get_prop(g, v, :value)
+function set_value!(g, v, value) = MG.set_prop!(g, v, :value, value)
 
 """
     get_all_values(g)
@@ -201,7 +241,9 @@ using [`vertex_map`](@ref).
 
 See also: [`set_all_values!`](@ref), [`vertex_map`](@ref)
 """
-function get_all_values end
+function get_all_values(g)
+    [MG.get_prop(g, v, :value) for v in normal_vertices(g)]
+end
 
 """
     set_all_values!(g, values)
@@ -212,27 +254,33 @@ on.
 
 See also: [`set_all_values!`](@ref), [`vertex_map`](@ref)
 """
-function set_all_values! end
+function set_all_values!(g, values)
+    for (i, v) in enumerate(normal_vertices(g))
+        set_prop!(g, v, :value, values[i])
+    end
+end
 
-function should_refine end
-function set_refine! end
-function unset_refine! end
+function should_refine(g, i) = MG.get_prop!(g, i, :refine)
+function set_refine!(g, i) = MG.set_prop!(g, i, :refine, true)
+function unset_refine!(g, i) = MG.set_prop!(g, i, :refine, false)
 
 "Is edge between `v1` and `v2` on boundary"
-function is_on_boundary end
+function is_on_boundary(g, v1, v2) = MG.get_prop(g, v1, v2, :boundary)
 
-function set_boundary! end
-function unset_boundary! end
+function set_boundary!(g, v1, v2) = MG.set_prop!(g, v1,v2, :boundary, true)
+function unset_boundary!(g, v1, v2) = MG.set_prop!(g, v1,v2, :boundary, true)
 
 "Return length of edge as euclidean distance between cartesian coordiantes of
 its vertices"
-function edge_length end
+function edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
 
 "Whether graph `g` has any hanging nodes"
-function has_hanging_nodes end
+has_hanging_nodes(g) = hanging_count(g) != 0
 
 "Get hanging node between normal vertices `v1` and `v2` in graph `g`"
-function get_hanging_node_between end
+function get_hanging_node_between(g, v1, v2)
+    # TODO
+end
 
 """
     vertex_map(g)
@@ -244,7 +292,7 @@ starting at 1.
 Removing vertices from graph **will** make previously generated mapping
 deprecated.
 """
-function vertex_map end
+vertex_map(g) =  Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
 
 include("flatgraph.jl")
 include("spheregraph.jl")

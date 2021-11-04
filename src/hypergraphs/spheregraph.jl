@@ -8,7 +8,7 @@ using LinearAlgebra
 Can represent Earth's surface where elevation above (or below) sea level is
 set using `elevation` property.
 
-# Properties of vertices and edges
+# Verticex properties
 All properties are the same as in `HyperGraph` except for the following:
 - `vertex` type vertices:
     - `xyz` - cartesian coordinates of vertex, include `elevation`
@@ -42,7 +42,7 @@ Create SphereGraph.
 function SphereGraph end
 
 function SphereGraph(radius)
-    graph = MetaGraph()
+    graph = MG.MetaGraph()
     SphereGraph(graph, radius, 0, 0, 0)
 end
 
@@ -136,92 +136,8 @@ function add_hanging!(g::SphereGraph, v1, v2)
     return nv(g)
 end
 
-function add_interior!(g, v1, v2, v3; refine=false)
-    Gr.add_vertex!(g)
-    MG.set_prop!(g, nv(g), :type, "interior")
-    MG.set_prop!(g, nv(g), :refine, refine)
-    Gr.add_edge!(g, nv(g), v1)
-    Gr.add_edge!(g, nv(g), v2)
-    Gr.add_edge!(g, nv(g), v3)
-    g.interior_count += 1
-    return nv(g)
-end
-
-function add_interior!(g, vs; refine=false)
-    add_interior!(vs[v1], vs[v2], vs[v3]; value=value)
-end
-
-function add_edge!(g, v1, v2,; boundary=false)
-    Gr.add_edge!(g, v1, v2)
-    MG.set_prop!(g, v1, v2, :boundary, boundary)
-end
-
-function rem_vertex!(g, v) = Gr.rem_vertex!(g, v)
-function rem_edge!(g, v1, v2) = Gr.rem_vertex!(g, v1, v2)
-
-function edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
-
-function unset_hanging!(g, v)
-    MG.set_prop!(g, v, :type, "vertex")
-    MG.rem_prop!(g, v, :v1)
-    MG.rem_prop!(g, v, :v2)
-    g.hanging_count -= 1
-    g.vertex_count += 1
-end
-
-all_vertex_count(g) = Gr.nv(g)
-vertex_count(g) = g.vertex_count
-hanging_count(g) = g.hanging_count
-interior_count(g) = g.interior_count
-
-function vertices_with_type(g, type::String)
-    filter_fun(g, v) = if get_prop(g.graph, v, :type) == type true else false end
-    Gr.filter_vertices(g, filter_fun)
-end
-
-function vertices_except_type(g, type::String)
-    filter_fun(g, v) = if get_prop(g.graph, v, :type) != type true else false end
-    Gr.filter_vertices(g, filter_fun)
-end
-
-hanging_nodes(g) = vertices_with_type(g, "hanging")
-normal_vertices(g) = vertices_with_type(g, "vertex")
-interiors(g) = vertices_with_type(g, "interior")
-
-has_hanging_nodes(g) = hanging_count(g) != 0
-
-function get_hanging_node_between(g, v1, v2)
-    # TODO
-end
-
-function get_cartesian(g::SphereGraph, v) = MG.get_prop(g.graph, v, :xyz)
-
-function is_hanging(g, v) = MG.get_prop(g, v, :type) == "hanging"
-function is_vertex(g, v) = MG.get_prop(g, v, :type) == "vertex"
-function is_interior(g, v) = MG.get_prop(g, v, :type) == "interior"
 function get_elevation(g, v) MG.get_prop(g, v, :elevation)
 function set_elevation!(g, v, elevation)
     MG.set_prop!(g, v, :elevation, elevation)
     recalculate_cartesian!(g, v)
 end
-function get_value(g, v) = MG.get_prop(g, v, :value)
-function set_value!(g, v, value) = MG.set_prop!(g, v, :value, value)
-function get_all_values(g)
-    [MG.get_prop(g, v, :value) for v in normal_vertices(g)]
-end
-
-function set_all_values!(g, values)
-    for (i, v) in enumerate(normal_vertices(g))
-        set_prop!(g, v, :value, values[i])
-    end
-end
-
-function is_on_boundary(g, v1, v2) = MG.get_prop(g, v1, v2, :boundary)
-function set_boundary!(g, v1, v2) = MG.set_prop!(g, v1,v2, :boundary, true)
-function unset_boundary!(g, v1, v2) = MG.set_prop!(g, v1,v2, :boundary, true)
-
-function should_refine(g, i) = MG.get_prop!(g, i, :refine)
-function set_refine!(g, i) = MG.set_prop!(g, i, :refine, true)
-function unset_refine!(g, i) = MG.set_prop!(g, i, :refine, false)
-
-vertex_map(g) =  Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
