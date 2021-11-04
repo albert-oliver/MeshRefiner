@@ -419,7 +419,7 @@ starting at 1."
 vertex_map(g) = Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
 
 "Set `:value` property for all vertexes with type `vertex` in graph `g`. Vertex
-with smalles `id` will receive value `a[1]`, next one `a[2]` and so on"
+with smallest `id` will receive value `a[1]`, next one `a[2]` and so on"
 function set_values!(g, a)
     for (i, v) in enumerate(normal_vertices(g))
         set_prop!(g, v, :value, a[i])

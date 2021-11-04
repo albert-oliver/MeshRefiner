@@ -67,7 +67,7 @@ end
 """
     transform_p1!(g, center)
 
-Run transgormation P1 on triangle represented by interior `center`.
+Run transformation P1 on triangle represented by interior `center`.
 
 ```text
      v                v
