@@ -1,4 +1,4 @@
-import Graphsl; const Gr = Graphs
+import Graphs; const Gr = Graphs
 import MetaGraphs; const MG = MetaGraphs
 using LinearAlgebra
 
@@ -29,7 +29,7 @@ All properties are the same as in `HyperGraph` except for the following:
 See also: [`HyperGraph`](@ref)
 """
 mutable struct SphereGraph <: HyperGraph
-    graph::MetaGraph
+    graph::MG.MetaGraph
     radius::Real
     vertices_count::Integer
     interior_count::Integer
@@ -57,28 +57,17 @@ SphereGraph() = SphereGraph(6371000)     # Earth's radius
 # ------ Functions specific for SphereGraph -----------------------------------
 # -----------------------------------------------------------------------------
 
-function cartesian_to_spherical(coords::Vector{<:Real})
-    x = coords[1]
-    y = coords[2]
-    z = coords[3]
+function cartesian_to_spherical(coords)
+    x, y, z = coords
     r = norm(coords[1:3])
-    lat = -acos(z / r) + pi / 2.0
-    lon = atan(y, x)
-    lat = lat * 180 / pi
-    lon = lon * 180 / pi
+    lat = r !=0 ? -acosd(z / r) + 90.0 : 0
+    lon = atand(y, x)
     [r, lat, lon]
 end
 
-function spherical_to_cartesian(coords::Vector{<:Real})
-    r = coords[1]
-    lat = coords[2] * pi / 180
-    lon = coords[3] * pi / 180
-    lat = -lat + pi / 2.0
-    lon = lon >= 0 ? lon : lon + 2.0 * pi
-    x = r * cos(lon) * sin(lat)
-    y = r * sin(lon) * sin(lat)
-    z = r * cos(lat)
-    [x, y, z]
+function spherical_to_cartesian(coords)
+    r, lat, lon = coords
+    r .* [cosd(lon) * cosd(lat), sind(lon) * cosd(lat), sind(lat)]
 end
 
 """
@@ -88,27 +77,28 @@ Return latitude and longtitude of vertex `v` (in geographic coordinate system).
 
 See also: [`SphereGraph`](@ref)
 """
-function gcs(g::SphereGraph, v) = MG.get_prop(g.graph, v, :gcs)
-function lat(g::SphereGraph, v) = gcs(g, v)[1]
-function lon(g::SphereGraph, v) = gcs(g, v)[2]
+gcs(g::SphereGraph, v) = MG.get_prop(g.graph, v, :gcs)
+lat(g::SphereGraph, v) = gcs(g, v)[1]
+lon(g::SphereGraph, v) = gcs(g, v)[2]
 
 "Return vector `[r, lat, lon]` with spherical coordinates of vertex `v`."
 function get_spherical(g::SphereGraph, v)
-    elevation = MG.get_prop(g, v, :elevation)
-    vcat([g.radius + elevation], )
+    coords = gcs(g, v)
+    elevation = MG.get_prop(g.graph, v, :elevation)
+    vcat([g.radius + elevation], coords)
 end
 
 "Recalculate cartesian coordinates of vertex `v` using spherical."
 function recalculate_cartesian!(g::SphereGraph, v)
     spherical = get_spherical(g, v)
-    xyz = spherical_to_cartesian(spherical)
-    MG.set_prop!(g.graph, v, :xyz, xyz)
+    coords = spherical_to_cartesian(spherical)
+    MG.set_prop!(g.graph, v, :xyz, coords)
 end
 
 "Recalculate spherical coordinates of vertex `v` using cartesian."
 function recalculate_spherical!(g::SphereGraph, v)
-    xyz = xyz(g, v)
-    spherical = cartesian_to_spherical(xyz)
+    coords = xyz(g, v)
+    spherical = cartesian_to_spherical(coords)
     MG.set_prop!(g.graph, v, :elevation, spherical[1] - g.radius)
     MG.set_prop!(g.graph, v, :gcs, spherical[2:3])
 end
@@ -117,23 +107,29 @@ end
 # ------ Methods for HyperGraph functions -------------------------------------
 # -----------------------------------------------------------------------------
 
-function add_vertex!(g::SphereGraph, coords::Vector{Real}; value::Real = 0.0)
+function add_vertex!(g::SphereGraph, coords; value::Real = 0.0)
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, "vertex")
     MG.set_prop!(g.graph, nv(g), :value, value)
     MG.set_prop!(g.graph, nv(g), :xyz, coords[1:3])
-    recalculate_spherical(g)
+    recalculate_spherical!(g, nv(g))
     g.vertices_count += 1
     return nv(g)
 end
 
-function add_vertex!(g::SphereGraph, coords::Vector{Real}, elevation::Real; value::Real = 0.0)
+function add_vertex!(g::SphereGraph, coords, elevation::Real; value::Real = 0.0)
+    lat = coords[1]
+    if lat < -90 || lat > 90
+        throw(DomainError(lat, "Latitude has to be in range [-90, 90]"))
+    end
+    lon = -(mod((-coords[2] + 180), 360) - 180)     # moves lon to range (-180, 180]
+
     Gr.add_vertex!(g.graph)
-    MG.set_prop!(g, nv(g), :type, "vertex")
+    MG.set_prop!(g.graph, nv(g), :type, "vertex")
     MG.set_prop!(g.graph, nv(g), :value, value)
-    MG.set_prop!(g, nv(g), :gcd, coords[1:2])
-    MG.set_prop!(g, nv(g), :elevation, elevation)
-    recalculate_cartesian(g)
+    MG.set_prop!(g.graph, nv(g), :gcs, [lat, lon])
+    MG.set_prop!(g.graph, nv(g), :elevation, elevation)
+    recalculate_cartesian!(g, nv(g))
     g.vertices_count += 1
     return nv(g)
 end
@@ -151,8 +147,8 @@ function add_hanging!(g::SphereGraph, v1, v2)
     return nv(g)
 end
 
-function get_elevation(g::SphereGraph, v) MG.get_prop(g, v, :elevation)
+get_elevation(g::SphereGraph, v) = MG.get_prop(g.graph, v, :elevation)
 function set_elevation!(g::SphereGraph, v, elevation)
-    MG.set_prop!(g, v, :elevation, elevation)
+    MG.set_prop!(g.graph, v, :elevation, elevation)
     recalculate_cartesian!(g, v)
 end

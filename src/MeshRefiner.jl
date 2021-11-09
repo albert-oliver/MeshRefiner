@@ -1,10 +1,10 @@
 module MeshRefiner
 
+include("hypergraphs/hypergraphs.jl")
 include("utils.jl")
 include("transformations/transformations.jl")
 include("adaptation/adaptation.jl")
 include("graph_creator/graph_creator.jl")
-include("hypergraphs/hypergraphs.jl")
 include("visualization/visualization.jl")
 include("io.jl")
 include("simulation/sim.jl")

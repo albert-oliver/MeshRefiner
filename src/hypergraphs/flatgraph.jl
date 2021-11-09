@@ -1,4 +1,4 @@
-import Graphsl; const Gr = Graphs
+import Graphs; const Gr = Graphs
 import MetaGraphs; const MG = MetaGraphs
 using LinearAlgebra
 
@@ -21,7 +21,7 @@ All properties are the same as in `HyperGraph` except for the following:
 See also: [`HyperGraph`](@ref)
 """
 mutable struct FlatGraph <: HyperGraph
-    graph::MetaGraph
+    graph::MG.MetaGraph
     vertices_count::Integer
     interior_count::Integer
     hanging_count::Integer
@@ -36,7 +36,7 @@ end
 # ------ Methods for HyperGraph functions -------------------------------------
 # -----------------------------------------------------------------------------
 
-function add_vertex!(g::FlatGraph, coords::Vector{Real}; value::Real = 0.0)
+function add_vertex!(g::FlatGraph, coords; value::Real = 0.0)
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, "vertex")
     MG.set_prop!(g.graph, nv(g), :value, value)
@@ -45,7 +45,7 @@ function add_vertex!(g::FlatGraph, coords::Vector{Real}; value::Real = 0.0)
     return nv(g)
 end
 
-function add_vertex!(g::FlatGraph, coords::Vector{Real}, elevation::Real; value::Real = 0.0)
+function add_vertex!(g::FlatGraph, coords, elevation::Real; value::Real = 0.0)
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, "vertex")
     MG.set_prop!(g.graph, nv(g), :value, value)
@@ -67,7 +67,7 @@ function add_hanging!(g::FlatGraph, v1, v2)
     return nv(g)
 end
 
-function get_elevation(g::FlatGraph, v) MG.get_prop(g, v, :xyz)[3]
+get_elevation(g::FlatGraph, v) = MG.get_prop(g, v, :xyz)[3]
 
 function set_elevation!(g::FlatGraph, v, elevation)
     xyz = MG.get_prop(g, v, :xyz)

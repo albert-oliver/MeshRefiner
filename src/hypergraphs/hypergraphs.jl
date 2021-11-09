@@ -60,7 +60,7 @@ export
     # Other
     has_hanging_nodes,
     get_hanging_node_between,
-    vertex_map
+    vertex_map,
 
     # SphereGraph only
     gcs,
@@ -125,8 +125,8 @@ Add new vertex to graph `g`.
     - `z = coords[3]`
     - and calculate `lat`, `lon` and `elevation`
 - when `elevation` is delivered:
-    - `lat = coords[1]`
-    - `lon = coords[2]`
+    - `lat = coords[1]` has to be in range [-90, 90]
+    - `lon = coords[2]` can be any real number, is moved to range (-180, 180]
     - `elevation = elevation`
     - and calculate `x`, `y`, `z`
 """
@@ -156,12 +156,12 @@ This will **not** create any edges betwwen those vertices.
 function add_interior! end
 
 function add_interior!(g, v1, v2, v3; refine=false)
-    Gr.add_vertex!(g)
-    MG.set_prop!(g, nv(g), :type, "interior")
-    MG.set_prop!(g, nv(g), :refine, refine)
-    Gr.add_edge!(g, nv(g), v1)
-    Gr.add_edge!(g, nv(g), v2)
-    Gr.add_edge!(g, nv(g), v3)
+    Gr.add_vertex!(g.graph)
+    MG.set_prop!(g.graph, nv(g), :type, "interior")
+    MG.set_prop!(g.graph, nv(g), :refine, refine)
+    Gr.add_edge!(g.graph, nv(g), v1)
+    Gr.add_edge!(g.graph, nv(g), v2)
+    Gr.add_edge!(g.graph, nv(g), v3)
     g.interior_count += 1
     return nv(g)
 end
@@ -172,8 +172,8 @@ end
 
 "Add edge between vertices `v1` and `v2`."
 function add_edge!(g, v1, v2,; boundary=false)
-    Gr.add_edge!(g, v1, v2)
-    MG.set_prop!(g, v1, v2, :boundary, boundary)
+    Gr.add_edge!(g.graph, v1, v2)
+    MG.set_prop!(g.graph, v1, v2, :boundary, boundary)
 end
 
 "Remove vertex `v` of any type from graph."
@@ -189,14 +189,14 @@ function rem_vertex!(g, v)
 end
 
 "Remove edge from `v1` to `v2` from graph."
-function rem_edge!(g, v1, v2) = Gr.rem_vertex!(g, v1, v2)
+rem_edge!(g, v1, v2) = Gr.rem_vertex!(g, v1, v2)
 
 # -----------------------------------------------------------------------------
 # ------ Functions counting elements fo graph  --------------------------------
 # -----------------------------------------------------------------------------
 
 "Number of **all** vertices in graph `g`. Alias: [`nv`](@ref)"
-all_vertex_count(g) = Gr.nv(g)
+all_vertex_count(g) = Gr.nv(g.graph)
 
 "Number of **all** vertices in graph `g`. Alias of [`vertex_count`](@ref)"
 nv = all_vertex_count
@@ -274,19 +274,19 @@ function unset_hanging!(g, v)
 end
 
 "Return vector with cartesian coordinates of vertex `v`. Alias: [`xyz`](@ref)"
-function get_cartesian(g::SphereGraph, v) = MG.get_prop(g.graph, v, :xyz)
+get_cartesian(g::HyperGraph, v) = MG.get_prop(g.graph, v, :xyz)
 
 "Return vector with cartesian coordinates of vertex `v`. Alias of:
 [`get_cartesian`](@ref)"
 xyz = get_cartesian
 
-function is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == "hanging"
-function is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == "vertex"
-function is_interior(g, v) = MG.get_prop(g.graph, v, :type) == "interior"
+is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == "hanging"
+is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == "vertex"
+is_interior(g, v) = MG.get_prop(g.graph, v, :type) == "interior"
 function get_elevation end
 function set_elevation! end
-function get_value(g, v) = MG.get_prop(g.graph, v, :value)
-function set_value!(g, v, value) = MG.set_prop!(g.graph, v, :value, value)
+get_value(g, v) = MG.get_prop(g.graph, v, :value)
+set_value!(g, v, value) = MG.set_prop!(g.graph, v, :value, value)
 
 """
     get_all_values(g)
@@ -313,27 +313,27 @@ See also: [`set_all_values!`](@ref), [`vertex_map`](@ref)
 """
 function set_all_values!(g, values)
     for (i, v) in enumerate(normal_vertices(g))
-        set_prop!(g, v, :value, values[i])
+        set_prop!(g.graph, v, :value, values[i])
     end
 end
 
-function should_refine(g, i) = MG.get_prop!(g.graph, i, :refine)
-function set_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, true)
-function unset_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, false)
+should_refine(g, i) = MG.get_prop!(g.graph, i, :refine)
+set_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, true)
+unset_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, false)
 
 # -----------------------------------------------------------------------------
 # ------ Functions handling edge properties -----------------------------------
 # -----------------------------------------------------------------------------
 
 "Is edge between `v1` and `v2` on boundary"
-function is_on_boundary(g, v1, v2) = MG.get_prop(g.graph, v1, v2, :boundary)
+is_on_boundary(g, v1, v2) = MG.get_prop(g.graph, v1, v2, :boundary)
 
-function set_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
-function unset_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
+set_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
+unset_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
 
 "Return length of edge as euclidean distance between cartesian coordiantes of
 its vertices"
-function edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
+edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
 
 # -----------------------------------------------------------------------------
 # ------ Ther functions -------------------------------------------------------
