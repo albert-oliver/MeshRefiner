@@ -1,7 +1,7 @@
 using MeshRefiner.HyperGraphs
 
 import Graphs; const Gr = Graphs
-import MetaGraphs; const MT = MetaGraphs
+import MetaGraphs; const MG = MetaGraphs
 
 @testset "SphereGraph" begin
     g = SphereGraph(100)
@@ -350,5 +350,94 @@ end
                 end
             end
         end
+    end
+
+    @testset "add_edge!" begin
+        g = SphereGraph(5)
+        add_vertex!(g, [3, 0, 0])
+        add_vertex!(g, [0, 4, 0])
+        add_vertex!(g, [0, 0, 4])
+        add_vertex!(g, [0, 0, 3])
+        add_vertex!(g, [1, 1, 1])
+
+        add_edge!(g, 1, 2)
+        add_edge!(g, 1, 3)
+        add_edge!(g, 2, 4; boundary=true)
+        add_edge!(g, 1, 5; boundary=true)
+
+        # test if graph has proper edges
+        edges = [
+            1  1  2  1;
+            2  3  4  5;
+        ]
+        for v1 in 1:5, v2 in 1:5
+            if [v1, v2] in eachcol(edges) ||  [v2, v1] in eachcol(edges)
+                @test has_edge(g, v1, v2)
+            else
+                @test !has_edge(g, v1, v2)
+            end
+        end
+
+        @test !is_on_boundary(g, 1, 2)
+        @test !is_on_boundary(g, 1, 3)
+        @test is_on_boundary(g, 2, 4)
+        @test is_on_boundary(g, 1, 5)
+    end
+
+    @testset "add_hanging!" begin
+        g = SphereGraph(5)
+        v1 = add_vertex!(g, [4, 0, 0])
+        v2 = add_vertex!(g, [0, 4, 0])
+        h = add_hanging!(g, v1, v2)
+
+        # basic graph properties
+        @test g.hanging_count == 1
+        @test g.vertices_count == 2
+        @test g.interior_count == 0
+        @test Gr.nv(g.graph) == 3
+        @test Gr.ne(g.graph) == 2
+
+        # new hanging node properties
+        @test is_hanging(g, h)
+        @test v1 in [MG.get_prop(g.graph, h, :v1), MG.get_prop(g.graph, h, :v2)]
+        @test v2 in [MG.get_prop(g.graph, h, :v1), MG.get_prop(g.graph, h, :v2)]
+        @test xyz(g, h) == [2, 2, 0]
+        @test gcs(g, h) ≈ [0, 45]
+        @test get_elevation(g, h) == sqrt(8) - 5
+
+        # edges
+        @test !has_edge(g, v1, v2)
+        @test has_edge(g, v1, h)
+        @test has_edge(g, v1, h)
+        @test !is_on_boundary(g, v1, h)
+        @test !is_on_boundary(g, v2, h)
+    end
+
+    @testset "add_interior!" begin
+        g = SphereGraph(5)
+        v1 = add_vertex!(g, [5, 0, 0])
+        v2 = add_vertex!(g, [0, 5, 0])
+        v3 = add_vertex!(g, [0, 0, 5])
+        i1 = add_interior!(g, 1, 2, 3)
+        v4 = add_vertex!(g, [0, -5, 0])
+        i2 = add_interior!(g, 1, 3, 5; refine=true)
+
+        @test g.vertices_count == 4
+        @test g.hanging_count == 0
+        @test g.interior_count == 2
+        @test Gr.nv(g.graph) == 6
+
+        @test is_interior(g, i1)
+        @test is_interior(g, i2)
+        @test !is_interior(g, v1)
+        @test !is_interior(g, v2)
+        @test !is_interior(g, v3)
+        @test !is_interior(g, v4)
+
+        @test Set(interiors_vertices(g, i1)) == Set([v1, v2, v3])
+        @test Set(interiors_vertices(g, i2)) == Set([v1, v3, v4])
+
+        @test !should_refine(g, i1)
+        @test should_refine(g, i2)
     end
 end

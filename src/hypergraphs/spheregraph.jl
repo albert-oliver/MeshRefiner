@@ -136,14 +136,20 @@ end
 
 function add_hanging!(g::SphereGraph, v1, v2)
     Gr.add_vertex!(g.graph)
-    MG.set_prop!(g, nv(g), :type, "hanging")
+    MG.set_prop!(g.graph, nv(g), :type, "hanging")
     MG.set_prop!(g.graph, nv(g), :value, 0.0)
-    xyz = (xyz(g, v1) + xyz(g, v2)) / 2.0
-    MG.set_prop!(g.graph, nv(g), :xyz, xyz)
+    coords = (xyz(g, v1) + xyz(g, v2)) / 2.0
+    MG.set_prop!(g.graph, nv(g), :xyz, coords)
     MG.set_prop!(g.graph, nv(g), :v1, v1)
     MG.set_prop!(g.graph, nv(g), :v2, v2)
-    recalculate_spherical(g)
+    recalculate_spherical!(g, nv(g))
     g.hanging_count += 1
+    props = MG.props(g.graph, nv(g))
+    rem_edge!(g, v1, v2)
+    add_edge!(g, v1, nv(g))
+    add_edge!(g, v2, nv(g))
+    MG.set_props!(g.graph, v1, nv(g), props)
+    MG.set_props!(g.graph, v2, nv(g), props)
     return nv(g)
 end
 

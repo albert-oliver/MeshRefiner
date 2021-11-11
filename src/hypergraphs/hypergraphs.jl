@@ -7,7 +7,7 @@ export
 
     # Adding / removing
     add_vertex!,
-    add_hangign!,
+    add_hanging!,
     add_interior!,
     add_edge!,
     rem_vertex!,
@@ -56,6 +56,7 @@ export
     set_boundary!,
     unset_boundary!,
     edge_length,
+    has_edge,
 
     # Other
     has_hanging_nodes,
@@ -101,7 +102,6 @@ See also: [`FlatGraph`](@ref), [`SphereGraph`](@ref)
 """
 abstract type HyperGraph end
 
-
 # -----------------------------------------------------------------------------
 # ------ Functions for adding and removing vertices and edges -----------------
 # -----------------------------------------------------------------------------
@@ -137,9 +137,12 @@ function add_vertex! end
 
 Add hanging node between vertices `v1` and `v2`.
 
-# Note
-This will remove edge between those vertices and calculate new vertex
-coordinates based on `v1` and `v2`.
+This does the following:
+- Remove edge between `v1` and `v2`
+- Add new vertex with type `hanging` in the middle
+    - calculated with cartesian coordinates
+- Connects `v1` and `v2` to new vertex
+- **All** properties of edge `v1-v2` wil, be copied to new ones
 """
 function add_hanging! end
 
@@ -148,10 +151,10 @@ function add_hanging! end
     add_interior!(g, vs; refine=false)
 
 Add interior to graph `g` that represents traingle with vertices `v1`, `v2` and
-`v3` (or vector `vs = [v1, v2, v3]`)
+`v3` (or vector `vs = [v1, v2, v3]`).
 
 # Note
-This will **not** create any edges betwwen those vertices.
+This will **not** create any edges between those vertices.
 """
 function add_interior! end
 
@@ -171,7 +174,7 @@ function add_interior!(g, vs; refine=false)
 end
 
 "Add edge between vertices `v1` and `v2`."
-function add_edge!(g, v1, v2,; boundary=false)
+function add_edge!(g, v1, v2; boundary=false)
     Gr.add_edge!(g.graph, v1, v2)
     MG.set_prop!(g.graph, v1, v2, :boundary, boundary)
 end
@@ -189,7 +192,7 @@ function rem_vertex!(g, v)
 end
 
 "Remove edge from `v1` to `v2` from graph."
-rem_edge!(g, v1, v2) = Gr.rem_vertex!(g, v1, v2)
+rem_edge!(g, v1, v2) = Gr.rem_edge!(g.graph, v1, v2)
 
 # -----------------------------------------------------------------------------
 # ------ Functions counting elements fo graph  --------------------------------
@@ -273,12 +276,16 @@ function unset_hanging!(g, v)
     g.vertex_count += 1
 end
 
+# -----------------------------------------------------------------------------
+# ------ Used in mosed functions below ----------------------------------------
+# -----------------------------------------------------------------------------
+
 "Return vector with cartesian coordinates of vertex `v`. Alias: [`xyz`](@ref)"
 get_cartesian(g::HyperGraph, v) = MG.get_prop(g.graph, v, :xyz)
 
 "Return vector with cartesian coordinates of vertex `v`. Alias of:
 [`get_cartesian`](@ref)"
-xyz = get_cartesian
+const xyz = get_cartesian
 
 is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == "hanging"
 is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == "vertex"
@@ -317,7 +324,7 @@ function set_all_values!(g, values)
     end
 end
 
-should_refine(g, i) = MG.get_prop!(g.graph, i, :refine)
+should_refine(g, i) = MG.get_prop(g.graph, i, :refine)
 set_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, true)
 unset_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, false)
 
@@ -334,6 +341,8 @@ unset_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
 "Return length of edge as euclidean distance between cartesian coordiantes of
 its vertices"
 edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
+
+has_edge(g, v1, v2) = Gr.has_edge(g.graph, v1, v2)
 
 # -----------------------------------------------------------------------------
 # ------ Ther functions -------------------------------------------------------
