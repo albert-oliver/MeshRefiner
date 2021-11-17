@@ -1,7 +1,3 @@
-using ..Utils
-
-using MetaGraphs
-
 """
 Quite complex 3d graph with `:value` property set for all normal vertices.
 Some values are set to 0. Nice for testing draw functions.
@@ -27,130 +23,130 @@ v---v---v-------v
 ```
 """
 function full_graph_1()
-    g = MetaGraph()
+    g = FlatGraph()
 
-    add_meta_vertex!(g, 0.0, 8.0, 2.0)  # 1
-    add_meta_vertex!(g, 2.0, 8.0, 2.0)  # 2
-    add_meta_vertex!(g, 4.0, 8.0, 0.0)  # 3
-    add_meta_vertex!(g, 6.0, 8.0, 0.0)  # 4
-    add_meta_vertex!(g, 8.0, 8.0, 0.0)  # 5
-    add_meta_vertex!(g, 2.0, 6.0, 2.0)  # 6
-    add_meta_vertex!(g, 4.0, 6.0, 0.0)  # 7
-    add_meta_vertex!(g, 6.0, 6.0, 0.0)  # 8
-    add_meta_vertex!(g, 8.0, 6.0, 0.0)  # 9
-    add_meta_vertex!(g, 5.0, 5.0, 0.0)  # 10
-    add_meta_vertex!(g, 0.0, 4.0, 2.0)  # 11
-    add_meta_vertex!(g, 2.0, 4.0, 2.0)  # 12
-    add_meta_vertex!(g, 4.0, 4.0, 0.0)  # 13
-    add_meta_vertex!(g, 6.0, 4.0, 0.0)  # 14
-    add_meta_vertex!(g, 8.0, 4.0, 0.0)  # 15
-    add_meta_vertex!(g, 2.0, 2.0, 2.0)  # 16
-    add_meta_vertex!(g, 6.0, 2.0, 0.0)  # 17
-    add_meta_vertex!(g, 0.0, 0.0, 2.0)  # 18
-    add_meta_vertex!(g, 2.0, 0.0, 2.0)  # 19
-    add_meta_vertex!(g, 4.0, 0.0, 2.0)  # 20
-    add_meta_vertex!(g, 8.0, 0.0, 2.0)  # 21
+    add_vertex!(g, [0.0, 8.0, 2.0])  # 1
+    add_vertex!(g, [2.0, 8.0, 2.0])  # 2
+    add_vertex!(g, [4.0, 8.0, 0.0])  # 3
+    add_vertex!(g, [6.0, 8.0, 0.0])  # 4
+    add_vertex!(g, [8.0, 8.0, 0.0])  # 5
+    add_vertex!(g, [2.0, 6.0, 2.0])  # 6
+    add_vertex!(g, [4.0, 6.0, 0.0])  # 7
+    add_vertex!(g, [6.0, 6.0, 0.0])  # 8
+    add_vertex!(g, [8.0, 6.0, 0.0])  # 9
+    add_vertex!(g, [5.0, 5.0, 0.0])  # 10
+    add_vertex!(g, [0.0, 4.0, 2.0])  # 11
+    add_vertex!(g, [2.0, 4.0, 2.0])  # 12
+    add_vertex!(g, [4.0, 4.0, 0.0])  # 13
+    add_vertex!(g, [6.0, 4.0, 0.0])  # 14
+    add_vertex!(g, [8.0, 4.0, 0.0])  # 15
+    add_vertex!(g, [2.0, 2.0, 2.0])  # 16
+    add_vertex!(g, [6.0, 2.0, 0.0])  # 17
+    add_vertex!(g, [0.0, 0.0, 2.0])  # 18
+    add_vertex!(g, [2.0, 0.0, 2.0])  # 19
+    add_vertex!(g, [4.0, 0.0, 2.0])  # 20
+    add_vertex!(g, [8.0, 0.0, 2.0])  # 21
 
-    set_prop!(g, 1, :value, 0.0)
-    set_prop!(g, 2, :value, 0.0)
-    set_prop!(g, 3, :value, 1.5)
-    set_prop!(g, 4, :value, 1.5)
-    set_prop!(g, 5, :value, 2.5)
-    set_prop!(g, 6, :value, 0.0)
-    set_prop!(g, 7, :value, 1.5)
-    set_prop!(g, 8, :value, 2.7)
-    set_prop!(g, 9, :value, 2.5)
-    set_prop!(g, 10, :value, 1.5)
-    set_prop!(g, 11, :value, 0.0)
-    set_prop!(g, 12, :value, 0.0)
-    set_prop!(g, 13, :value, 1.5)
-    set_prop!(g, 14, :value, 1.5)
-    set_prop!(g, 15, :value, 1.5)
-    set_prop!(g, 16, :value, 0.0)
-    set_prop!(g, 17, :value, 1.5)
-    set_prop!(g, 18, :value, 0.0)
-    set_prop!(g, 19, :value, 0.0)
-    set_prop!(g, 20, :value, 0.0)
-    set_prop!(g, 21, :value, 0.0)
+    set_value!(g, 1, 0.0)
+    set_value!(g, 2, 0.0)
+    set_value!(g, 3, 1.5)
+    set_value!(g, 4, 1.5)
+    set_value!(g, 5, 2.5)
+    set_value!(g, 6, 0.0)
+    set_value!(g, 7, 1.5)
+    set_value!(g, 8, 2.7)
+    set_value!(g, 9, 2.5)
+    set_value!(g, 10, 1.5)
+    set_value!(g, 11, 0.0)
+    set_value!(g, 12, 0.0)
+    set_value!(g, 13, 1.5)
+    set_value!(g, 14, 1.5)
+    set_value!(g, 15, 1.5)
+    set_value!(g, 16, 0.0)
+    set_value!(g, 17, 1.5)
+    set_value!(g, 18, 0.0)
+    set_value!(g, 19, 0.0)
+    set_value!(g, 20, 0.0)
+    set_value!(g, 21, 0.0)
 
-    add_interior!(g, 1, 2, 6, false)
-    add_interior!(g, 2, 3, 6, false)
-    add_interior!(g, 1, 6, 11, false)
-    add_interior!(g, 11, 12, 6, false)
-    add_interior!(g, 12, 13, 6, false)
-    add_interior!(g, 3, 7, 6, false)
-    add_interior!(g, 6, 7, 13, false)
-    add_interior!(g, 7, 13, 10, false)
-    add_interior!(g, 7, 8, 10, false)
-    add_interior!(g, 8, 14, 10, false)
-    add_interior!(g, 14, 13, 10, false)
-    add_interior!(g, 3, 7, 8, false)
-    add_interior!(g, 3, 4, 8, false)
-    add_interior!(g, 4, 5, 8, false)
-    add_interior!(g, 5, 8, 9, false)
-    add_interior!(g, 8, 9, 15, false)
-    add_interior!(g, 8, 14, 15, false)
-    add_interior!(g, 11, 18, 16, false)
-    add_interior!(g, 11, 12, 16, false)
-    add_interior!(g, 12, 13, 16, false)
-    add_interior!(g, 13, 20, 16, false)
-    add_interior!(g, 19, 20, 16, false)
-    add_interior!(g, 18, 19, 16, false)
-    add_interior!(g, 13, 20, 17, false)
-    add_interior!(g, 13, 14, 17, false)
-    add_interior!(g, 14, 15, 17, false)
-    add_interior!(g, 15, 21, 17, false)
-    add_interior!(g, 20, 21, 17, false)
+    add_interior!(g, 1, 2, 6)
+    add_interior!(g, 2, 3, 6)
+    add_interior!(g, 1, 6, 11)
+    add_interior!(g, 11, 12, 6)
+    add_interior!(g, 12, 13, 6)
+    add_interior!(g, 3, 7, 6)
+    add_interior!(g, 6, 7, 13)
+    add_interior!(g, 7, 13, 10)
+    add_interior!(g, 7, 8, 10)
+    add_interior!(g, 8, 14, 10)
+    add_interior!(g, 14, 13, 10)
+    add_interior!(g, 3, 7, 8)
+    add_interior!(g, 3, 4, 8)
+    add_interior!(g, 4, 5, 8)
+    add_interior!(g, 5, 8, 9)
+    add_interior!(g, 8, 9, 15)
+    add_interior!(g, 8, 14, 15)
+    add_interior!(g, 11, 18, 16)
+    add_interior!(g, 11, 12, 16)
+    add_interior!(g, 12, 13, 16)
+    add_interior!(g, 13, 20, 16)
+    add_interior!(g, 19, 20, 16)
+    add_interior!(g, 18, 19, 16)
+    add_interior!(g, 13, 20, 17)
+    add_interior!(g, 13, 14, 17)
+    add_interior!(g, 14, 15, 17)
+    add_interior!(g, 15, 21, 17)
+    add_interior!(g, 20, 21, 17)
 
-    add_meta_edge!(g, 1, 2, true)
-    add_meta_edge!(g, 2, 3, true)
-    add_meta_edge!(g, 3, 4, true)
-    add_meta_edge!(g, 4, 5, true)
-    add_meta_edge!(g, 5, 9, true)
-    add_meta_edge!(g, 9, 15, true)
-    add_meta_edge!(g, 15, 21, true)
-    add_meta_edge!(g, 21, 20, true)
-    add_meta_edge!(g, 20, 19, true)
-    add_meta_edge!(g, 19, 18, true)
-    add_meta_edge!(g, 18, 11, true)
-    add_meta_edge!(g, 11, 1, true)
+    add_edge!(g, 1, 2; boundary=true)
+    add_edge!(g, 2, 3; boundary=true)
+    add_edge!(g, 3, 4; boundary=true)
+    add_edge!(g, 4, 5; boundary=true)
+    add_edge!(g, 5, 9; boundary=true)
+    add_edge!(g, 9, 15; boundary=true)
+    add_edge!(g, 15, 21; boundary=true)
+    add_edge!(g, 21, 20; boundary=true)
+    add_edge!(g, 20, 19; boundary=true)
+    add_edge!(g, 19, 18; boundary=true)
+    add_edge!(g, 18, 11; boundary=true)
+    add_edge!(g, 11, 1; boundary=true)
 
-    add_meta_edge!(g, 2, 6, false)
-    add_meta_edge!(g, 1, 6, false)
-    add_meta_edge!(g, 3, 6, false)
-    add_meta_edge!(g, 11, 6, false)
-    add_meta_edge!(g, 12, 6, false)
-    add_meta_edge!(g, 13, 6, false)
-    add_meta_edge!(g, 7, 6, false)
-    add_meta_edge!(g, 3, 7, false)
-    add_meta_edge!(g, 13, 7, false)
-    add_meta_edge!(g, 3, 8, false)
-    add_meta_edge!(g, 4, 8, false)
-    add_meta_edge!(g, 5, 8, false)
-    add_meta_edge!(g, 9, 8, false)
-    add_meta_edge!(g, 15, 8, false)
-    add_meta_edge!(g, 14, 8, false)
-    add_meta_edge!(g, 10, 8, false)
-    add_meta_edge!(g, 7, 8, false)
-    add_meta_edge!(g, 7, 10, false)
-    add_meta_edge!(g, 13, 10, false)
-    add_meta_edge!(g, 14, 10, false)
-    add_meta_edge!(g, 11, 12, false)
-    add_meta_edge!(g, 12, 13, false)
-    add_meta_edge!(g, 13, 14, false)
-    add_meta_edge!(g, 14, 15, false)
-    add_meta_edge!(g, 11, 16, false)
-    add_meta_edge!(g, 12, 16, false)
-    add_meta_edge!(g, 13, 16, false)
-    add_meta_edge!(g, 20, 16, false)
-    add_meta_edge!(g, 19, 16, false)
-    add_meta_edge!(g, 18, 16, false)
-    add_meta_edge!(g, 13, 20, false)
-    add_meta_edge!(g, 13, 17, false)
-    add_meta_edge!(g, 14, 17, false)
-    add_meta_edge!(g, 15, 17, false)
-    add_meta_edge!(g, 21, 17, false)
-    add_meta_edge!(g, 20, 17, false)
+    add_edge!(g, 2, 6)
+    add_edge!(g, 1, 6)
+    add_edge!(g, 3, 6)
+    add_edge!(g, 11, 6)
+    add_edge!(g, 12, 6)
+    add_edge!(g, 13, 6)
+    add_edge!(g, 7, 6)
+    add_edge!(g, 3, 7)
+    add_edge!(g, 13, 7)
+    add_edge!(g, 3, 8)
+    add_edge!(g, 4, 8)
+    add_edge!(g, 5, 8)
+    add_edge!(g, 9, 8)
+    add_edge!(g, 15, 8)
+    add_edge!(g, 14, 8)
+    add_edge!(g, 10, 8)
+    add_edge!(g, 7, 8)
+    add_edge!(g, 7, 10)
+    add_edge!(g, 13, 10)
+    add_edge!(g, 14, 10)
+    add_edge!(g, 11, 12)
+    add_edge!(g, 12, 13)
+    add_edge!(g, 13, 14)
+    add_edge!(g, 14, 15)
+    add_edge!(g, 11, 16)
+    add_edge!(g, 12, 16)
+    add_edge!(g, 13, 16)
+    add_edge!(g, 20, 16)
+    add_edge!(g, 19, 16)
+    add_edge!(g, 18, 16)
+    add_edge!(g, 13, 20)
+    add_edge!(g, 13, 17)
+    add_edge!(g, 14, 17)
+    add_edge!(g, 15, 17)
+    add_edge!(g, 21, 17)
+    add_edge!(g, 20, 17)
 
     return g
 end

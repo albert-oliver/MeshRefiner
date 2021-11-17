@@ -279,4 +279,10 @@
         @test get_elevation(g, 1) == 2
         @test xyz(g, 1) ≈ [7, 0, 0]
     end
+
+    @testset "get_values_cartesian" begin
+        g = SphereGraph(5)
+        add_vertex!(g, [0, 0], 1; value=1)
+        @test get_value_cartesian(g, 1) ≈ [7, 0, 0]
+    end
 end

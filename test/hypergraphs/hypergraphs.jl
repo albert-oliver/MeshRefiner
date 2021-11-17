@@ -291,6 +291,9 @@ import MetaGraphs; const MG = MetaGraphs
             g
         end
 
+        sample_sphere_graph = () -> sample_graph(SphereGraph)
+        sample_flat_graph = () -> sample_graph(FlatGraph)
+
         edges = [
             1 2 3 7 6 5 1 2 2 3 4 5 4 4 ;
             2 3 7 6 5 1 4 4 8 8 8 4 6 7
@@ -302,9 +305,6 @@ import MetaGraphs; const MG = MetaGraphs
         vs = 1:7
         hs = [8]
         inters = 9:15
-
-        sample_sphere_graph = () -> sample_graph(SphereGraph)
-        sample_flat_graph = () -> sample_graph(FlatGraph)
 
         function test_edges(g, edges, b_edges)
             for v1 in vertices_except_type(g, INTERIOR), v2 in vertices_except_type(g, INTERIOR)

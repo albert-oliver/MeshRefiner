@@ -5,7 +5,6 @@ export
 
     center_point,
     distance,
-    x, y, z,
     barycentric_matrix,
     barycentric,
     projection_area,
@@ -185,55 +184,6 @@ Return cartesian distance between points `p1` and `p2` (represented as arrays
 function distance end
 distance(p1::Array{<:Real, 1}, p2::Array{<:Real, 1}) = sqrt(sum(map(x -> x^2, p1-p2)))
 distance(g, v1, v2) = distance(xyz(g, v1), xyz(g, v2))
-
-
-"""
-    x(graph, vertex)
-    x(point)
-
-Returns `x` coordindate.
-
-If `graph` and `vertex` are delivered returns `x` property of `vertex`
-
-`point` is represented as array [x,y,z]. So returns `point[1]`. For convenience.
-
-See also: [`y`](@ref), [`z`](@ref), [`coords`](@ref)
-"""
-function x end
-x(graph::HyperGraph, vertex::Integer) = get_prop(graph, vertex, :x)
-x(point::Array{<:Real, 1}) = point[1]
-
-"""
-    z(graph, vertex)
-    z(point)
-
-Returns `y` coordindate.
-
-If `graph` and `vertex` are delivered returns `y` property of `vertex`
-
-`point` is represented as array [x,y,z]. So returns `point[2]`. For convenience.
-
-See also: [`x`](@ref), [`z`](@ref), [`coords`](@ref)
-"""
-function y end
-y(graph::HyperGraph, vertex::Integer) = get_prop(graph, vertex, :y)
-y(point::Array{<:Real, 1}) = point[2]
-
-"""
-    z(graph, vertex)
-    z(point)
-
-Returns `z` coordindate.
-
-If `graph` and `vertex` are delivered returns `z` property of `vertex`
-
-`point` is represented as array [x,y,z]. So returns `point[3]`. For convenience.
-
-See also: [`x`](@ref), [`y`](@ref), [`coords`](@ref)
-"""
-function z end
-z(graph::HyperGraph, vertex::Integer) = get_prop(graph, vertex, :z)
-z(point::Array{<:Real, 1}) = point[3]
 
 """
     projection_area(g, i)

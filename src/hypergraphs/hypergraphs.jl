@@ -4,7 +4,7 @@ export
     HyperGraph,
     FlatGraph,
     SphereGraph,
-    VType, VERTEX, HANGING, INTERIOR,
+    VERTEX, HANGING, INTERIOR,
 
     # Adding / removing
     add_vertex!,
@@ -47,6 +47,7 @@ export
     set_elevation!,
     get_value,
     set_value!,
+    get_value_cartesian,
     get_all_values,
     set_all_values!,
     should_refine,
@@ -78,7 +79,9 @@ import Graphs; const Gr = Graphs
 # ------ HyperGraph type definition -------------------------------------------
 # -----------------------------------------------------------------------------
 
-@enum VType VERTEX HANGING INTERIOR
+const VERTEX = 1
+const HANGING = 2
+const INTERIOR = 3
 
 """
 Abstract type that holds hypergraph.
@@ -235,24 +238,24 @@ interior_count(g) = g.interior_count
 # -----------------------------------------------------------------------------
 
 "Return vector of all vertices with type `type`"
-function vertices_with_type(g, type::VType)
+function vertices_with_type(g, type::Integer)
     filter_fun(g, v) = MG.get_prop(g, v, :type) == type
     MG.filter_vertices(g.graph, filter_fun)
 end
 
 "Return vector of all vertices with type different from `type`"
-function vertices_except_type(g, type::VType)
+function vertices_except_type(g, type::Integer)
     filter_fun(g, v) = MG.get_prop(g, v, :type) != type
     MG.filter_vertices(g.graph, filter_fun)
 end
 
-"Return all vertices with type `vertex`"
+"Return all vertices with type `VERTEX`"
 normal_vertices(g) = vertices_with_type(g, VERTEX)
 
-"Return all vertices with type `hanging`"
+"Return all vertices with type `HANGING`"
 hanging_nodes(g) = vertices_with_type(g, HANGING)
 
-"Return all vertices with type `interior`"
+"Return all vertices with type `INTERIOR`"
 interiors(g) = vertices_with_type(g, INTERIOR)
 
 "Return neighbors with all types of vertex `v`"
@@ -321,6 +324,9 @@ function get_elevation end
 function set_elevation! end
 get_value(g, v) = MG.get_prop(g.graph, v, :value)
 set_value!(g, v, value) = MG.set_prop!(g.graph, v, :value, value)
+
+"Return cartesian coordinates of the point that sits `value` above vertex."
+function get_value_cartesian end
 
 """
     get_all_values(g)

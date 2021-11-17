@@ -139,3 +139,9 @@ function set_elevation!(g::SphereGraph, v, elevation)
     MG.set_prop!(g.graph, v, :elevation, elevation)
     recalculate_cartesian!(g, v)
 end
+
+function get_value_cartesian(g::SphereGraph, v)
+    coords = get_spherical(g, v)
+    coords[1] += get_value(g, v)
+    return spherical_to_cartesian(coords)
+end
