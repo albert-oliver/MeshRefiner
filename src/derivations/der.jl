@@ -29,7 +29,7 @@ function test_sim(steps=4, adapt_steps=10, dt=0.1)
     g = simple_graph(size)
     for step in 1:adapt_steps
         for i in interiors(g)
-            set_prop!(g, i, :refine, true)
+            set_refine!(g, i)
         end
         run_transformations!(g)
     end
@@ -37,14 +37,15 @@ function test_sim(steps=4, adapt_steps=10, dt=0.1)
     best_x = 1
     best_y = 1
     for v in normal_vertices(g)
-        if abs(x(g, v) - half) < best_x && abs(y(g, v) - half) < best_y
-            best_x = abs(x(g, v) - half)
-            best_y = abs(y(g, v) - half)
+        x, y, z = xyz(g, v)
+        if abs(x - half) < best_x && abs(y - half) < best_y
+            best_x = abs(x - half)
+            best_y = abs(y - half)
             best_v = v
         end
-        set_prop!(g, v, :value, 1)
+        set_value!(g, v, 1)
     end
-    set_prop!(g, best_v, :value, 100)
+    set_value!(g, best_v, 100)
     # draw_graphplot(g)
     simulate(g, steps, dt)
 end

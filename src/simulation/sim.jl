@@ -33,8 +33,8 @@ Triangle is represented by `interior` in graph `g.`
 """
 function rel_triangle_ϵ(g, interior)
     a, b, c = map(v -> xyz(g, v), interiors_vertices(g, interior))
-    hx = (max(a[1], b[1], c[1] - min(a[1], b[1], c[1]) / 4
-    hy = (max(a[2], b[2], c[2] - min(a[2], b[2], c[2]) / 4
+    hx = (max(a[1], b[1], c[1]) - min(a[1], b[1], c[1])) / 4
+    hy = (max(a[2], b[2], c[2])- min(a[2], b[2], c[2])) / 4
     min(hx, hy)
 end
 
