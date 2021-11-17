@@ -1,4 +1,4 @@
-function check_p5(g, center)
+function check_p5(g::HyperGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -80,7 +80,7 @@ Conditions:
 - Breaks *longest edge* (note that it is the one without hanging node)
 - It's vertices are not hanging nodes
 """
-function transform_p5!(g, center)
+function transform_p5!(g::HyperGraph, center::Integer)
     mapping = check_p5(g, center)
     if isnothing(mapping)
         return false
@@ -90,14 +90,14 @@ function transform_p5!(g, center)
 
     B5 = is_on_boundary(g, v1, v3)
 
-    v6 = add_vertex!(g, (xyz(v1) + xyz(v3)) / 2.0)
+    v6 = add_vertex!(g, (xyz(g, v1) + xyz(g, v3)) / 2.0)
     if !B5
         set_hanging!(g, v6, v1, v3)
     end
 
-    add_edge!(g, v1, v6; refine=B5)
-    add_edge!(g, v6, v3; refine=B5)
-    add_edge!(g, v2, v6, refine=false)
+    add_edge!(g, v1, v6; boundary=B5)
+    add_edge!(g, v6, v3; boundary=B5)
+    add_edge!(g, v2, v6, boundary=false)
 
     add_interior!(g, v1, v2, v6)
     add_interior!(g, v6, v2, v3)

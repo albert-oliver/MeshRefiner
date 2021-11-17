@@ -1,4 +1,4 @@
-function check_p1(g, center)
+function check_p1(g::HyperGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     elseif !should_refine(g, center)
@@ -79,15 +79,13 @@ Conditions:
     - It's vertices are not hanging nodes **AND** other two egdes are not same
     length and on the boundary
 """
-function transform_p1!(g, center)
+function transform_p1!(g::HyperGraph, center::Integer)
     mapping = check_p1(g, center)
     if isnothing(mapping)
         return false
     end
 
     h, v1, v2 = mapping
-    p1 = props(g, v1)
-    p2 = props(g, v2)
     B1 = is_on_boundary(g, v1, v2)
     L1 = distance(g, v1, v2)
 

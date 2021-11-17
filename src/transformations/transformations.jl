@@ -26,7 +26,7 @@ include("rivara/p6.jl")
 
 Run function `fun(g, i)` on all interiors `i` of graph `g`
 """
-function run_for_all_triangles!(g, fun; log=false)
+function run_for_all_triangles!(g::HyperGraph, fun; log=false)
     ran = false
     for v in interiors(g)
         ex = fun(g, v)
@@ -46,7 +46,7 @@ more transformations can be executed.
 
 `log` flag tells wheter to log what transformation was executed on which vertex
 """
-function run_transformations!(g; log=false)
+function run_transformations!(g::HyperGraph; log=false)
     while true
         ran = false
         ran |= run_for_all_triangles!(g, transform_p1!, log)
@@ -77,13 +77,13 @@ v                 v
 v-----v           v--v--v
 ```
 """
-function subdivie(g, iters)
+function subdivie(g::HyperGraph, iters)
     for _ in 1:iters
 
     end
 end
 
-function points_in_subdivided(g, interior, iters)
+function points_in_subdivided(g::HyperGraph, interior, iters)
 
 end
 

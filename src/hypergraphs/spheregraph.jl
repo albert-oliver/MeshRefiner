@@ -140,6 +140,8 @@ function set_elevation!(g::SphereGraph, v, elevation)
     recalculate_cartesian!(g, v)
 end
 
+coords2D(g::SphereGraph, v) = gcs(g, v)
+
 function get_value_cartesian(g::SphereGraph, v)
     coords = get_spherical(g, v)
     coords[1] += get_value(g, v)

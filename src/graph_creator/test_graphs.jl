@@ -8,7 +8,7 @@ function p1_graph_1()
     add_vertex!(g, [1.0, 0.0, 1.0])
     add_vertex!(g, [0.5, 1.0, -1.0])
 
-    add_interior!(g, 3, 4, 5, true)
+    add_interior!(g, 3, 4, 5; refine=true)
 
     add_edge!(g, 3, 4)
     add_edge!(g, 4, 5; boundary=true)
@@ -46,7 +46,7 @@ function p2_graph_1()
     add_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 2)
-    add_edge!(g, 2, 3; refine=true)
+    add_edge!(g, 2, 3; boundary=true)
     add_edge!(g, 1, 4)
     add_edge!(g, 3, 4)
 
@@ -65,7 +65,7 @@ function p3_graph_1()
     add_interior!(g, 1, 2, 3)
 
     add_edge!(g, 1, 2)
-    add_edge!(g, 2, 3, true)
+    add_edge!(g, 2, 3; boundary=true)
     add_edge!(g, 1, 4)
     add_edge!(g, 3, 4)
 

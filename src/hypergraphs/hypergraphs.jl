@@ -40,6 +40,7 @@ export
     unset_hanging!,
     get_cartesian,
     xyz,
+    coords2D,
     is_hanging,
     is_vertex,
     is_interior,
@@ -322,6 +323,17 @@ get_cartesian(g::HyperGraph, v) = MG.get_prop(g.graph, v, :xyz)
 [`get_cartesian`](@ref)"
 const xyz = get_cartesian
 
+"""
+    coords2D(g, v)
+
+Return 2D coordintes of vertex `v`.
+
+For:
+- `FlatGraph` return `[x, y]`
+- `SphereGraph` return `[lat, lon]`
+"""
+function coords2D end
+
 is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == HANGING
 is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == VERTEX
 is_interior(g, v) = MG.get_prop(g.graph, v, :type) == INTERIOR
@@ -383,7 +395,7 @@ edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
 has_edge(g, v1, v2) = Gr.has_edge(g.graph, v1, v2)
 
 # -----------------------------------------------------------------------------
-# ------ Ther functions -------------------------------------------------------
+# ------ Other functions ------------------------------------------------------
 # -----------------------------------------------------------------------------
 
 "Whether graph `g` has any hanging nodes"

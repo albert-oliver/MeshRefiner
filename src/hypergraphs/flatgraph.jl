@@ -63,4 +63,6 @@ function set_elevation!(g::FlatGraph, v, elevation)
     MG.set_prop!(g, v, :xyz, coords)
 end
 
+coords2D(g::FlatGraph, v) = xyz(g, v)[1:2]
+
 get_value_cartesian(g::FlatGraph, v) = xyz(g, v) + [0, 0, get_value(g, v)]

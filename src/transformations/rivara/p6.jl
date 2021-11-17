@@ -1,4 +1,4 @@
-function check_p6(g, center)
+function check_p6(g::HyperGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -41,7 +41,7 @@ function check_p6(g, center)
         h1 = hB
         h2 = hC
         h3 = hA
-    elseif max == lC
+    elseif longest == lC
         v1 = vA
         v2 = vB
         v3 = vC
@@ -83,7 +83,7 @@ Three hanging nodes, any edge can be the longest-edge.
 Conditions:
 - Breaks *longest edge*
 """
-function transform_p6!(g, center)
+function transform_p6!(g::HyperGraph, center::Integer)
     mapping = check_p6(g, center)
     if isnothing(mapping)
         return false

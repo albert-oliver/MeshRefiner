@@ -1,4 +1,4 @@
-function check_p3(g, center)
+function check_p3(g::HyperGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -113,19 +113,17 @@ Conditions:
     - It's vertices are not hanging nodes **AND** other egde is not same
     length and on the boundary
 """
-function transform_p3!(g, center)
+function transform_p3!(g::HyperGraph, center::Integer)
     mapping = check_p3(g, center)
     if isnothing(mapping)
         return false
     end
 
     v1, v2, v3, h = mapping
-    p1 = props(g, v1)
-    p3 = props(g, v3)
 
     B3 = is_on_boundary(g, v1, v3)
 
-    v5 = add_vertex!(g, (xyz(v1) + xyz(v3)) / 2.0)
+    v5 = add_vertex!(g, (xyz(g, v1) + xyz(g, v3)) / 2.0)
     if !B3
         set_hanging!(g, v5, v2, v3)
     end

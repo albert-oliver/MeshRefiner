@@ -1,4 +1,4 @@
-function check_p4(g, center)
+function check_p4(g::HyperGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -73,7 +73,7 @@ Two edges with hanging node, one of them is the longest edge.
 Conditions:
 - Breaks triangle if hanging node is on the longes edge
 """
-function transform_p4!(g, center)
+function transform_p4!(g::HyperGraph, center::Integer)
     mapping = check_p4(g, center)
     if isnothing(mapping)
         return false
