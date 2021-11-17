@@ -34,6 +34,9 @@ export
     hanging_neighbors,
     interior_neighbors,
     interiors_vertices,
+    is_ordinary_edge,
+    edges,
+    all_edges,
 
     # Vertex properties
     set_hanging!,
@@ -41,6 +44,7 @@ export
     get_cartesian,
     xyz,
     coords2D,
+    get_type,
     is_hanging,
     is_vertex,
     is_interior,
@@ -284,6 +288,19 @@ interior_neighbors(g, v) = neighbors_with_type(g, v, INTERIOR)
 "Return three vertices that make triangle represented by interior `i`"
 interiors_vertices(g, i) = neighbors(g, i)
 
+"Check if edge between `v1` `v2` is ordinary, that is if it doesn't connect
+`INTERIOR` to its vertices."
+is_ordinary_edge(g, v1, v2) = !is_interior(g, v1) && !is_interior(g, v2)
+
+"Return *all* edges in graph `g` (including possibly edges between interiors
+and) its vertices. To get ordinary edges use [`edges`](@ref)."
+all_edges(g) = map(e -> [Gr.src(e), Gr.dst(e)], Gr.edges(g.graph))
+
+"Return oridanry edges in graph `g`. To get all edges use [`all_edges`](@ref)."
+function edges(g)
+    filter(e -> is_ordinary_edge(g, e[1], e[2]), all_edges(g))
+end
+
 # -----------------------------------------------------------------------------
 # ------ Functions handling vertex properties  --------------------------------
 # -----------------------------------------------------------------------------
@@ -334,6 +351,7 @@ For:
 """
 function coords2D end
 
+get_type(g, v) = MG.get_prop(g.graph, v, :type)
 is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == HANGING
 is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == VERTEX
 is_interior(g, v) = MG.get_prop(g.graph, v, :type) == INTERIOR

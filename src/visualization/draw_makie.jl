@@ -1,8 +1,6 @@
 using ..Utils
 
 using GLMakie
-using MetaGraphs
-using Graphs
 
 """
     draw_makie(g; wireframe=false, include_fun=false, transparent_fun=false, show_axis=false)
@@ -17,12 +15,9 @@ function draw_makie(g;
     transparent_fun=true, shading_fun=false, show_axis=false)
 
     # edges
-    src_dest = map(e -> [e.src, e.dst], edges(g))
-    is_proper(x) = !is_interior(g, x[1]) & !is_interior(g, x[2])
-    not_interior = filter(is_proper, src_dest)
-    list = vcat(not_interior...)
-    coordinates = map(v -> coords(g, v), list)
-    edge_coords = map(x -> Point3f0(x), coordinates)
+    list = vcat(edges(g)...)
+    coordinates = map(v -> xyz(g, v), list)
+    edge_coords = map(x -> Point3f(x), coordinates)
 
     # To force 3D view
     scene = scatter([0.0, 0.5], [0.0, 0.5], [0.0, 0.5],
