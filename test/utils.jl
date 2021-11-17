@@ -1,40 +1,19 @@
 using MeshRefiner.Utils
-
-using MetaGraphs
-using Graphs
+using MeshRefiner.HyperGraphs
 
 function triangle_graph()
-    g = MetaGraph()
-    add_vertex!(g)
-    set_prop!(g, nv(g), :type, "vertex")
-    set_prop!(g, nv(g), :x, 4)
-    set_prop!(g, nv(g), :y, 3)
-    set_prop!(g, nv(g), :z, 0)
-    set_prop!(g, nv(g), :value, 2)
-    add_vertex!(g)
-    set_prop!(g, nv(g), :type, "vertex")
-    set_prop!(g, nv(g), :x, 2)
-    set_prop!(g, nv(g), :y, 3)
-    set_prop!(g, nv(g), :z, 2)
-    set_prop!(g, nv(g), :value, 1)
-    add_vertex!(g)
-    set_prop!(g, nv(g), :type, "vertex")
-    set_prop!(g, nv(g), :x, 6)
-    set_prop!(g, nv(g), :y, 6)
-    set_prop!(g, nv(g), :z, 1)
-    set_prop!(g, nv(g), :value, 3)
-    add_vertex!(g)
-    set_prop!(g, nv(g), :type, "interior")
-    set_prop!(g, nv(g), :refine, false)
+    g = FlatGraph()
+    add_vertex!(g, [4, 3, 0]; value=2)
+    add_vertex!(g, [2, 3, 2]; value=1)
+    add_vertex!(g, [6, 6, 1]; value=3)
+    add_interior!(g, 1, 2, 3)
     add_edge!(g, 1, 2)
     add_edge!(g, 1, 3)
     add_edge!(g, 2, 3)
-    add_edge!(g, 4, 1)
-    add_edge!(g, 4, 2)
-    add_edge!(g, 4, 3)
     g
 end
 
+@testset "Utils" begin
 @testset "center_point" begin
     @test center_point([[1.0], [2.0], [3.0]]) == [2.0]
     @test center_point([[1], [2], [3]]) == [2]
@@ -84,4 +63,5 @@ end
     @test e([4, 3]) == 0    # vertex
     @test e([2, 3]) == 0    # vertex
     @test e([6, 6]) == 1    # vertex
+end
 end

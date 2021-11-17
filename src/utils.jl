@@ -54,7 +54,7 @@ function barycentric_matrix(triangle::Triangle)
 end
 
 function barycentric_matrix(g::HyperGraph, interior::Integer)
-    v1, v2, v3 = interior_vertices(g, interior)
+    v1, v2, v3 = interiors_vertices(g, interior)
 
     barycentric_matrix(xyz(g, v1), xyz(g, v2), xyz(g, v3))
 end
@@ -104,9 +104,9 @@ See also: [`barycentric_matrix`](@ref), [`barycentric`](@ref)
 """
 function approx_function end
 
-function approx_function(g, interior, val_fun=(g, v)->get_prop(g, v, :value))
+function approx_function(g, interior, val_fun=(g, v)->get_value(g, v))
     M = barycentric_matrix(g, interior)
-    v1, v2, v3 = interior_vertices(g, interior)
+    v1, v2, v3 = interiors_vertices(g, interior)
     val1, val2, val3 = map(v -> val_fun(g, v), [v1, v2, v3])
     u(λ₁, λ₂) = val1 * λ₁ + val2 * λ₂ + val3 * (1 -  λ₁ - λ₂)
     function f(p)
@@ -126,7 +126,7 @@ every other. It lineary decreases from 1 to 0 to neighbour vertices.
 """
 function pyramid_function(g, interior, summit)
     M = barycentric_matrix(g, interior)
-    v1, v2, v3 = interior_vertices(g, interior)
+    v1, v2, v3 = interiors_vertices(g, interior)
     val1, val2, val3 = map(v -> Int(summit == v), [v1, v2, v3])
     u(λ₁, λ₂) = val1 * λ₁ + val2 * λ₂ + val3 * (1 -  λ₁ - λ₂)
     function f(p)
@@ -182,8 +182,8 @@ Return cartesian distance between points `p1` and `p2` (represented as arrays
 [x, y, z]), or vertices `v1` and `v2` in graph `g`.
 """
 function distance end
-distance(p1::Array{<:Real, 1}, p2::Array{<:Real, 1}) = sqrt(sum(map(x -> x^2, p1-p2)))
-distance(g, v1, v2) = distance(xyz(g, v1), xyz(g, v2))
+distance(p1::Vector{<:Real}, p2::Vector{<:Real}) = norm(p1 - p2)
+distance(g::HyperGraph, v1, v2) = distance(xyz(g, v1), xyz(g, v2))
 
 """
     projection_area(g, i)
@@ -205,7 +205,7 @@ function projection_area(triangle::Triangle)
 end
 
 function projection_area(g::HyperGraph, i::Integer)
-    a, b, c = interior_vertices(g, i)
+    a, b, c = interiors_vertices(g, i)
     projection_area(xyz(g, a), xyz(g, b), xyz(g, c))
 end
 

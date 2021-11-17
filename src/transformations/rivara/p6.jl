@@ -1,18 +1,12 @@
-using ..Utils
-
-using MetaGraphs
-using Graphs
-
 function check_p6(g, center)
-    if get_prop(g, center, :type) != "interior"
+    if !is_interior(g, center)
         return nothing
     end
 
-    vertexes = interior_vertices(g, center)
-
-    vA = vertexes[1]
-    vB = vertexes[2]
-    vC = vertexes[3]
+    vs = interiors_vertices(g, center)
+    vA = vs[1]
+    vB = vs[2]
+    vC = vs[3]
     hA = get_hanging_node_between(g, vB, vC)
     hB = get_hanging_node_between(g, vA, vC)
     hC = get_hanging_node_between(g, vA, vB)
@@ -24,7 +18,7 @@ function check_p6(g, center)
     lA = distance(g, vB, hA) + distance(g, vC, hA)
     lB = distance(g, vA, hB) + distance(g, vC, hB)
     lC = distance(g, vA, hC) + distance(g, vB, hC)
-    max = maximum([lA, lB, lC])
+    longest = maximum([lA, lB, lC])
 
     v1 = nothing
     v2 = nothing
@@ -33,14 +27,14 @@ function check_p6(g, center)
     h2 = nothing
     h3 = nothing
 
-    if max == lA
+    if longest == lA
         v1 = vB
         v2 = vC
         v3 = vA
         h1 = hA
         h2 = hB
         h3 = hB
-    elseif max == lB
+    elseif longest == lB
         v1 = vC
         v2 = vA
         v3 = vB
@@ -97,12 +91,12 @@ function transform_p6!(g, center)
 
     v1, v2, v3, h1, h2, h3 = mapping
 
-    set_prop!(g, h1, :type, "vertex")
+    unset_hanging!(g, h1)
 
-    add_meta_edge!(g, v3, h1, false)
+    add_edge!(g, v3, h1)
 
-    add_interior!(g, v1, h1, v3, false)
-    add_interior!(g, h1, v2, v3, false)
+    add_interior!(g, v1, h1, v3)
+    add_interior!(g, h1, v2, v3)
 
     rem_vertex!(g, center)
 

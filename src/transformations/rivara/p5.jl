@@ -1,18 +1,12 @@
-using ..Utils
-
-using MetaGraphs
-using Graphs
-
 function check_p5(g, center)
-    if get_prop(g, center, :type) != "interior"
+    if !is_interior(g, center)
         return nothing
     end
 
-    vertexes = interior_vertices(g, center)
-
-    vA = vertexes[1]
-    vB = vertexes[2]
-    vC = vertexes[3]
+    vs = interiors_vertices(g, center)
+    vA = vs[1]
+    vB = vs[2]
+    vC = vs[3]
     hA = get_hanging_node_between(g, vB, vC)
     hB = get_hanging_node_between(g, vA, vC)
     hC = get_hanging_node_between(g, vA, vB)
@@ -58,8 +52,8 @@ function check_p5(g, center)
     L3 = distance(g, v2, h2)
     L4 = distance(g, h2, v3)
     L5 = distance(g, v1, v3)
-    HN1 = get_prop(g, v1, :type) == "hanging" ? true : false
-    HN3 = get_prop(g, v3, :type) == "hanging" ? true : false
+    HN1 = is_hanging(g, v1)
+    HN3 = is_hanging(g, v3)
 
     if L5 > (L1+L2) && L5 > (L3+L4) && (!HN1 && !HN3)
         return v1, v2, v3
@@ -93,23 +87,20 @@ function transform_p5!(g, center)
     end
 
     v1, v2, v3 = mapping
-    p1 = props(g, v1)
-    p2 = props(g, v2)
-    p3 = props(g, v3)
 
-    B5 = get_prop(g, v1, v3, :boundary)
+    B5 = is_on_boundary(g, v1, v3)
 
-    v6 = add_meta_vertex!(g, (p1[:x] + p3[:x])/2, (p1[:y] + p3[:y])/2, (p1[:z] + p3[:z])/2)
+    v6 = add_vertex!(g, (xyz(v1) + xyz(v3)) / 2.0)
     if !B5
-        set_prop!(g, v6, :type, "hanging")
+        set_hanging!(g, v6, v1, v3)
     end
 
-    add_meta_edge!(g, v1, v6, B5)
-    add_meta_edge!(g, v6, v3, B5)
-    add_meta_edge!(g, v2, v6, false)
+    add_edge!(g, v1, v6; refine=B5)
+    add_edge!(g, v6, v3; refine=B5)
+    add_edge!(g, v2, v6, refine=false)
 
-    add_interior!(g, v1, v2, v6, false)
-    add_interior!(g, v6, v2, v3, false)
+    add_interior!(g, v1, v2, v6)
+    add_interior!(g, v6, v2, v3)
 
     rem_edge!(g, v1, v3)
     rem_vertex!(g, center)

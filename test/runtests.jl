@@ -2,7 +2,7 @@ using MeshRefiner
 using Test
 
 include("hypergraphs/hypergraphs.jl")
-# include("utils.jl")
+include("utils.jl")
 include("transformations/transformations.jl")
 
 function main_test()

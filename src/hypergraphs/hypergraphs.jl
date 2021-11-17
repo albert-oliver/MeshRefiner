@@ -290,15 +290,20 @@ interiors_vertices(g, i) = neighbors(g, i)
 "Change type of vertex `v` to `hanging` from `vertex` and set its 'parents' to
 `v1` and `v2`"
 function set_hanging!(g, v, v1, v2)
+    if !is_hanging(g, v)
+        g.hanging_count += 1
+        g.vertex_count -= 1
+    end
     MG.set_prop!(g.graph, v, :type, HANGING)
     MG.set_prop!(g.graph, v, :v1, v1)
     MG.set_prop!(g.graph, v, :v2, v2)
-    g.hanging_count += 1
-    g.vertex_count -= 1
 end
 
 "Change type of vertex to `vertex` from `hanging`"
 function unset_hanging!(g, v)
+    if !is_hanging(g, v)
+        return nothing
+    end
     MG.set_prop!(g.graph, v, :type, VERTEX)
     MG.rem_prop!(g.graph, v, :v1)
     MG.rem_prop!(g.graph, v, :v2)

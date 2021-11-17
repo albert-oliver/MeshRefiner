@@ -3,7 +3,7 @@ using MeshRefiner.HyperGraphs
 import Graphs; const Gr = Graphs
 import MetaGraphs; const MG = MetaGraphs
 
-@testset "SphereGraph" begin
+@testset "FlatGraphs" begin
     g = FlatGraph()
     @test g.vertex_count == 0
     @test g.interior_count == 0
