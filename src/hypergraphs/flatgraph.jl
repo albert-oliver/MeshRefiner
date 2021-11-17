@@ -14,7 +14,7 @@ Can represent samll part Earth's surface, where curvature is negligible.
 
 # Verticex properties
 All properties are the same as in `HyperGraph` except for the following:
-- `vertex` type vertices:
+- `VERTEX` type vertices:
     - `xyz` - cartesian coordinates of vertex (include elvation as `xyz[3]`)
     - `value` - custom property of vertex - for instance water
 
@@ -22,7 +22,7 @@ See also: [`HyperGraph`](@ref)
 """
 mutable struct FlatGraph <: HyperGraph
     graph::MG.MetaGraph
-    vertices_count::Integer
+    vertex_count::Integer
     interior_count::Integer
     hanging_count::Integer
 end
@@ -38,39 +38,27 @@ end
 
 function add_vertex!(g::FlatGraph, coords; value::Real = 0.0)
     Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, "vertex")
+    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     MG.set_prop!(g.graph, nv(g), :value, value)
     MG.set_prop!(g.graph, nv(g), :xyz, coords[1:3])
-    g.vertices_count += 1
+    g.vertex_count += 1
     return nv(g)
 end
 
 function add_vertex!(g::FlatGraph, coords, elevation::Real; value::Real = 0.0)
     Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, "vertex")
+    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     MG.set_prop!(g.graph, nv(g), :value, value)
     xyz = vcat(coords[1:2], [elevation])
     MG.set_prop!(g.graph, nv(g), :xyz, xyz)
-    g.vertices_count += 1
+    g.vertex_count += 1
     return nv(g)
 end
 
-function add_hanging!(g::FlatGraph, v1, v2)
-    Gr.add_vertex!(g.graph)
-    MG.set_prop!(g, nv(g), :type, "hanging")
-    MG.set_prop!(g.graph, nv(g), :value, 0.0)
-    xyz = (xyz(g, v1) + xyz(g, v2)) / 2.0
-    MG.set_prop!(g.graph, nv(g), :xyz, xyz)
-    MG.set_prop!(g.graph, nv(g), :v1, v1)
-    MG.set_prop!(g.graph, nv(g), :v2, v2)
-    g.hanging_count += 1
-    return nv(g)
-end
-
-get_elevation(g::FlatGraph, v) = MG.get_prop(g, v, :xyz)[3]
+get_elevation(g::FlatGraph, v) = MG.get_prop(g.graph, v, :xyz)[3]
 
 function set_elevation!(g::FlatGraph, v, elevation)
-    xyz = MG.get_prop(g, v, :xyz)
-    xyz[3] = elevation
-    MG.set_prop!(g, v, :xyz, xyz)
+    coords = MG.get_prop(g.graph, v, :xyz)
+    coords[3] = elevation
+    MG.set_prop!(g, v, :xyz, coords)
 end

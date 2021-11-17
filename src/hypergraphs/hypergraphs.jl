@@ -4,6 +4,7 @@ export
     HyperGraph,
     FlatGraph,
     SphereGraph,
+    VType, VERTEX, HANGING, INTERIOR,
 
     # Adding / removing
     add_vertex!,
@@ -35,6 +36,7 @@ export
     interiors_vertices,
 
     # Vertex properties
+    set_hanging!,
     unset_hanging!,
     get_cartesian,
     xyz,
@@ -76,24 +78,26 @@ import Graphs; const Gr = Graphs
 # ------ HyperGraph type definition -------------------------------------------
 # -----------------------------------------------------------------------------
 
+@enum VType VERTEX HANGING INTERIOR
+
 """
 Abstract type that holds hypergraph.
 
 In this case hypergraph represents triangle mesh and is a graph with three
 types of vertices:
-- `vertex` - normal vertex of graph
-- `hanging` - hanging node on edge between two normal vertices, made when breaking traingle on one side of edge
-- `interior` - vertex representing inside of trinagle
+- `VERTEX` - normal vertex of graph
+- `HANGING` - hanging node on edge between two normal vertices, made when breaking traingle on one side of edge
+- `INTERIOR` - vertex representing inside of trinagle
 
 Vertices are represented by integers starting at 1.
 
 Two concrete subtypes of `HyperGraph` are `FlatGraph` and `SphereGraph`.
 
-# Vertex properties
-- `vertex` properteis depends on subtype
-- `hanging` vertices have same properties as normal vertices plus:
+# Properties of vertex by its type
+- `VERTEX` properties depends on graph subtype
+- `HANGING` vertices have same properties as normal vertices, plus:
     - `v1`, `v2`: vertices between which hanging node lies
-- Interiors (type `interior`):
+- `INTERIOR`:
     - `refine::Bool`: whether this traingle should be refined
 # Edge properties
 - `boundary::Bool` - whether this edge lies on boundary of mesh
@@ -133,18 +137,31 @@ Add new vertex to graph `g`.
 function add_vertex! end
 
 """
-    add_hanging!(g, v1, v2)
+    add_hanging!(g, v1, v2, elevation; value=0)
+    add_hanging!(g, v1, v2, coords, elevation; value=0)
 
-Add hanging node between vertices `v1` and `v2`.
+Add hanging node between vertices `v1` and `v2`. Other arguments are similar to
+[`add_vertex!`](@ref).
 
-This does the following:
-- Remove edge between `v1` and `v2`
-- Add new vertex with type `hanging` in the middle
-    - calculated with cartesian coordinates
-- Connects `v1` and `v2` to new vertex
-- **All** properties of edge `v1-v2` wil, be copied to new ones
+# Note
+Only add new vertex with type `hanging`. **No** other changes will be made
+(specifically no edges will be added or removed).
+
+See also: [`add_vertex!`](@ref)
 """
 function add_hanging! end
+
+function add_hanging!(g::HyperGraph, v1, v2, coords; value = 0.0)
+    add_vertex!(g, coords; value=value)
+    set_hanging!(g, nv(g), v1, v2)
+    nv(g)
+end
+
+function add_hanging!(g::HyperGraph, v1, v2, coords, elevation; value = 0.0)
+    add_vertex!(g, coords, elevation; value=value)
+    set_hanging!(g, nv(g), v1, v2)
+    nv(g)
+end
 
 """
     add_interior!(g, v1, v2, v3; refine=false)
@@ -160,7 +177,7 @@ function add_interior! end
 
 function add_interior!(g, v1, v2, v3; refine=false)
     Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, "interior")
+    MG.set_prop!(g.graph, nv(g), :type, INTERIOR)
     MG.set_prop!(g.graph, nv(g), :refine, refine)
     Gr.add_edge!(g.graph, nv(g), v1)
     Gr.add_edge!(g.graph, nv(g), v2)
@@ -180,7 +197,7 @@ function add_edge!(g, v1, v2; boundary=false)
 end
 
 "Remove vertex `v` of any type from graph."
-function rem_vertex!(g, v)
+function rem_vertex!(g::HyperGraph, v)
     if is_vertex(g, v)
         g.vertex_count -= 1
     elseif is_hanging(g, v)
@@ -188,7 +205,7 @@ function rem_vertex!(g, v)
     else
         g.interior_count -=1
     end
-    Gr.rem_vertex!(g, v)
+    Gr.rem_vertex!(g.graph, v)
 end
 
 "Remove edge from `v1` to `v2` from graph."
@@ -218,25 +235,25 @@ interior_count(g) = g.interior_count
 # -----------------------------------------------------------------------------
 
 "Return vector of all vertices with type `type`"
-function vertices_with_type(g, type::String)
-    filter_fun(g, v) = if get_prop(g.graph, v, :type) == type true else false end
-    Gr.filter_vertices(g, filter_fun)
+function vertices_with_type(g, type::VType)
+    filter_fun(g, v) = MG.get_prop(g, v, :type) == type
+    MG.filter_vertices(g.graph, filter_fun)
 end
 
 "Return vector of all vertices with type different from `type`"
-function vertices_except_type(g, type::String)
-    filter_fun(g, v) = if get_prop(g.graph, v, :type) != type true else false end
-    Gr.filter_vertices(g, filter_fun)
+function vertices_except_type(g, type::VType)
+    filter_fun(g, v) = MG.get_prop(g, v, :type) != type
+    MG.filter_vertices(g.graph, filter_fun)
 end
 
 "Return all vertices with type `vertex`"
-normal_vertices(g) = vertices_with_type(g, "vertex")
+normal_vertices(g) = vertices_with_type(g, VERTEX)
 
 "Return all vertices with type `hanging`"
-hanging_nodes(g) = vertices_with_type(g, "hanging")
+hanging_nodes(g) = vertices_with_type(g, HANGING)
 
 "Return all vertices with type `interior`"
-interiors(g) = vertices_with_type(g, "interior")
+interiors(g) = vertices_with_type(g, INTERIOR)
 
 "Return neighbors with all types of vertex `v`"
 neighbors(g, v) = Gr.neighbors(g.graph, v)
@@ -252,13 +269,13 @@ function neighbors_except_type(g, v, type)
 end
 
 "Return neighbors with type `vertex` of vertex `v`"
-vertex_neighbors(g, v) = neighbors_with_type(g, v, "vertex")
+vertex_neighbors(g, v) = neighbors_with_type(g, v, VERTEX)
 
 "Return neighbors with type `hanging` of vertex `v`"
-hanging_neighbors(g, v) = neighbors_with_type(g, v, "hanging")
+hanging_neighbors(g, v) = neighbors_with_type(g, v, HANGING)
 
 "Return neighbors with type `interior` of vertex `v`"
-interior_neighbors(g, v) = neighbors_with_type(g, v, "interior")
+interior_neighbors(g, v) = neighbors_with_type(g, v, INTERIOR)
 
 "Return three vertices that make triangle represented by interior `i`"
 interiors_vertices(g, i) = neighbors(g, i)
@@ -267,9 +284,19 @@ interiors_vertices(g, i) = neighbors(g, i)
 # ------ Functions handling vertex properties  --------------------------------
 # -----------------------------------------------------------------------------
 
-"Changes type of vertex to `vertex` from `hanging`"
+"Change type of vertex `v` to `hanging` from `vertex` and set its 'parents' to
+`v1` and `v2`"
+function set_hanging!(g, v, v1, v2)
+    MG.set_prop!(g.graph, v, :type, HANGING)
+    MG.set_prop!(g.graph, v, :v1, v1)
+    MG.set_prop!(g.graph, v, :v2, v2)
+    g.hanging_count += 1
+    g.vertex_count -= 1
+end
+
+"Change type of vertex to `vertex` from `hanging`"
 function unset_hanging!(g, v)
-    MG.set_prop!(g.graph, v, :type, "vertex")
+    MG.set_prop!(g.graph, v, :type, VERTEX)
     MG.rem_prop!(g.graph, v, :v1)
     MG.rem_prop!(g.graph, v, :v2)
     g.hanging_count -= 1
@@ -287,9 +314,9 @@ get_cartesian(g::HyperGraph, v) = MG.get_prop(g.graph, v, :xyz)
 [`get_cartesian`](@ref)"
 const xyz = get_cartesian
 
-is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == "hanging"
-is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == "vertex"
-is_interior(g, v) = MG.get_prop(g.graph, v, :type) == "interior"
+is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == HANGING
+is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == VERTEX
+is_interior(g, v) = MG.get_prop(g.graph, v, :type) == INTERIOR
 function get_elevation end
 function set_elevation! end
 get_value(g, v) = MG.get_prop(g.graph, v, :value)
@@ -356,12 +383,12 @@ function get_hanging_node_between(g, v1, v2)
     if Gr.has_edge(g.graph, v1, v2)
         return nothing
     end
-    hnodes1 = filter(v -> is_hanging(v), neighbors(g, v1))
-    hnodes2 = filter(v -> is_hanging(v), neighbors(g, v2))
+    hnodes1 = filter(v -> is_hanging(g, v), neighbors(g, v1))
+    hnodes2 = filter(v -> is_hanging(g, v), neighbors(g, v2))
     hnodes_all = intersect(hnodes1, hnodes2)
 
     for h in hnodes_all
-        h_is_between = [MG.get_prop(g.graph, h, :v1), MG.get_prop(g.graph, h, :v1)]
+        h_is_between = [MG.get_prop(g.graph, h, :v1), MG.get_prop(g.graph, h, :v2)]
         if v1 in h_is_between && v2 in h_is_between
             return h
         end

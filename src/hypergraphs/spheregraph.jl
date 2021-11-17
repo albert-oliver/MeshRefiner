@@ -15,7 +15,7 @@ set using `elevation` property.
 
 # Verticex properties
 All properties are the same as in `HyperGraph` except for the following:
-- `vertex` type vertices:
+- `VERTEX` type vertices:
     - `xyz` - cartesian coordinates of vertex, include `elevation`
     - `gcs` - geographic coordinate system - latitude and longitude of vertex
     - `elevation` - elevation of point above sea level (or below when negative)
@@ -31,7 +31,7 @@ See also: [`HyperGraph`](@ref)
 mutable struct SphereGraph <: HyperGraph
     graph::MG.MetaGraph
     radius::Real
-    vertices_count::Integer
+    vertex_count::Integer
     interior_count::Integer
     hanging_count::Integer
 end
@@ -109,11 +109,11 @@ end
 
 function add_vertex!(g::SphereGraph, coords; value::Real = 0.0)
     Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, "vertex")
+    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     MG.set_prop!(g.graph, nv(g), :value, value)
     MG.set_prop!(g.graph, nv(g), :xyz, coords[1:3])
     recalculate_spherical!(g, nv(g))
-    g.vertices_count += 1
+    g.vertex_count += 1
     return nv(g)
 end
 
@@ -125,31 +125,12 @@ function add_vertex!(g::SphereGraph, coords, elevation::Real; value::Real = 0.0)
     lon = -(mod((-coords[2] + 180), 360) - 180)     # moves lon to range (-180, 180]
 
     Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, "vertex")
+    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     MG.set_prop!(g.graph, nv(g), :value, value)
     MG.set_prop!(g.graph, nv(g), :gcs, [lat, lon])
     MG.set_prop!(g.graph, nv(g), :elevation, elevation)
     recalculate_cartesian!(g, nv(g))
-    g.vertices_count += 1
-    return nv(g)
-end
-
-function add_hanging!(g::SphereGraph, v1, v2)
-    Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, "hanging")
-    MG.set_prop!(g.graph, nv(g), :value, 0.0)
-    coords = (xyz(g, v1) + xyz(g, v2)) / 2.0
-    MG.set_prop!(g.graph, nv(g), :xyz, coords)
-    MG.set_prop!(g.graph, nv(g), :v1, v1)
-    MG.set_prop!(g.graph, nv(g), :v2, v2)
-    recalculate_spherical!(g, nv(g))
-    g.hanging_count += 1
-    props = MG.props(g.graph, nv(g))
-    rem_edge!(g, v1, v2)
-    add_edge!(g, v1, nv(g))
-    add_edge!(g, v2, nv(g))
-    MG.set_props!(g.graph, v1, nv(g), props)
-    MG.set_props!(g.graph, v2, nv(g), props)
+    g.vertex_count += 1
     return nv(g)
 end
 
