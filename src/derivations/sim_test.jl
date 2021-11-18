@@ -42,9 +42,9 @@ t = Derivations.ProjectIO.load_heightmap("resources/hill.png", (10.0, 10.0), 9.0
 g = Derivations.Adaptation.generate_terrain_mesh(t, 0.0001)
 Derivations.Adaptation.match_to_fun!(g, (x, y) -> 0.0)
 
-t = Derivations.ProjectIO.load_heightmap("resources/valley.png", (10.0, 10.0), 9.0)
-g = Derivations.Adaptation.generate_terrain_mesh(t, 0.0001)
-Derivations.Adaptation.match_to_fun!(g, (x, y) -> 0.0)
+t = MeshRefiner.ProjectIO.load_heightmap("resources/valley.png", (10.0, 10.0), 9.0)
+g = MeshRefiner.Adaptation.generate_terrain_mesh(t, 0.0001)
+MeshRefiner.Adaptation.match_to_fun!(g, (x, y) -> 0.0)
 
 Derivations.Adaptation.match_to_fun!(g, (x, y) -> 0.0)
 f = Derivations.GraphCreator.hat_fun([2.5, 5], [5, 5], 4.0)

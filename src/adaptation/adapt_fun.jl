@@ -2,22 +2,14 @@ using ..Utils
 using ..Transformations
 
 using LinearAlgebra
-using Graphs, MetaGraphs
+using Statistics
 
 "Return relative error of approximation of traingle represented by interior `i`
 to function `fun`"
-function error_rel(g, fun, i)
-    v1, v2, v3 = interior_vertices(g, i)
-
-    v1coor = [x(g, v1), y(g, v1)]
-    v2coor = [x(g, v2), y(g, v2)]
-    v3coor = [x(g, v3), y(g, v3)]
-    center = (v1coor + v2coor + v3coor) / 3.0
-
-    a1 = get_prop(g, v1, :value)
-    a2 = get_prop(g, v2, :value)
-    a3 = get_prop(g, v3, :value)
-    uh = (a1 + a2 + a3) / 3.0
+function error_rel(g::HyperGraph, fun, i)
+    v1, v2, v3 = interiors_vertices(g, i)
+    center = mean([coords2D(g, v1), coords2D(g, v2), coords2D(g, v3)])
+    uh = mean([get_value(g, v1), get_value(g, v2), get_value(g, v3)])
 
     return (fun(center) - uh)^2 / fun(center)^2
 end
@@ -26,7 +18,7 @@ end
 porperty `:value`"
 function match_to_fun!(g, fun)
     for v in normal_vertices(g)
-        set_prop!(g, v, :value, fun(x(g, v), y(g, v)))
+        set_value!(g, v, fun(coords2D(g, v)))
     end
 end
 
@@ -38,18 +30,19 @@ better approximation.
 """
 function adapt_fun!(g, fun, iters)
     max_error = 0
+    errors = Dict()
     match_to_fun!(g, fun)
     for i = 1:iters
         for e in interiors(g)
             error = error_rel(g, fun, e)
-            set_prop!(g, e, :error, error)
+            errors[e] = error
             max_error = max(max_error, error)
         end
 
         for e in interiors(g)
-            error = get_prop(g, e, :error)
+            error = errors[e]
             if (error) > 0.33 * max_error
-                set_prop!(g, e, :refine, true)
+                set_refine!(g, e)
             end
         end
 

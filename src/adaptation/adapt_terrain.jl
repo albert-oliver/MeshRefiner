@@ -11,22 +11,22 @@ struct BoundingBox
 end
 
 
-function initial_graph(terrain::TerrainMap)::AbstractMetaGraph
-    g = MetaGraph()
+function initial_graph(terrain::TerrainMap)::FlatGraph
+    g = FlatGraph()
     min_x, min_y = index_to_point(terrain, 1, 1)
     max_x, max_y = index_to_point(terrain, size(terrain.M, 1), size(terrain.M, 2))
-    add_meta_vertex!(g, min_x, min_y, elevation_norm(terrain, min_x, min_y))
-    add_meta_vertex!(g, min_x, max_y, elevation_norm(terrain, min_x, max_y))
-    add_meta_vertex!(g, max_x, max_y, elevation_norm(terrain, max_x, max_y))
-    add_meta_vertex!(g, max_x, min_y, elevation_norm(terrain, max_x, min_y))
-    add_meta_edge!(g, 1, 2, true)
-    add_meta_edge!(g, 2, 3, true)
-    add_meta_edge!(g, 3, 4, true)
-    add_meta_edge!(g, 4, 1, true)
+    add_vertex!(g, [min_x, min_y], elevation_norm(terrain, min_x, min_y))
+    add_vertex!(g, [min_x, max_y], elevation_norm(terrain, min_x, max_y))
+    add_vertex!(g, [max_x, max_y], elevation_norm(terrain, max_x, max_y))
+    add_vertex!(g, [max_x, min_y], elevation_norm(terrain, max_x, min_y))
+    add_edge!(g, 1, 2; boundary=true)
+    add_edge!(g, 2, 3; boundary=true)
+    add_edge!(g, 3, 4; boundary=true)
+    add_edge!(g, 4, 1; boundary=true)
     # diagonal
-    add_meta_edge!(g, 1, 3, false)
-    add_interior!(g, 1, 2, 3, false)
-    add_interior!(g, 1, 3, 4, false)
+    add_edge!(g, 1, 3)
+    add_interior!(g, 1, 2, 3)
+    add_interior!(g, 1, 3, 4)
     return g
 end
 
@@ -58,10 +58,10 @@ function indexes_in_triangle(t::Triangle, terrain::TerrainMap)
     t_i = map(p -> point_to_index_coords(terrain, p[1], p[2]), t)
 
     bb = BoundingBox(
-            minimum([x(t_i[1]), x(t_i[2]), x(t_i[3])]),
-            maximum([x(t_i[1]), x(t_i[2]), x(t_i[3])]),
-            minimum([y(t_i[1]), y(t_i[2]), y(t_i[3])]),
-            maximum([y(t_i[1]), y(t_i[2]), y(t_i[3])])
+            minimum([t_i[1][1], t_i[2][1], t_i[3][1]]),
+            maximum([t_i[1][1], t_i[2][1], t_i[3][1]]),
+            minimum([t_i[1][2], t_i[2][2], t_i[3][2]]),
+            maximum([t_i[1][2], t_i[2][2], t_i[3][2]])
         )
 
     M = barycentric_matrix(t_i)
@@ -78,9 +78,9 @@ function indexes_in_triangle(t::Triangle, terrain::TerrainMap)
 end
 
 "Return approximate error of traingle represented by interior `interior`."
-function approx_error(g::AbstractMetaGraph, interior::Integer, terrain::TerrainMap)::Real
-    v1, v2, v3 = interior_vertices(g, interior)
-    triangle = ([x(g, v1), y(g, v1)], [x(g, v2), y(g, v2)], [x(g, v3), y(g, v3)])
+function approx_error(g::HyperGraph, interior::Integer, terrain::TerrainMap)::Real
+    v1, v2, v3 = interiors_vertices(g, interior)
+    triangle = (coords2D(g, v1), coords2D(g, v2), coords2D(g, v3))
 
     indexes = indexes_in_triangle(triangle, terrain)
     if isempty(indexes)
@@ -91,7 +91,11 @@ function approx_error(g::AbstractMetaGraph, interior::Integer, terrain::TerrainM
     M = barycentric_matrix(triangle)
     points_br = map(p -> barycentric(M, p), points)
 
-    approx(p) = z(g, v1)*p[1] + z(g, v2)*p[2] + z(g, v3)*(1 - p[1] - p[2])
+    function approx(p)
+        get_elevation(g, v1) * p[1] +
+        get_elevation(g, v2) * p[2] +
+        get_elevation(g, v3) * (1 - p[1] - p[2])
+    end
     approx_elev = map(approx, points_br)
     real_elev = map(i -> terrain.M[i[1], i[2]], indexes)
 
@@ -102,16 +106,16 @@ function approx_error(g::AbstractMetaGraph, interior::Integer, terrain::TerrainM
 end
 
 "Mark all traingles where error is larger than `ϵ` for refinement."
-function mark_for_refinement(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Number)::Array{Number, 1}
+function mark_for_refinement(g::HyperGraph, terrain::TerrainMap, ϵ::Number)::Array{Number, 1}
     to_refine = []
     errors = []     # Only used for logging
     for interior in interiors(g)
         e = approx_error(g, interior, terrain)
         if e > ϵ
-            set_prop!(g, interior, :refine, true)
+            set_refine!(g, interior)
             push!(to_refine, interior)
-            push!(errors, e)    # Only used for logging
         end
+        push!(errors, e)    # Only used for logging
     end
 
     # Only used for logging
@@ -122,9 +126,11 @@ function mark_for_refinement(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Numb
 end
 
 "Adjust elevations of all vertices to fit proper values."
-function adjust_elevations!(g::AbstractMetaGraph, terrain::TerrainMap)
-    for vertex in normal_vertices(g)
-        set_prop!(g, vertex, :z, elevation_norm(terrain, x(g, vertex), y(g, vertex)))
+function adjust_elevations!(g::HyperGraph, terrain::TerrainMap)
+    for v in normal_vertices(g)
+        x, y = coords2D(g, v)
+        elev = elevation_norm(terrain, x, y)
+        set_elevation!(g, v, elev)
     end
 end
 
@@ -138,10 +144,10 @@ Before calling this function all elevations are in range [0, 1].
 Real life values cause overflow when calculating error for large triangles (as
 it is relative error it requires division by sum of squeres of elevations).
 """
-function scale_elevations!(g, terrain)
-    for vertex in normal_vertices(g)
-        elev = get_prop(g, vertex, :z)
-        set_prop!(g, vertex, :z, (elev - 1) * terrain.scale + terrain.offset)
+function scale_elevations!(g::HyperGraph, terrain)
+    for v in normal_vertices(g)
+        elev = get_elevation(g, v)
+        set_elevation!(g, v, (elev - 1) * terrain.scale + terrain.offset)
     end
 end
 
@@ -153,7 +159,7 @@ after `max_iters` iterations.
 
 See also: [`generate_terrain_mesh`](@ref)
 """
-function adapt_terrain!(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Real, max_iters::Integer)
+function adapt_terrain!(g::HyperGraph, terrain::TerrainMap, ϵ::Real, max_iters::Integer)
     for i in 1:max_iters
         print("Iteration ", i, ": ")
         to_refine = mark_for_refinement(g, terrain, ϵ)
@@ -164,15 +170,6 @@ function adapt_terrain!(g::AbstractMetaGraph, terrain::TerrainMap, ϵ::Real, max
         adjust_elevations!(g, terrain)
     end
     return g
-end
-
-function check_mesh(g)
-    for v in 1:nv(g)
-        if get_prop(g, v, :type) == "hanging"
-            return false
-        end
-    end
-    return true
 end
 
 """

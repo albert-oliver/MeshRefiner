@@ -11,6 +11,9 @@ export
     hat_fun,
     block_fun
 
+using ..Utils
+using ..HyperGraphs
+
 include("functions.jl")
 include("example_graphs.jl")
 include("test_graphs.jl")

@@ -1,18 +1,13 @@
-using ..Utils
-
-using MetaGraphs
-using Graphs
-
-function check_p2(g, center)
-    if get_prop(g, center, :type) != "interior"
+function check_p2(g::HyperGraph, center::Integer)
+    if !is_interior(g, center)
         return nothing
     end
 
-    vertexes = interior_vertices(g, center)
+    vs = interiors_vertices(g, center)
 
-    vA = vertexes[1]
-    vB = vertexes[2]
-    vC = vertexes[3]
+    vA = vs[1]
+    vB = vs[2]
+    vC = vs[3]
     hA = get_hanging_node_between(g, vB, vC)
     hB = get_hanging_node_between(g, vA, vC)
     hC = get_hanging_node_between(g, vA, vB)
@@ -77,7 +72,7 @@ One edge with hanging node that is the longest edge.
 Conditions:
 - Breaks triangle if hanging node is on the longes edge
 """
-function transform_p2!(g, center)
+function transform_p2!(g::HyperGraph, center::Integer)
     mapping = check_p2(g, center)
     if isnothing(mapping)
         return false
@@ -85,13 +80,13 @@ function transform_p2!(g, center)
 
     v1, v2, v3, h = mapping
 
-    set_prop!(g, h, :type, "vertex")
+    unset_hanging!(g, h)
 
-    add_meta_edge!(g, h, v3, false)
-
-    # TODO view of center to add_interior to split points 
-    add_interior!(g, v1, v3, h, false)
-    add_interior!(g, v2, v3, h, false)
+    add_edge!(g, h, v3)
+    
+    # TODO view of center to add_interior to split points
+    add_interior!(g, v1, v3, h)
+    add_interior!(g, v2, v3, h)
 
     rem_vertex!(g, center)
 

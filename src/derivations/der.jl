@@ -1,5 +1,6 @@
 module Derivations
 
+include("../hypergraphs/hypergraphs.jl")
 include("../utils.jl")
 include("../transformations/transformations.jl")
 include("../adaptation/adaptation.jl")
@@ -8,16 +9,15 @@ include("../visualization/visualization.jl")
 include("../io.jl")
 include("../simulation/sim.jl")
 
-# using .ProjectIO
+using .HyperGraphs
 using .Utils
+using .Transformations
 using .Adaptation
 using .GraphCreator
-using .Transformations
 using .Visualization
+using .ProjectIO
 using .Simulation
 
-using Graphs
-using MetaGraphs
 using LinearAlgebra
 using Statistics
 using Compose
@@ -29,7 +29,7 @@ function test_sim(steps=4, adapt_steps=10, dt=0.1)
     g = simple_graph(size)
     for step in 1:adapt_steps
         for i in interiors(g)
-            set_prop!(g, i, :refine, true)
+            set_refine!(g, i)
         end
         run_transformations!(g)
     end
@@ -37,16 +37,17 @@ function test_sim(steps=4, adapt_steps=10, dt=0.1)
     best_x = 1
     best_y = 1
     for v in normal_vertices(g)
-        if abs(x(g, v) - half) < best_x && abs(y(g, v) - half) < best_y
-            best_x = abs(x(g, v) - half)
-            best_y = abs(y(g, v) - half)
+        x, y, z = xyz(g, v)
+        if abs(x - half) < best_x && abs(y - half) < best_y
+            best_x = abs(x - half)
+            best_y = abs(y - half)
             best_v = v
         end
-        set_prop!(g, v, :value, 1)
+        set_value!(g, v, 1)
     end
-    set_prop!(g, best_v, :value, 100)
+    set_value!(g, best_v, 100)
     # draw_graphplot(g)
-    simulate(g, steps, dt)
+    simulate!(g, steps, dt, (x, y) -> 0)
 end
 
 function test_save()
@@ -95,7 +96,7 @@ function interactive_test()
     g = simple_graph()
     i = 1
     while true
-        draw(PNG(string("resources/testgraph", i, ".png"), 16cm, 16cm), draw_graphplot(g, true))
+        draw(PNG(string("resources/testgraph", i, ".png"), 16cm, 16cm), draw_graphplot(g; vid=true))
         print("To refine (q to quit): ")
         s = readline()
         if (s == "q")
@@ -104,9 +105,9 @@ function interactive_test()
         splitted = split(s)
         for svertex in splitted
             v = parse(Int64, svertex)
-            set_prop!(g, v, :refine, true)
+            set_refine!(g, v)
         end
-        run_transformations!(g, true)
+        run_transformations!(g; log=true)
         i += 1
     end
 end

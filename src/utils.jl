@@ -4,35 +4,18 @@ export
     Triangle,
 
     center_point,
-    get_hanging_node_between,
-    add_meta_vertex!,
-    add_hanging!,
-    add_interior!,
-    interior_vertices,
-    add_meta_edge!,
     distance,
-    x, y, z,
-    coords,
     barycentric_matrix,
     barycentric,
-    vertices_with_type,
-    normal_vertices,
-    hanging_nodes,
-    interiors,
-    is_hanging,
-    is_vertex,
-    is_interior,
     projection_area,
     approx_function,
-    pyramid_function,
-    vertex_map,
-    set_values!
+    pyramid_function
 
 using Colors
-using MetaGraphs
-using Graphs
 using Statistics
 using LinearAlgebra
+
+using ..HyperGraphs
 
 "Holds three 3-elemnt arrays [x, y, z] that represent each vertex of triangle"
 const Triangle = Tuple{Array{<:Real, 1}, Array{<:Real, 1}, Array{<:Real, 1}}
@@ -70,10 +53,10 @@ function barycentric_matrix(triangle::Triangle)
     barycentric_matrix(triangle[1], triangle[2], triangle[3])
 end
 
-function barycentric_matrix(g::AbstractMetaGraph, interior::Integer)
-    v1, v2, v3 = interior_vertices(g, interior)
+function barycentric_matrix(g::HyperGraph, interior::Integer)
+    v1, v2, v3 = interiors_vertices(g, interior)
 
-    barycentric_matrix(coords(g, v1), coords(g, v2), coords(g, v3))
+    barycentric_matrix(xyz(g, v1), xyz(g, v2), xyz(g, v3))
 end
 
 """
@@ -107,7 +90,7 @@ function barycentric(triangle::Triangle, p::Array{<:Real, 1})::Array{<:Real, 1}
     (M*vcat(p,1))[1:2]
 end
 
-function barycentric(g::AbstractMetaGraph, interior::Integer, p::Array{<:Real, 1})
+function barycentric(g::HyperGraph, interior::Integer, p::Array{<:Real, 1})
     M = barycentric_matrix(g, interior)
     (M*vcat(p,1))[1:2]
 end
@@ -121,9 +104,9 @@ See also: [`barycentric_matrix`](@ref), [`barycentric`](@ref)
 """
 function approx_function end
 
-function approx_function(g, interior, val_fun=(g, v)->get_prop(g, v, :value))
+function approx_function(g, interior, val_fun=(g, v)->get_value(g, v))
     M = barycentric_matrix(g, interior)
-    v1, v2, v3 = interior_vertices(g, interior)
+    v1, v2, v3 = interiors_vertices(g, interior)
     val1, val2, val3 = map(v -> val_fun(g, v), [v1, v2, v3])
     u(λ₁, λ₂) = val1 * λ₁ + val2 * λ₂ + val3 * (1 -  λ₁ - λ₂)
     function f(p)
@@ -143,7 +126,7 @@ every other. It lineary decreases from 1 to 0 to neighbour vertices.
 """
 function pyramid_function(g, interior, summit)
     M = barycentric_matrix(g, interior)
-    v1, v2, v3 = interior_vertices(g, interior)
+    v1, v2, v3 = interiors_vertices(g, interior)
     val1, val2, val3 = map(v -> Int(summit == v), [v1, v2, v3])
     u(λ₁, λ₂) = val1 * λ₁ + val2 * λ₂ + val3 * (1 -  λ₁ - λ₂)
     function f(p)
@@ -184,148 +167,12 @@ center_point(points::Matrix) = mean(points, dims=1)
 center_point(points::Array{<:Array, 1}) = mean(points)
 
 function center_point(g, vertices::Array)
-    center_point(map(x -> coords(g, x), vertices))
+    center_point(map(x -> xyz(g, x), vertices))
 end
 
 function center_point(g, interior::Integer)
-    center_point(g, interior_vertices(g, interior))
+    center_point(g, interiors_vertices(g, interior))
 end
-
-"""
-    vertices_with_type(g, type)
-
-Return all vertices with type `type`.
-
-See also: [`interiors`](@ref), [`hanging_nodes`](@ref),
-[`normal_vertices`](@ref)
-"""
-function vertices_with_type(g::AbstractMetaGraph, type::String)
-    filter_fun(g, v) = if get_prop(g, v, :type) == type true else false end
-    filter_vertices(g, filter_fun)
-end
-
-"""
-    interiors(g)
-
-Return all vertices with type 'interior'.
-
-See also: [`vertices_with_type`](@ref), [`hanging_nodes`](@ref),
-[`normal_vertices`](@ref)
-"""
-function interiors(g::AbstractMetaGraph)
-    vertices_with_type(g, "interior")
-end
-
-"""
-    hanging_nodes(g)
-
-Return all vertices with type 'hanging'.
-
-See also: [`vertices_with_type`](@ref), [`interiors`](@ref),
-[`normal_vertices`](@ref)
-"""
-function hanging_nodes(g::AbstractMetaGraph)
-    vertices_with_type(g, "hanging")
-end
-
-"""
-    normal_vertices(g)
-
-Return all vertices with type 'vertex'.
-
-See also: [`vertices_with_type`](@ref), [`hanging_nodes`](@ref),
-[`hanging_nodes`](@ref)
-"""
-function normal_vertices(g::AbstractMetaGraph)
-    vertices_with_type(g, "vertex")
-end
-
-"""
-    get_hanging_node_between(g, v1, v2)
-
-Get hanging node between normal vertices `v1` and `v2` in graph `g`.
-"""
-function get_hanging_node_between(g::AbstractMetaGraph, v1::Integer, v2::Integer)
-    if has_edge(g, v1, v2)
-        return nothing
-    end
-    nodes1 = filter(v -> get_prop(g, v, :type) == "hanging", neighbors(g, v1))
-    nodes2 = filter(v -> get_prop(g, v, :type) == "hanging", neighbors(g, v2))
-    nodes = intersect(nodes1, nodes2)
-
-    x1 = get_prop(g, v1, :x)
-    y1 = get_prop(g, v1, :y)
-    x2 = get_prop(g, v2, :x)
-    y2 = get_prop(g, v2, :y)
-    for node in nodes
-        xh = get_prop(g, node, :x)
-        yh = get_prop(g, node, :y)
-        if xh == (x1+x2)/2.0 && yh ==(y1+y2)/2.0
-            return node
-        end
-    end
-
-    return nothing
-end
-
-"Add vertex to graph `g` with properties `x`, `y` and `z`"
-# TODO change signature to g, lat, lon
-function add_meta_vertex!(g, x, y, z)
-    add_vertex!(g)
-    # TODO compute height (?)
-    # TODO set prop lat, lon, h
-    set_prop!(g, nv(g), :type, "vertex")
-    # TODO compute x,y,z from lat, lon, h
-    set_prop!(g, nv(g), :x, convert(Float64, x))
-    set_prop!(g, nv(g), :y, convert(Float64, y))
-    set_prop!(g, nv(g), :z, convert(Float64, z))
-    return nv(g)
-end
-
-"Add hanging node to graph `g` with properties `x`, `y` and `z`"
-function add_hanging!(g, x, y, z)
-    add_vertex!(g)
-    set_prop!(g, nv(g), :type, "hanging")
-    set_prop!(g, nv(g), :x, x)
-    set_prop!(g, nv(g), :y, y)
-    set_prop!(g, nv(g), :z, z)
-    # TODO lat, lon, h
-    return nv(g)
-end
-
-"Add interior to graph `g` that represents triangle `v1` `v2` `v3`.
-Set `:refine` property to `boundary`."
-function add_interior!(g, v1, v2, v3, refine)
-    add_vertex!(g)
-    set_prop!(g, nv(g), :type, "interior")
-    set_prop!(g, nv(g), :refine, refine)
-    # TODO set_prop!(g, nv(g), :points, fun_with_view() )
-    # set_prop!(g, nv(g), :v1, v1)
-    # set_prop!(g, nv(g), :v2, v2)
-    # set_prop!(g, nv(g), :v3, v3)
-    add_edge!(g, nv(g), v1)
-    add_edge!(g, nv(g), v2)
-    add_edge!(g, nv(g), v3)
-    return nv(g)
-end
-
-"Add edge to grapg `g` between vertices `v1` and `v2`. Set `:boundary` property
-to `boundary`."
-function add_meta_edge!(g, v1, v2, boundary)
-    add_edge!(g, v1, v2)
-    set_prop!(g, v1, v2, :boundary, boundary)
-end
-
-"Return vertices of triangle, that is represented by interior `i` as 3-element
-Array."
-function interior_vertices(g::AbstractMetaGraph, i::Integer)
-    # [get_prop(g, i, :v1), get_prop(g, i, :v2), get_prop(g, i, :v3)]
-    neighbors(g, i)
-end
-
-is_hanging(g, v) = get_prop(g, v, :type) == "hanging"
-is_vertex(g, v) = get_prop(g, v, :type) == "vertex"
-is_interior(g, v) = get_prop(g, v, :type) == "interior"
 
 """
     distance(p1, p2)
@@ -335,66 +182,8 @@ Return cartesian distance between points `p1` and `p2` (represented as arrays
 [x, y, z]), or vertices `v1` and `v2` in graph `g`.
 """
 function distance end
-distance(p1::Array{<:Real, 1}, p2::Array{<:Real, 1}) = sqrt(sum(map(x -> x^2, p1-p2)))
-distance(g, v1, v2) = distance(coords(g, v1), coords(g, v2))
-
-
-"""
-    x(graph, vertex)
-    x(point)
-
-Returns `x` coordindate.
-
-If `graph` and `vertex` are delivered returns `x` property of `vertex`
-
-`point` is represented as array [x,y,z]. So returns `point[1]`. For convenience.
-
-See also: [`y`](@ref), [`z`](@ref), [`coords`](@ref)
-"""
-function x end
-x(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :x)
-x(point::Array{<:Real, 1}) = point[1]
-
-"""
-    z(graph, vertex)
-    z(point)
-
-Returns `y` coordindate.
-
-If `graph` and `vertex` are delivered returns `y` property of `vertex`
-
-`point` is represented as array [x,y,z]. So returns `point[2]`. For convenience.
-
-See also: [`x`](@ref), [`z`](@ref), [`coords`](@ref)
-"""
-function y end
-y(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :y)
-y(point::Array{<:Real, 1}) = point[2]
-
-"""
-    z(graph, vertex)
-    z(point)
-
-Returns `z` coordindate.
-
-If `graph` and `vertex` are delivered returns `z` property of `vertex`
-
-`point` is represented as array [x,y,z]. So returns `point[3]`. For convenience.
-
-See also: [`x`](@ref), [`y`](@ref), [`coords`](@ref)
-"""
-function z end
-z(graph::AbstractMetaGraph, vertex::Integer) = get_prop(graph, vertex, :z)
-z(point::Array{<:Real, 1}) = point[3]
-
-"""
-    coords(g, v)
-
-Return [x,y,z] coords of node `v` in graph `g` as 3-element Array.
-
-See also: [`x`](@ref), [`y`](@ref), [`z`](@ref)
-"""
-coords(g, v) = [get_prop(g, v, :x), get_prop(g, v, :y), get_prop(g, v, :z)]
+distance(p1::Vector{<:Real}, p2::Vector{<:Real}) = norm(p1 - p2)
+distance(g::HyperGraph, v1, v2) = distance(xyz(g, v1), xyz(g, v2))
 
 """
     projection_area(g, i)
@@ -415,21 +204,9 @@ function projection_area(triangle::Triangle)
     projection_area(a, b, c)
 end
 
-function projection_area(g::AbstractMetaGraph, i::Integer)
-    a, b, c = interior_vertices(g, i)
-    projection_area(coords(g, a), coords(g, b), coords(g, c))
+function projection_area(g::HyperGraph, i::Integer)
+    a, b, c = interiors_vertices(g, i)
+    projection_area(xyz(g, a), xyz(g, b), xyz(g, c))
 end
 
-"Return dictionary that maps id's of all vertices with type `vertex` to number
-starting at 1."
-vertex_map(g) = Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
-
-"Set `:value` property for all vertexes with type `vertex` in graph `g`. Vertex
-with smalles `id` will receive value `a[1]`, next one `a[2]` and so on"
-function set_values!(g, a)
-    for (i, v) in enumerate(normal_vertices(g))
-        set_prop!(g, v, :value, a[i])
-    end
-end
-
-end
+end #module

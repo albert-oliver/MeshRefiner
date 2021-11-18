@@ -5,6 +5,7 @@ module ProjectIO
 using ..Adaptation
 using ..Utils
 using ..Visualization
+using ..HyperGraphs
 
 export
     load_data,
@@ -14,14 +15,15 @@ export
     export_simulation,
     load_vtu
 
-using Graphs
-using MetaGraphs
 using Printf
 using GLMakie
 using LightXML
 
 import Images
 import ArchGDAL; const AG = ArchGDAL
+import MetaGraphs as MG
+import Graphs as Gr
+
 
 "Load terrain data (in bytes) as `TerrainMap`"
 function load_data(filename, dims, type=Float64)::TerrainMap
@@ -71,24 +73,33 @@ function saveGML(g, filename)
     open(filename, "w") do io
         write(io, "graph [\n")
         write(io, "\tdirected 0\n")
+        if typeof(g) == FlatGraph
+            write(io, "\ttype FlatGraph\n")
+        elseif typeof(g) == SphereGraph
+            write(io, "\ttype SphereGraph\n")
+            write(io, @sprintf("\tradius %s\n"), string(g.radius))
+        end
+        write(io, @sprintf("\tvertex_count %s\n", string(g.vertex_count)))
+        write(io, @sprintf("\tinterior_count %s\n", string(g.interior_count)))
+        write(io, @sprintf("\thanging_counts %s\n", string(g.hanging_count)))
 
-        for v in 1:nv(g)
+        for v in 1:MG.nv(g.graph)
             write(io, "\tnode [\n")
 
             write(io, @sprintf("\t\tid %d\n", v))
-            for pair in props(g, v)
+            for pair in MG.props(g.graph, v)
                 write(io, @sprintf("\t\t%s %s\n", string(pair[1]), string(pair[2])))
             end
 
             write(io, "\t]\n")
         end
 
-        for e in edges(g)
+        for e in MG.edges(g.graph)
             write(io, "\tedge [\n")
 
-            write(io, @sprintf("\t\tsource %d\n", src(e)))
-            write(io, @sprintf("\t\ttarget %d\n", dst(e)))
-            for pair in props(g, e)
+            write(io, @sprintf("\t\tsource %d\n", Gr.src(e)))
+            write(io, @sprintf("\t\ttarget %d\n", Gr.dst(e)))
+            for pair in MG.props(g.graph, e)
                 write(io, @sprintf("\t\t%s %s\n", string(pair[1]), string(pair[2])))
             end
 
@@ -97,6 +108,7 @@ function saveGML(g, filename)
 
         write(io, "]\n")
     end
+    return nothing
 end
 
 "Export graph as OBJ. If flag `include_fun` is set also export function that mesh
@@ -107,7 +119,8 @@ function export_obj(g, filename, include_fun=false)
         t_map = Dict()
         fun_map = Dict()
         for v in normal_vertices(g)
-            write(io, @sprintf("v %f %f %f\n", x(g, v), y(g, v), z(g, v)))
+            x, y, z = xyz(g, v)
+            write(io, @sprintf("v %f %f %f\n", x, y, z))
             t_map[v] = v_id
             v_id += 1
         end
@@ -121,14 +134,15 @@ function export_obj(g, filename, include_fun=false)
 
         if include_fun
             for v in normal_vertices(g)
-                write(io, @sprintf("v %f %f %f\n", x(g, v), y(g, v), z(g, v) + get_prop(g, v, :value)))
+                x, y, z = get_value_cartesian(g, v)
+                write(io, @sprintf("v %f %f %f\n", x, y, z))
                 fun_map[v] = v_id
                 v_id += 1
             end
         end
 
         for i in interiors(g)
-            v1, v2, v3 = interior_vertices(g, i)
+            v1, v2, v3 = interiors_vertices(g, i)
             write(io, @sprintf("f %d %d %d\n", t_map[v1], t_map[v2], t_map[v3]))
             if include_fun
                 write(io, @sprintf("f %d %d %d\n", fun_map[v1], fun_map[v2], fun_map[v3]))
@@ -144,7 +158,7 @@ Export simulation as video. Values is matrix returned from [`simulate`](@ref).
 """
 function export_simulation(g, values; filename="sim.mp4", fps=24,
     transparent_fun=false, shading_fun=true, show_axis=false)
-    set_values!(g, values[1,:])
+    set_all_values!(g, values[1,:])
     scene = draw_makie(g; include_fun=false, show_axis=show_axis)
     vertices, faces = function_mesh(g)
 
@@ -197,7 +211,7 @@ end
 
 Loads vtu file as graph.
 """
-function load_vtu(filename::String)::AbstractMetaGraph
+function load_vtu(filename::String)::FlatGraph
     xdoc = parse_file(filename)
     xroot = root(xdoc)
     piece = xroot["UnstructuredGrid"][1]["Piece"][1]
@@ -216,17 +230,17 @@ function load_vtu(filename::String)::AbstractMetaGraph
     free(xdoc)
 
     # Create graph
-    g = MetaGraph()
+    g = FlatGraph()
 
     for point in eachcol(points)
-        add_meta_vertex!(g, point[1], point[2], point[3])
+        add_vertex!(g, [point[1], point[2], point[3]])
     end
 
     for cell in eachcol(cells)
-        add_meta_edge!(g, cell[1], cell[2], true)
-        add_meta_edge!(g, cell[1], cell[3], true)
-        add_meta_edge!(g, cell[2], cell[3], true)
-        add_interior!(g, cell[1], cell[2], cell[3], false)
+        add_edge!(g, cell[1], cell[2])
+        add_edge!(g, cell[1], cell[3])
+        add_edge!(g, cell[2], cell[3])
+        add_interior!(g, cell[1], cell[2], cell[3])
     end
 
     return g

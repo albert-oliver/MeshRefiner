@@ -3,11 +3,10 @@ module Simulation
 
 export simulate!
 
-using Graphs
-using MetaGraphs
 using LinearAlgebra
 
 using ..Utils
+using ..HyperGraphs
 
 """
     common_triangles(h, i, j)
@@ -16,14 +15,12 @@ Return common triangles of vertices `i` and `j`. Common traingles are all
 triangles with both `i` and `j` as its vertices.
 """
 function common_triangles(g, i, j)
-    interiors1 = filter(v -> get_prop(g, v, :type) == "interior", neighbors(g, i))
-    interiors2 = filter(v -> get_prop(g, v, :type) == "interior", neighbors(g, j))
-    intersect(interiors1, interiors2)
+    intersect(interior_neighbors(g, i), interior_neighbors(g, j))
 end
 
 "Return interiors of all traingles that have `i` as one of thair vertices."
 function triangles_with_vertex(g, i)
-    filter(v -> get_prop(g, v, :type) == "interior", neighbors(g, i))
+    filter(v -> is_interior(g, v), neighbors(g, i))
 end
 
 """
@@ -35,9 +32,9 @@ inside triangle, where `(xs, ys)` is center of triangle.
 Triangle is represented by `interior` in graph `g.`
 """
 function rel_triangle_ϵ(g, interior)
-    a, b, c = map(v -> coords(g, v), interior_vertices(g, interior))
-    hx = (max(x(a), x(b), x(c)) - min(x(a), x(b), x(c))) / 4
-    hy = (max(y(a), y(b), y(c)) - min(y(a), y(b), y(c))) / 4
+    a, b, c = map(v -> xyz(g, v), interiors_vertices(g, interior))
+    hx = (max(a[1], b[1], c[1]) - min(a[1], b[1], c[1])) / 4
+    hy = (max(a[2], b[2], c[2])- min(a[2], b[2], c[2])) / 4
     min(hx, hy)
 end
 
@@ -67,7 +64,7 @@ function gradient_norm(g)
     interiors_vector = collect(enumerate(interiors(g)))
     integrals = zeros(length(interiors_vector))
     Threads.@threads for (i, interior) in interiors_vector
-        value_func(g, v) = get_prop(g, v, :value) + z(g, v)
+        value_func(g, v) = get_value(g, v) + get_elevation(g, v)
         f = approx_function(g, interior, value_func)
         center = center_point(g, interior)[1:2]
         ϵ = rel_triangle_ϵ(g, interior)
@@ -94,8 +91,8 @@ function ee_matrix(g)
     M = zeros((vertices_count, vertices_count))
     for interior in interiors(g)
         area = projection_area(g, interior)
-        for vᵢ in interior_vertices(g, interior)
-            for vⱼ in interior_vertices(g, interior)
+        for vᵢ in interiors_vertices(g, interior)
+            for vⱼ in interiors_vertices(g, interior)
                 i = v_map[vᵢ]
                 j = v_map[vⱼ]
                 if i == j
@@ -123,7 +120,7 @@ function calculate_physics(g, dt, γ, α, β)
 
             # Part that calculates diffusion
             ϵ = rel_triangle_ϵ(g, interior)
-            value_func(g, v) = get_prop(g, v, :value) + get_prop(g, v, :z)
+            value_func(g, v) = get_value(g, v) + get_elevation(g, v)
             u = approx_function(g, interior, value_func)
             ∇u = gradient(u, [xs, ys]; ϵ=ϵ)
             e = pyramid_function(g, interior, vᵢ)
@@ -148,7 +145,7 @@ function calculate_source(g, dt, f)
         area = projection_area(g, interior)
         xs, ys = center_point(g, interior)[1:2]
         value = f(xs, ys) * (1/3) * area
-        for vᵢ in interior_vertices(g, interior)
+        for vᵢ in interiors_vertices(g, interior)
             i = v_map[vᵢ]
             source[i] += value
         end
@@ -167,7 +164,7 @@ Note that graph `g` should have been adapted to function representing starting
 water level using `adapt_fun!`.
 """
 function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
-    result = reshape(map(v -> get_prop(g, v, :value), normal_vertices(g)), 1, :)
+    result = reshape(map(v -> get_value(g, v), normal_vertices(g)), 1, :)
     v_map = vertex_map(g)
     vertices_count = length(v_map)
 
@@ -179,7 +176,7 @@ function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
 
         # RHS
         # (1)
-        aᵗ = map(v -> get_prop(g, v, :value), normal_vertices(g))
+        aᵗ = map(v -> get_value(g, v), normal_vertices(g))
         previous_step = M*aᵗ
 
         # (2)
@@ -193,7 +190,7 @@ function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
         # aᵗ⁺¹ has values close to 0 (ex. 1e-10) and sqrt doesn't work
         aᵗ⁺¹ = map(x -> x < 0.0 ? 0.0 : x, aᵗ⁺¹)
         result = vcat(result, aᵗ⁺¹')
-        set_values!(g, aᵗ⁺¹)
+        set_all_values!(g, aᵗ⁺¹)
     end
 
     result

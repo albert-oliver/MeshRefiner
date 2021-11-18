@@ -1,6 +1,10 @@
 "Most important module responsible for adaptaion of the mesh."
 module Adaptation
 
+using ..HyperGraphs
+using ..Utils
+using ..Transformations
+
 export
     adapt_fun!,
     adapt_terrain!,

@@ -1,18 +1,12 @@
-using ..Utils
-
-using MetaGraphs
-using Graphs
-
-function check_p3(g, center)
-    if get_prop(g, center, :type) != "interior"
+function check_p3(g::HyperGraph, center::Integer)
+    if !is_interior(g, center)
         return nothing
     end
 
-    vertexes = interior_vertices(g, center)
-
-    vA = vertexes[1]
-    vB = vertexes[2]
-    vC = vertexes[3]
+    vs = interiors_vertices(g, center)
+    vA = vs[1]
+    vB = vs[2]
+    vC = vs[3]
     hA = get_hanging_node_between(g, vB, vC)
     hB = get_hanging_node_between(g, vA, vC)
     hC = get_hanging_node_between(g, vA, vB)
@@ -37,9 +31,9 @@ function check_p3(g, center)
     lAB = distance(g, vA, vB)
     lBC = distance(g, vB, vC)
     lCA = distance(g, vC, vA)
-    max = maximum([lAB, lBC, lCA])
+    longest = maximum([lAB, lBC, lCA])
 
-    if max == lAB
+    if longest == lAB
         if h == hA
             v1 = vB
             v2 = vC
@@ -51,7 +45,7 @@ function check_p3(g, center)
         else
             return nothing
         end
-    elseif max == lBC
+    elseif longest == lBC
         if h == hB
             v1 = vC
             v2 = vA
@@ -63,7 +57,7 @@ function check_p3(g, center)
         else
             return nothing
         end
-    else # max == lCA
+    else # longest == lCA
         if h == hA
             v1 = vC
             v2 = vB
@@ -86,10 +80,10 @@ function check_p3(g, center)
     L5 = distance(g, h, v2)
     L2 = distance(g, v2, v3)
     L3 = distance(g, v1, v3)
-    B2 = get_prop(g, v2, v3, :boundary)
-    B3 = get_prop(g, v1, v3, :boundary)
-    HN1 = get_prop(g, v1, :type) == "hanging" ? true : false
-    HN3 = get_prop(g, v3, :type) == "hanging" ? true : false
+    B2 = is_on_boundary(g, v2, v3)
+    B3 = is_on_boundary(g, v1, v3)
+    HN1 = is_hanging(g, v1)
+    HN3 = is_hanging(g, v3)
 
     if ((L3 > (L4 + L5)) && (L3 >= L2)) && (B3 ||
         ( !B3 && (!HN1 && !HN3) && (!(B2 && L2 == L3))) )
@@ -119,31 +113,29 @@ Conditions:
     - It's vertices are not hanging nodes **AND** other egde is not same
     length and on the boundary
 """
-function transform_p3!(g, center)
+function transform_p3!(g::HyperGraph, center::Integer)
     mapping = check_p3(g, center)
     if isnothing(mapping)
         return false
     end
 
     v1, v2, v3, h = mapping
-    p1 = props(g, v1)
-    p3 = props(g, v3)
 
-    B3 = get_prop(g, v1, v3, :boundary)
+    B3 = is_on_boundary(g, v1, v3)
 
-    v5 = add_meta_vertex!(g, (p1[:x] + p3[:x])/2, (p1[:y] + p3[:y])/2, (p1[:z] + p3[:z])/2)
+    v5 = add_vertex!(g, (xyz(g, v1) + xyz(g, v3)) / 2.0)
     if !B3
-        set_prop!(g, v5, :type, "hanging")
+        set_hanging!(g, v5, v1, v3)
     end
 
     rem_edge!(g, v1, v3)
 
-    add_meta_edge!(g, v1, v5, B3)
-    add_meta_edge!(g, v3, v5, B3)
-    add_meta_edge!(g, v2, v5, false)
+    add_edge!(g, v1, v5; boundary=B3)
+    add_edge!(g, v3, v5, boundary=B3)
+    add_edge!(g, v2, v5, boundary=false)
 
-    add_interior!(g, v1, v2, v5, false)
-    add_interior!(g, v2, v5, v3, false)
+    add_interior!(g, v1, v2, v5)
+    add_interior!(g, v2, v5, v3)
 
     rem_vertex!(g, center)
 

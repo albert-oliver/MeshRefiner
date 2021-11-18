@@ -1,12 +1,11 @@
 using ..Adaptation
-using ..Utils
 
 function regular_flat_mesh(; subdivisions::Integer=10, dims=(1.0, 1.0))
     g = simple_graph(dims)
 
     for i in 1:subdivisions
         for interior in interiors(g)
-            set_prop!(g, interior, :refine, true)
+            set_refine!(g, interior)
         end
         Adaptation.run_transformations!(g)
     end
@@ -22,7 +21,7 @@ function regular_slope_mesh(; subdivisions::Integer=10, dims=(1.0, 1.0), height=
 
     for v in normal_vertices(g)
         z_val = -(height / dims[1]) * x(g, v) + height
-        set_prop!(g, v, :z, z_val)
+        set_elevation!(g, v, z_val)
     end
 
     g
@@ -35,7 +34,7 @@ function regular_channel_mesh(; subdivisions=10, dims=(1.0, 1.0), height=1.0)
     for v in normal_vertices(g)
         z_val  = (-(height / dims[1]) * x(g, v) + height) / 2.0
         z_val += height / 2.0 * abs(y(g, v) - yp) / (dims[2] / 2.0)
-        set_prop!(g, v, :z, z_val)
+        set_elevation!(g, v, z_val)
     end
 
     g

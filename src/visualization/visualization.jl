@@ -2,8 +2,7 @@
 module Visualization
 
 using ..Utils
-
-using MetaGraphs
+using ..HyperGraphs
 
 export draw_makie, draw_graphplot, terrain_mesh, function_mesh
 
@@ -39,17 +38,17 @@ function custom_z_mesh(g, z_fun, face_filter)
     vmap = vertex_map(g)
     vmapf(x) = vmap[x]
 
-    xyz(g, v) = [x(g, v), y(g, v), z_fun(g, v)]
-    vertices = hcat([xyz(g, v) for v in normal_vertices(g)]...)'
+    coords(g, v) = vcat(xyz(g, v)[1:2], z_fun(g, v))
+    vs = hcat([coords(g, v) for v in normal_vertices(g)]...)'
 
-    triangles = [interior_vertices(g, i) for i in interiors(g)]
-    sorted = map(vs -> sort_cclockwise(vs, vertices[vmapf.(vs), :]), triangles)
+    triangles = [interiors_vertices(g, i) for i in interiors(g)]
+    sorted = map(ids -> sort_cclockwise(ids, vs[vmapf.(ids), :]), triangles)
     pa_filter(x) = face_filter(g, x)
     filtered_triangles = filter(pa_filter, sorted)
     matrix_triangles = hcat(filtered_triangles...)'
     faces = map(vmapf, matrix_triangles)
 
-    (vertices, faces)
+    (vs, faces)
 end
 
 """
@@ -61,7 +60,7 @@ Return tuple `(vertices, faces)` with mesh representing terrain.
 - `faces` is matrix where each row is three vertex indexes
 """
 function terrain_mesh(g)
-    custom_z_mesh(g, (g, v) -> z(g, v), (g, vs) -> true)
+    custom_z_mesh(g, (g, v) -> get_elevation(g, v), (g, vs) -> true)
 end
 
 """
@@ -76,8 +75,8 @@ No face is generated if all vertices of triangle have `:value` property equal
 to 0.
 """
 function function_mesh(g)
-    face_filter(g, vs) = !([get_prop(g, v, :value) for v in vs] ≈ [0.0, 0.0, 0.0])
-    vs, f = custom_z_mesh(g, (g, v) -> get_prop(g, v, :value) + z(g, v), face_filter)
+    face_filter(g, vs) = !([get_value(g, v) for v in vs] ≈ [0.0, 0.0, 0.0])
+    vs, f = custom_z_mesh(g, (g, v) -> get_value(g, v) + get_elevation(g, v), face_filter)
     (vs, f)
 end
 
