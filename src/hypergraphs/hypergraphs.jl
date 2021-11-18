@@ -122,7 +122,7 @@ abstract type HyperGraph end
     add_vertex!(g, coords; value=0)
     add_vertex!(g, coords, elevation; value=0)
 
-Add new vertex to graph `g`.
+Add new vertex to graph `g`. Return its `id`.
 
 ## For `FlatGraph`:
 - when `elevation` is not delivered add vertex with coordinates:
@@ -148,8 +148,8 @@ function add_vertex! end
     add_hanging!(g, v1, v2, elevation; value=0)
     add_hanging!(g, v1, v2, coords, elevation; value=0)
 
-Add hanging node between vertices `v1` and `v2`. Other arguments are similar to
-[`add_vertex!`](@ref).
+Add hanging node between vertices `v1` and `v2`. Return its `id`. Other arguments
+are similar to [`add_vertex!`](@ref).
 
 # Note
 Only add new vertex with type `hanging`. **No** other changes will be made
@@ -159,14 +159,27 @@ See also: [`add_vertex!`](@ref)
 """
 function add_hanging! end
 
-function add_hanging!(g::HyperGraph, v1, v2, coords; value = 0.0)
-    add_vertex!(g, coords; value=value)
+function add_hanging!(
+    g::HyperGraph,
+    v1::Integer,
+    v2::Integer,
+    coords::AbstractVector{<:Real};
+    value::Real = 0.0,
+)
+    add_vertex!(g, coords; value = value)
     set_hanging!(g, nv(g), v1, v2)
     nv(g)
 end
 
-function add_hanging!(g::HyperGraph, v1, v2, coords, elevation; value = 0.0)
-    add_vertex!(g, coords, elevation; value=value)
+function add_hanging!(
+    g::HyperGraph,
+    v1::Integer,
+    v2::Integer,
+    coords::AbstractVector{<:Real},
+    elevation::Real;
+    value = 0.0,
+)
+    add_vertex!(g, coords, elevation; value = value)
     set_hanging!(g, nv(g), v1, v2)
     nv(g)
 end
@@ -176,14 +189,21 @@ end
     add_interior!(g, vs; refine=false)
 
 Add interior to graph `g` that represents traingle with vertices `v1`, `v2` and
-`v3` (or vector `vs = [v1, v2, v3]`).
+`v3` (or vector `vs = [v1, v2, v3]`). Return its `id`.
 
 # Note
-This will **not** create any edges between those vertices.
+This will **not** create any edges between those vertices. However it will
+create edges between new `INTERIOR` vertex and each of the three.
 """
 function add_interior! end
 
-function add_interior!(g, v1, v2, v3; refine=false)
+function add_interior!(
+    g::HyperGraph,
+    v1::Integer,
+    v2::Integer,
+    v3::Integer;
+    refine::Bool = false,
+)
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, INTERIOR)
     MG.set_prop!(g.graph, nv(g), :refine, refine)
@@ -194,110 +214,123 @@ function add_interior!(g, v1, v2, v3; refine=false)
     return nv(g)
 end
 
-function add_interior!(g, vs; refine=false)
-    add_interior!(vs[v1], vs[v2], vs[v3]; value=value)
+function add_interior!(
+    g::HyperGraph,
+    vs::AbstractVector{<:Real};
+    refine::Bool = false,
+)
+    add_interior!(vs[v1], vs[v2], vs[v3]; value = value)
 end
 
 "Add edge between vertices `v1` and `v2`."
-function add_edge!(g, v1, v2; boundary=false)
+function add_edge!(
+    g::HyperGraph,
+    v1::Integer,
+    v2::Integer;
+    boundary::Bool = false,
+)
     Gr.add_edge!(g.graph, v1, v2)
     MG.set_prop!(g.graph, v1, v2, :boundary, boundary)
 end
 
 "Remove vertex `v` of any type from graph."
-function rem_vertex!(g::HyperGraph, v)
+function rem_vertex!(g::HyperGraph, v::Integer)
     if is_vertex(g, v)
         g.vertex_count -= 1
     elseif is_hanging(g, v)
         g.hanging_count -= 1
     else
-        g.interior_count -=1
+        g.interior_count -= 1
     end
     Gr.rem_vertex!(g.graph, v)
 end
 
 "Remove edge from `v1` to `v2` from graph."
-rem_edge!(g, v1, v2) = Gr.rem_edge!(g.graph, v1, v2)
+rem_edge!(g::HyperGraph, v1::Integer, v2::Integer) =
+    Gr.rem_edge!(g.graph, v1, v2)
 
 # -----------------------------------------------------------------------------
 # ------ Functions counting elements fo graph  --------------------------------
 # -----------------------------------------------------------------------------
 
 "Number of **all** vertices in graph `g`. Alias: [`nv`](@ref)"
-all_vertex_count(g) = Gr.nv(g.graph)
+all_vertex_count(g::HyperGraph) = Gr.nv(g.graph)
 
 "Number of **all** vertices in graph `g`. Alias of [`vertex_count`](@ref)"
 nv = all_vertex_count
 
 "Number of normal vertices in graph `g`"
-vertex_count(g) = g.vertex_count
+vertex_count(g::HyperGraph) = g.vertex_count
 
 "Number of hanging nodes in graph `g`"
-hanging_count(g) = g.hanging_count
+hanging_count(g::HyperGraph) = g.hanging_count
 
 "Number of interiors in graph `g`"
-interior_count(g) = g.interior_count
+interior_count(g::HyperGraph) = g.interior_count
 
 # -----------------------------------------------------------------------------
 # ------ Iterators over vertices ----------------------------------------------
 # -----------------------------------------------------------------------------
 
 "Return vector of all vertices with type `type`"
-function vertices_with_type(g, type::Integer)
+function vertices_with_type(g::HyperGraph, type::Integer)
     filter_fun(g, v) = MG.get_prop(g, v, :type) == type
     MG.filter_vertices(g.graph, filter_fun)
 end
 
 "Return vector of all vertices with type different from `type`"
-function vertices_except_type(g, type::Integer)
+function vertices_except_type(g::HyperGraph, type::Integer)
     filter_fun(g, v) = MG.get_prop(g, v, :type) != type
     MG.filter_vertices(g.graph, filter_fun)
 end
 
 "Return all vertices with type `VERTEX`"
-normal_vertices(g) = vertices_with_type(g, VERTEX)
+normal_vertices(g::HyperGraph) = vertices_with_type(g, VERTEX)
 
 "Return all vertices with type `HANGING`"
-hanging_nodes(g) = vertices_with_type(g, HANGING)
+hanging_nodes(g::HyperGraph) = vertices_with_type(g, HANGING)
 
 "Return all vertices with type `INTERIOR`"
-interiors(g) = vertices_with_type(g, INTERIOR)
+interiors(g::HyperGraph) = vertices_with_type(g, INTERIOR)
 
 "Return neighbors with all types of vertex `v`"
-neighbors(g, v) = Gr.neighbors(g.graph, v)
+neighbors(g::HyperGraph, v::Integer) = Gr.neighbors(g.graph, v)
 
 "Return neighbors with type `type` of vertex `v`"
-function neighbors_with_type(g, v, type)
+function neighbors_with_type(g::HyperGraph, v::Integer, type::Integer)
     filter(u -> MG.get_prop(g.graph, u, :type) == type, neighbors(g, v))
 end
 
 "Return neighbors with type different than `type` of vertex `v`"
-function neighbors_except_type(g, v, type)
+function neighbors_except_type(g::HyperGraph, v::Integer, type::Integer)
     filter(u -> MG.get_prop(g.graph, u, :type) != type, neighbors(g, v))
 end
 
 "Return neighbors with type `vertex` of vertex `v`"
-vertex_neighbors(g, v) = neighbors_with_type(g, v, VERTEX)
+vertex_neighbors(g::HyperGraph, v::Integer) = neighbors_with_type(g, v, VERTEX)
 
 "Return neighbors with type `hanging` of vertex `v`"
-hanging_neighbors(g, v) = neighbors_with_type(g, v, HANGING)
+hanging_neighbors(g::HyperGraph, v::Integer) =
+    neighbors_with_type(g, v, HANGING)
 
 "Return neighbors with type `interior` of vertex `v`"
-interior_neighbors(g, v) = neighbors_with_type(g, v, INTERIOR)
+interior_neighbors(g::HyperGraph, v::Integer) =
+    neighbors_with_type(g, v, INTERIOR)
 
 "Return three vertices that make triangle represented by interior `i`"
-interiors_vertices(g, i) = neighbors(g, i)
+interiors_vertices(g::HyperGraph, i::Integer) = neighbors(g, i)
 
 "Check if edge between `v1` `v2` is ordinary, that is if it doesn't connect
 `INTERIOR` to its vertices."
-is_ordinary_edge(g, v1, v2) = !is_interior(g, v1) && !is_interior(g, v2)
+is_ordinary_edge(g::HyperGraph, v1::Integer, v2::Integer) =
+    !is_interior(g, v1) && !is_interior(g, v2)
 
 "Return *all* edges in graph `g` (including possibly edges between interiors
 and) its vertices. To get ordinary edges use [`edges`](@ref)."
-all_edges(g) = map(e -> [Gr.src(e), Gr.dst(e)], Gr.edges(g.graph))
+all_edges(g::HyperGraph) = map(e -> [Gr.src(e), Gr.dst(e)], Gr.edges(g.graph))
 
 "Return oridanry edges in graph `g`. To get all edges use [`all_edges`](@ref)."
-function edges(g)
+function edges(g::HyperGraph)
     filter(e -> is_ordinary_edge(g, e[1], e[2]), all_edges(g))
 end
 
@@ -307,7 +340,7 @@ end
 
 "Change type of vertex `v` to `hanging` from `vertex` and set its 'parents' to
 `v1` and `v2`"
-function set_hanging!(g, v, v1, v2)
+function set_hanging!(g::HyperGraph, v::Integer, v1::Integer, v2::Integer)
     if !is_hanging(g, v)
         g.hanging_count += 1
         g.vertex_count -= 1
@@ -318,7 +351,7 @@ function set_hanging!(g, v, v1, v2)
 end
 
 "Change type of vertex to `vertex` from `hanging`"
-function unset_hanging!(g, v)
+function unset_hanging!(g::HyperGraph, v::Integer)
     if !is_hanging(g, v)
         return nothing
     end
@@ -334,7 +367,7 @@ end
 # -----------------------------------------------------------------------------
 
 "Return vector with cartesian coordinates of vertex `v`. Alias: [`xyz`](@ref)"
-get_cartesian(g::HyperGraph, v) = MG.get_prop(g.graph, v, :xyz)
+get_cartesian(g::HyperGraph, v::Integer) = MG.get_prop(g.graph, v, :xyz)
 
 "Return vector with cartesian coordinates of vertex `v`. Alias of:
 [`get_cartesian`](@ref)"
@@ -351,14 +384,17 @@ For:
 """
 function coords2D end
 
-get_type(g, v) = MG.get_prop(g.graph, v, :type)
-is_hanging(g, v) = MG.get_prop(g.graph, v, :type) == HANGING
-is_vertex(g, v) = MG.get_prop(g.graph, v, :type) == VERTEX
-is_interior(g, v) = MG.get_prop(g.graph, v, :type) == INTERIOR
+get_type(g::HyperGraph, v::Integer)::Integer = MG.get_prop(g.graph, v, :type)
+is_hanging(g::HyperGraph, v::Integer) =
+    MG.get_prop(g.graph, v, :type) == HANGING
+is_vertex(g::HyperGraph, v::Integer) = MG.get_prop(g.graph, v, :type) == VERTEX
+is_interior(g::HyperGraph, v::Integer) =
+    MG.get_prop(g.graph, v, :type) == INTERIOR
 function get_elevation end
 function set_elevation! end
-get_value(g, v) = MG.get_prop(g.graph, v, :value)
-set_value!(g, v, value) = MG.set_prop!(g.graph, v, :value, value)
+get_value(g::HyperGraph, v::Integer)::Real = MG.get_prop(g.graph, v, :value)
+set_value!(g::HyperGraph, v::Integer, value::Real) =
+    MG.set_prop!(g.graph, v, :value, value)
 
 "Return cartesian coordinates of the point that sits `value` above vertex."
 function get_value_cartesian end
@@ -373,7 +409,7 @@ using [`vertex_map`](@ref).
 
 See also: [`set_all_values!`](@ref), [`vertex_map`](@ref)
 """
-function get_all_values(g)
+function get_all_values(g::HyperGraph)
     [MG.get_prop(g.graph, v, :value) for v in normal_vertices(g)]
 end
 
@@ -386,41 +422,48 @@ on.
 
 See also: [`set_all_values!`](@ref), [`vertex_map`](@ref)
 """
-function set_all_values!(g, values)
+function set_all_values!(g::HyperGraph, values::AbstractVector{<:Real})
     for (i, v) in enumerate(normal_vertices(g))
-        set_prop!(g.graph, v, :value, values[i])
+        MG.set_prop!(g.graph, v, :value, values[i])
     end
 end
 
-should_refine(g, i) = MG.get_prop(g.graph, i, :refine)
-set_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, true)
-unset_refine!(g, i) = MG.set_prop!(g.graph, i, :refine, false)
+should_refine(g::HyperGraph, i::Integer)::Bool =
+    MG.get_prop(g.graph, i, :refine)
+set_refine!(g::HyperGraph, i::Integer) = MG.set_prop!(g.graph, i, :refine, true)
+unset_refine!(g::HyperGraph, i::Integer) =
+    MG.set_prop!(g.graph, i, :refine, false)
 
 # -----------------------------------------------------------------------------
 # ------ Functions handling edge properties -----------------------------------
 # -----------------------------------------------------------------------------
 
 "Is edge between `v1` and `v2` on boundary"
-is_on_boundary(g, v1, v2) = MG.get_prop(g.graph, v1, v2, :boundary)
+is_on_boundary(g::HyperGraph, v1::Integer, v2::Integer) =
+    MG.get_prop(g.graph, v1, v2, :boundary)
 
-set_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
-unset_boundary!(g, v1, v2) = MG.set_prop!(g.graph, v1,v2, :boundary, true)
+set_boundary!(g::HyperGraph, v1::Integer, v2::Integer) =
+    MG.set_prop!(g.graph, v1, v2, :boundary, true)
+unset_boundary!(g::HyperGraph, v1::Integer, v2::Integer) =
+    MG.set_prop!(g.graph, v1, v2, :boundary, true)
 
 "Return length of edge as euclidean distance between cartesian coordiantes of
 its vertices"
-edge_length(g, v1, v2) = norm(xyz(g, v1) - xyz(g, v2))
+edge_length(g::HyperGraph, v1::Integer, v2::Integer)::Real =
+    norm(xyz(g, v1) - xyz(g, v2))
 
-has_edge(g, v1, v2) = Gr.has_edge(g.graph, v1, v2)
+has_edge(g::HyperGraph, v1::Integer, v2::Integer)::Bool =
+    Gr.has_edge(g.graph, v1, v2)
 
 # -----------------------------------------------------------------------------
 # ------ Other functions ------------------------------------------------------
 # -----------------------------------------------------------------------------
 
 "Whether graph `g` has any hanging nodes"
-has_hanging_nodes(g) = hanging_count(g) != 0
+has_hanging_nodes(g::HyperGraph) = hanging_count(g) != 0
 
 "Get hanging node between normal vertices `v1` and `v2` in graph `g`"
-function get_hanging_node_between(g, v1, v2)
+function get_hanging_node_between(g::HyperGraph, v1::Integer, v2::Integer)
     if Gr.has_edge(g.graph, v1, v2)
         return nothing
     end
@@ -448,7 +491,8 @@ starting at 1.
 Removing vertices from graph **will** make previously generated mapping
 deprecated.
 """
-vertex_map(g) =  Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
+vertex_map(g::HyperGraph) =
+    Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
 
 include("flatgraph.jl")
 include("spheregraph.jl")

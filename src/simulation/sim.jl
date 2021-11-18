@@ -190,7 +190,7 @@ function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
         # aᵗ⁺¹ has values close to 0 (ex. 1e-10) and sqrt doesn't work
         aᵗ⁺¹ = map(x -> x < 0.0 ? 0.0 : x, aᵗ⁺¹)
         result = vcat(result, aᵗ⁺¹')
-        set_values!(g, aᵗ⁺¹)
+        set_all_values!(g, aᵗ⁺¹)
     end
 
     result

@@ -171,7 +171,7 @@ function center_point(g, vertices::Array)
 end
 
 function center_point(g, interior::Integer)
-    center_point(g, interior_vertices(g, interior))
+    center_point(g, interiors_vertices(g, interior))
 end
 
 """

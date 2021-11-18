@@ -11,7 +11,7 @@ struct BoundingBox
 end
 
 
-function initial_graph(terrain::TerrainMap)::AbstractMetaGraph
+function initial_graph(terrain::TerrainMap)::FlatGraph
     g = FlatGraph()
     min_x, min_y = index_to_point(terrain, 1, 1)
     max_x, max_y = index_to_point(terrain, size(terrain.M, 1), size(terrain.M, 2))
@@ -19,14 +19,14 @@ function initial_graph(terrain::TerrainMap)::AbstractMetaGraph
     add_vertex!(g, [min_x, max_y], elevation_norm(terrain, min_x, max_y))
     add_vertex!(g, [max_x, max_y], elevation_norm(terrain, max_x, max_y))
     add_vertex!(g, [max_x, min_y], elevation_norm(terrain, max_x, min_y))
-    add_edge!(g, 1, 2, true)
-    add_edge!(g, 2, 3, true)
-    add_edge!(g, 3, 4, true)
-    add_edge!(g, 4, 1, true)
+    add_edge!(g, 1, 2; boundary=true)
+    add_edge!(g, 2, 3; boundary=true)
+    add_edge!(g, 3, 4; boundary=true)
+    add_edge!(g, 4, 1; boundary=true)
     # diagonal
-    add_edge!(g, 1, 3, false)
-    add_interior!(g, 1, 2, 3, false)
-    add_interior!(g, 1, 3, 4, false)
+    add_edge!(g, 1, 3)
+    add_interior!(g, 1, 2, 3)
+    add_interior!(g, 1, 3, 4)
     return g
 end
 
@@ -58,10 +58,10 @@ function indexes_in_triangle(t::Triangle, terrain::TerrainMap)
     t_i = map(p -> point_to_index_coords(terrain, p[1], p[2]), t)
 
     bb = BoundingBox(
-            minimum([x(t_i[1]), x(t_i[2]), x(t_i[3])]),
-            maximum([x(t_i[1]), x(t_i[2]), x(t_i[3])]),
-            minimum([y(t_i[1]), y(t_i[2]), y(t_i[3])]),
-            maximum([y(t_i[1]), y(t_i[2]), y(t_i[3])])
+            minimum([t_i[1][1], t_i[2][1], t_i[3][1]]),
+            maximum([t_i[1][1], t_i[2][1], t_i[3][1]]),
+            minimum([t_i[1][2], t_i[2][2], t_i[3][2]]),
+            maximum([t_i[1][2], t_i[2][2], t_i[3][2]])
         )
 
     M = barycentric_matrix(t_i)
@@ -79,8 +79,8 @@ end
 
 "Return approximate error of traingle represented by interior `interior`."
 function approx_error(g::HyperGraph, interior::Integer, terrain::TerrainMap)::Real
-    v1, v2, v3 = interior_vertices(g, interior)
-    triangle = (coords2D(v1), coords2D(v2), coords2D(v3))
+    v1, v2, v3 = interiors_vertices(g, interior)
+    triangle = (coords2D(g, v1), coords2D(g, v2), coords2D(g, v3))
 
     indexes = indexes_in_triangle(triangle, terrain)
     if isempty(indexes)
@@ -91,7 +91,11 @@ function approx_error(g::HyperGraph, interior::Integer, terrain::TerrainMap)::Re
     M = barycentric_matrix(triangle)
     points_br = map(p -> barycentric(M, p), points)
 
-    approx(p) = z(g, v1)*p[1] + z(g, v2)*p[2] + z(g, v3)*(1 - p[1] - p[2])
+    function approx(p)
+        get_elevation(g, v1) * p[1] +
+        get_elevation(g, v2) * p[2] +
+        get_elevation(g, v3) * (1 - p[1] - p[2])
+    end
     approx_elev = map(approx, points_br)
     real_elev = map(i -> terrain.M[i[1], i[2]], indexes)
 

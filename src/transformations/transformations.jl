@@ -49,12 +49,12 @@ more transformations can be executed.
 function run_transformations!(g::HyperGraph; log=false)
     while true
         ran = false
-        ran |= run_for_all_triangles!(g, transform_p1!, log)
-        ran |= run_for_all_triangles!(g, transform_p2!, log)
-        ran |= run_for_all_triangles!(g, transform_p3!, log)
-        ran |= run_for_all_triangles!(g, transform_p4!, log)
-        ran |= run_for_all_triangles!(g, transform_p5!, log)
-        ran |= run_for_all_triangles!(g, transform_p6!, log)
+        ran |= run_for_all_triangles!(g, transform_p1!; log=log)
+        ran |= run_for_all_triangles!(g, transform_p2!; log=log)
+        ran |= run_for_all_triangles!(g, transform_p3!; log=log)
+        ran |= run_for_all_triangles!(g, transform_p4!; log=log)
+        ran |= run_for_all_triangles!(g, transform_p5!; log=log)
+        ran |= run_for_all_triangles!(g, transform_p6!; log=log)
         if !ran
             return false
         end

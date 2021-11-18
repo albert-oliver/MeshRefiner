@@ -125,7 +125,7 @@ function transform_p3!(g::HyperGraph, center::Integer)
 
     v5 = add_vertex!(g, (xyz(g, v1) + xyz(g, v3)) / 2.0)
     if !B3
-        set_hanging!(g, v5, v2, v3)
+        set_hanging!(g, v5, v1, v3)
     end
 
     rem_edge!(g, v1, v3)

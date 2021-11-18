@@ -36,7 +36,11 @@ end
 # ------ Methods for HyperGraph functions -------------------------------------
 # -----------------------------------------------------------------------------
 
-function add_vertex!(g::FlatGraph, coords; value::Real = 0.0)
+function add_vertex!(
+    g::FlatGraph,
+    coords::AbstractVector{<:Real};
+    value::Real = 0.0,
+)::Integer
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     MG.set_prop!(g.graph, nv(g), :value, value)
@@ -45,7 +49,12 @@ function add_vertex!(g::FlatGraph, coords; value::Real = 0.0)
     return nv(g)
 end
 
-function add_vertex!(g::FlatGraph, coords, elevation::Real; value::Real = 0.0)
+function add_vertex!(
+    g::FlatGraph,
+    coords::AbstractVector{<:Real},
+    elevation::Real;
+    value::Real = 0.0,
+)::Integer
     Gr.add_vertex!(g.graph)
     MG.set_prop!(g.graph, nv(g), :type, VERTEX)
     MG.set_prop!(g.graph, nv(g), :value, value)
@@ -55,14 +64,15 @@ function add_vertex!(g::FlatGraph, coords, elevation::Real; value::Real = 0.0)
     return nv(g)
 end
 
-get_elevation(g::FlatGraph, v) = MG.get_prop(g.graph, v, :xyz)[3]
+get_elevation(g::FlatGraph, v::Integer) = MG.get_prop(g.graph, v, :xyz)[3]
 
-function set_elevation!(g::FlatGraph, v, elevation)
+function set_elevation!(g::FlatGraph, v::Integer, elevation::Real)
     coords = MG.get_prop(g.graph, v, :xyz)
     coords[3] = elevation
-    MG.set_prop!(g, v, :xyz, coords)
+    MG.set_prop!(g.graph, v, :xyz, coords)
 end
 
-coords2D(g::FlatGraph, v) = xyz(g, v)[1:2]
+coords2D(g::FlatGraph, v::Integer) = xyz(g, v)[1:2]
 
-get_value_cartesian(g::FlatGraph, v) = xyz(g, v) + [0, 0, get_value(g, v)]
+get_value_cartesian(g::FlatGraph, v::Integer) =
+    xyz(g, v) + [0, 0, get_value(g, v)]

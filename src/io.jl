@@ -149,7 +149,7 @@ Export simulation as video. Values is matrix returned from [`simulate`](@ref).
 """
 function export_simulation(g, values; filename="sim.mp4", fps=24,
     transparent_fun=false, shading_fun=true, show_axis=false)
-    set_values!(g, values[1,:])
+    set_all_values!(g, values[1,:])
     scene = draw_makie(g; include_fun=false, show_axis=show_axis)
     vertices, faces = function_mesh(g)
 

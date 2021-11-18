@@ -18,7 +18,7 @@ end
 porperty `:value`"
 function match_to_fun!(g, fun)
     for v in normal_vertices(g)
-        set_value!(g, v, fun(coords2D(v)))
+        set_value!(g, v, fun(coords2D(g, v)))
     end
 end
 
