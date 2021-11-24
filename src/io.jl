@@ -155,37 +155,37 @@ function save_GraphML(g, filename)
             xv = new_child(xgraph, "node")
             set_attribute(xv, "id", v)
             xattr = new_child(xv, "data")
-            set_attribute(xattr, "type", name_to_id["type"])
+            set_attribute(xattr, "key", name_to_id["type"])
             add_text(xattr, string(get_type(g, v)))
             if is_vertex(g, v) || is_hanging(g, v)
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "x", name_to_id["x"])
+                set_attribute(xattr, "key", name_to_id["x"])
                 add_text(xattr, string(xyz(g, v)[1]))
 
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "y", name_to_id["y"])
+                set_attribute(xattr, "key", name_to_id["y"])
                 add_text(xattr, string(xyz(g, v)[2]))
 
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "z", name_to_id["z"])
+                set_attribute(xattr, "key", name_to_id["z"])
                 add_text(xattr, string(xyz(g, v)[3]))
 
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "value", name_to_id["value"])
+                set_attribute(xattr, "key", name_to_id["value"])
                 add_text(xattr, string(get_value(g, v)))
             end
             if is_hanging(g, v)
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "v1", name_to_id["v1"])
+                set_attribute(xattr, "key", name_to_id["v1"])
                 add_text(xattr, string(MG.get_prop(g.graph, v, :v1)))
 
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "v2", name_to_id["v2"])
+                set_attribute(xattr, "key", name_to_id["v2"])
                 add_text(xattr, string(MG.get_prop(g.graph, v, :v2)))
             end
             if is_interior(g, v)
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "refine", name_to_id["refine"])
+                set_attribute(xattr, "key", name_to_id["refine"])
                 add_text(xattr, string(should_refine(g, v)))
             end
         end
@@ -199,7 +199,7 @@ function save_GraphML(g, filename)
 
             if is_ordinary_edge(g, v1, v2)
                 xattr = new_child(xv, "data")
-                set_attribute(xattr, "boundary", name_to_id["boundary"])
+                set_attribute(xattr, "key", name_to_id["boundary"])
                 add_text(xattr, string(is_on_boundary(g, v1, v2)))
             end
             egde_id += 1
@@ -213,7 +213,7 @@ function save_GraphML(g, filename)
         xroot = root(xdoc)
         xgraph = xroot["graph"][1]
         xtype = new_child(xroot, "type")
-        add_text(xradius, "FlatGraph")
+        add_text(xtype, "FlatGraph")
         xdoc
     end
 
@@ -222,7 +222,7 @@ function save_GraphML(g, filename)
         xroot = root(xdoc)
         xgraph = xroot["graph"][1]
         xtype = new_child(xroot, "type")
-        add_text(xradius, "SphereGraph")
+        add_text(xtype, "SphereGraph")
         xradius = new_child(xroot, "radius")
         add_text(xradius, string(g.radius))
         xdoc
@@ -230,6 +230,34 @@ function save_GraphML(g, filename)
 
     xdoc = prepare_XML(g)
     save_file(xdoc, filename)
+end
+
+"Create graph from GraphML file"
+function load_GraphML(filename)
+    xdoc = parse_file(filename)
+    xroot = root(xdoc)
+    g = nothing
+    if xroot["type"][1] == "SphereGraph"
+        radius = parse(Float64, xroot["radius"][1])
+        g = SphereGraph(radius)
+    else
+        g = FlatGraph()
+    end
+    types = Dict("int" => Int64, "boolean" => Bool, "double" => Float64)
+    keys = map(key -> attributes_dict(key), xroot["key"])
+    keys = map(key -> (key["id"], key), keys)
+    keys = Dict(keys)
+
+    tmp_g = MetaGraph()
+    vertex_map = Dict()
+    v_id = 1
+    for v in xroot["graph"][1]["node"]
+        MG.add_vertex!()
+        vertex_map[]
+
+
+        v_id += 1
+    end
 end
 
 "Export graph as OBJ. If flag `include_fun` is set also export function that mesh
