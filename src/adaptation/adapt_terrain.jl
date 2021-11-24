@@ -167,6 +167,10 @@ function adapt_terrain!(g::HyperGraph, terrain::TerrainMap, ϵ::Real, max_iters:
             break
         end
         run_transformations!(g)
+        if has_hanging_nodes(g)
+            println("ERROR")
+            break
+        end
         adjust_elevations!(g, terrain)
     end
     return g

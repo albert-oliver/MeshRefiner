@@ -111,6 +111,127 @@ function saveGML(g, filename)
     return nothing
 end
 
+"Save graph `g` as GraphML file."
+function save_GraphML(g, filename)
+    function _prepare_XML(g::HyperGraph)
+        xdoc = XMLDocument()
+        xroot = create_root(xdoc, "graphml")
+        set_attribute(xroot, "xmlns", "http://graphml.graphdrawing.org/xmlns")
+        set_attribute(
+            xroot,
+            "xmlns:xsi",
+            "http://www.w3.org/2001/XMLSchema-instance",
+        )
+        set_attribute(
+            xroot,
+            " xsi:schemaLocation",
+            "http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd",
+        )
+
+        keys = [
+            Dict("id" => "d0", "for" => "node", "attr.name" => "type", "attr.type" => "int")
+            Dict("id" => "d1", "for" => "node", "attr.name" => "x", "attr.type" => "double")
+            Dict("id" => "d2", "for" => "node", "attr.name" => "y", "attr.type" => "double")
+            Dict("id" => "d3", "for" => "node", "attr.name" => "z", "attr.type" => "double")
+            Dict("id" => "d4", "for" => "node", "attr.name" => "value", "attr.type" => "double")
+            Dict("id" => "d5", "for" => "node", "attr.name" => "v1", "attr.type" => "int")
+            Dict("id" => "d6", "for" => "node", "attr.name" => "v2", "attr.type" => "int")
+            Dict("id" => "d7", "for" => "node", "attr.name" => "refine", "attr.type" => "boolean")
+            Dict("id" => "d8", "for" => "edge", "attr.name" => "boundary", "attr.type" => "boolean")
+        ]
+        name_to_id = Dict(map(key -> (key["attr.name"], key["id"]), keys))
+        for key in keys
+            xkey = new_child(xroot, "key")
+            for (attr, value) in key
+                set_attribute(xkey, attr, value)
+            end
+        end
+
+        xgraph = new_child(xroot, "graph")
+        set_attribute(xgraph, "id", "G")
+        set_attribute(xgraph, "edgedefault", "undirected")
+
+        for v in 1:nv(g)
+            xv = new_child(xgraph, "node")
+            set_attribute(xv, "id", v)
+            xattr = new_child(xv, "data")
+            set_attribute(xattr, "type", name_to_id["type"])
+            add_text(xattr, string(get_type(g, v)))
+            if is_vertex(g, v) || is_hanging(g, v)
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "x", name_to_id["x"])
+                add_text(xattr, string(xyz(g, v)[1]))
+
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "y", name_to_id["y"])
+                add_text(xattr, string(xyz(g, v)[2]))
+
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "z", name_to_id["z"])
+                add_text(xattr, string(xyz(g, v)[3]))
+
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "value", name_to_id["value"])
+                add_text(xattr, string(get_value(g, v)))
+            end
+            if is_hanging(g, v)
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "v1", name_to_id["v1"])
+                add_text(xattr, string(MG.get_prop(g.graph, v, :v1)))
+
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "v2", name_to_id["v2"])
+                add_text(xattr, string(MG.get_prop(g.graph, v, :v2)))
+            end
+            if is_interior(g, v)
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "refine", name_to_id["refine"])
+                add_text(xattr, string(should_refine(g, v)))
+            end
+        end
+
+        egde_id = 1
+        for (v1, v2) in all_edges(g)
+            xv = new_child(xgraph, "edge")
+            set_attribute(xv, "id", egde_id)
+            set_attribute(xv, "source", v1)
+            set_attribute(xv, "target", v2)
+
+            if is_ordinary_edge(g, v1, v2)
+                xattr = new_child(xv, "data")
+                set_attribute(xattr, "boundary", name_to_id["boundary"])
+                add_text(xattr, string(is_on_boundary(g, v1, v2)))
+            end
+            egde_id += 1
+        end
+
+        xdoc
+    end
+
+    function prepare_XML(g::FlatGraph)
+        xdoc = _prepare_XML(g)
+        xroot = root(xdoc)
+        xgraph = xroot["graph"][1]
+        xtype = new_child(xroot, "type")
+        add_text(xradius, "FlatGraph")
+        xdoc
+    end
+
+    function prepare_XML(g::SphereGraph)
+        xdoc = _prepare_XML(g)
+        xroot = root(xdoc)
+        xgraph = xroot["graph"][1]
+        xtype = new_child(xroot, "type")
+        add_text(xradius, "SphereGraph")
+        xradius = new_child(xroot, "radius")
+        add_text(xradius, string(g.radius))
+        xdoc
+    end
+
+    xdoc = prepare_XML(g)
+    save_file(xdoc, filename)
+end
+
 "Export graph as OBJ. If flag `include_fun` is set also export function that mesh
 approximates (requires `value` property set)."
 function export_obj(g, filename, include_fun=false)
@@ -127,7 +248,8 @@ function export_obj(g, filename, include_fun=false)
 
         # TODO remove
         for v in hanging_nodes(g)
-            write(io, @sprintf("v %f %f %f\n", x(g, v), y(g, v), z(g, v)))
+            x, y, z = xyz(g, v)
+            write(io, @sprintf("v %f %f %f\n", x, y, z))
             t_map[v] = v_id
             v_id += 1
         end
