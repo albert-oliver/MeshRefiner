@@ -76,8 +76,7 @@ function check_p3(g::HyperGraph, center::Integer)
         return nothing
     end
 
-    L4 = distance(g, v1, h)
-    L5 = distance(g, h, v2)
+    L45 = distance(g, v1, v2)
     L2 = distance(g, v2, v3)
     L3 = distance(g, v1, v3)
     B2 = is_on_boundary(g, v2, v3)
@@ -85,7 +84,7 @@ function check_p3(g::HyperGraph, center::Integer)
     HN1 = is_hanging(g, v1)
     HN3 = is_hanging(g, v3)
 
-    if ((L3 > (L4 + L5)) && (L3 >= L2)) && (B3 ||
+    if ((L3 > L45) && (L3 >= L2)) && (B3 ||
         ( !B3 && (!HN1 && !HN3) && (!(B2 && L2 == L3))) )
         return v1, v2, v3, h
     end

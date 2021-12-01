@@ -176,7 +176,6 @@ function load_GraphML(filename)
         add_vertex!(g, [x, y, z], value=value)
         vertex_map_real[v] = nv(g)
     end
-    println(vertex_map)
 
     # Hanging nodes
     for v in MG.filter_vertices(tmp_g, :type, HANGING)
@@ -195,16 +194,16 @@ function load_GraphML(filename)
     # Interiors
     for v in MG.filter_vertices(tmp_g, :type, INTERIOR)
         refine = MG.get_prop(tmp_g, v, :refine)
-        v1, v2, v3 = Gr.neighbors(tmp_g, v)
+        v1, v2, v3 = map(x -> vertex_map_real[x], Gr.neighbors(tmp_g, v))
         add_interior!(g, v1, v2, v3, refine=refine)
+        vertex_map_real[v] = nv(g)
     end
 
     for e in Gr.edges(tmp_g)
-
         if !isempty(MG.props(tmp_g, e))
-            v1 = e.src
-            v2 = e.dst
-            boundary = MG.get_prop(tmp_g, v1, v2, :boundary)
+            v1 = vertex_map_real[e.src]
+            v2 = vertex_map_real[e.dst]
+            boundary = MG.get_prop(tmp_g, e, :boundary)
             add_edge!(g, v1, v2, boundary=boundary)
         end
     end

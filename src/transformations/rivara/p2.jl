@@ -43,12 +43,11 @@ function check_p2(g::HyperGraph, center::Integer)
         return nothing
     end
 
-    L1 = distance(g, v1, h)
-    L2 = distance(g, v2, h)
+    L12 = distance(g, v1, v2)
     L3 = distance(g, v2, v3)
     L4 = distance(g, v1, v3)
 
-    if (L1+L2) >= L3 && (L1+L2) >= L4
+    if L12 >= L3 && L12 >= L4
         return v1, v2, v3, h
     end
     return nothing
@@ -83,7 +82,7 @@ function transform_p2!(g::HyperGraph, center::Integer)
     unset_hanging!(g, h)
 
     add_edge!(g, h, v3)
-    
+
     # TODO view of center to add_interior to split points
     add_interior!(g, v1, v3, h)
     add_interior!(g, v2, v3, h)

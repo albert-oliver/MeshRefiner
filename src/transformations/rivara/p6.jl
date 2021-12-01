@@ -52,14 +52,11 @@ function check_p6(g::HyperGraph, center::Integer)
         return nothing
     end
 
-    L1 = distance(g, v1, h1)
-    L2 = distance(g, h1, v2)
-    L3 = distance(g, v2, h2)
-    L4 = distance(g, h2, v3)
-    L5 = distance(g, v3, h3)
-    L6 = distance(g, h3, v1)
+    L12 = distance(g, v1, v2)
+    L34 = distance(g, v2, v3)
+    L56 = distance(g, v3, v1)
 
-    if (L1 + L2) >= (L3 + L4) && (L1 + L2) >= (L5 + L6)
+    if L12 >= L34 && L12 >= L56
         return v1, v2, v3, h1, h2, h3
     end
     return nothing

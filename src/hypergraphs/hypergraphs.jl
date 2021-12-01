@@ -219,7 +219,7 @@ function add_interior!(
     vs::AbstractVector{<:Real};
     refine::Bool = false,
 )
-    add_interior!(vs[v1], vs[v2], vs[v3]; value = value)
+    add_interior!(vs[v1], vs[v2], vs[v3]; refine=refine)
 end
 
 "Add edge between vertices `v1` and `v2`."
