@@ -1,5 +1,6 @@
 import Graphs; const Gr = Graphs
 import MetaGraphs; const MG = MetaGraphs
+import Base: show
 using LinearAlgebra
 
 # -----------------------------------------------------------------------------
@@ -30,6 +31,17 @@ end
 function FlatGraph()
     graph = MG.MetaGraph()
     FlatGraph(graph, 0, 0, 0)
+end
+
+function show(io::IO, g::FlatGraph)
+    vs = g.vertex_count
+    ins = g.interior_count
+    hs = g.hanging_count
+    es = length(edges(g))
+    print(
+        io,
+        "FlatGraph with ($(vs) vertices), ($(ins) interiors), ($(hs) hanging nodes) and ($(es) edges)",
+    )
 end
 
 # -----------------------------------------------------------------------------

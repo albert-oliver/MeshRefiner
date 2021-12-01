@@ -53,6 +53,18 @@ Construct a `SphereGraph` with `radius=6371000` - Earth's radius.
 """
 SphereGraph() = SphereGraph(6371000)::SphereGraph
 
+function show(io::IO, g::SphereGraph)
+    vs = g.vertex_count
+    ins = g.interior_count
+    hs = g.hanging_count
+    es = length(edges(g))
+    r = g.radius
+    print(
+        io,
+        "SphereGraph with ($(vs) vertices), ($(ins) interiors), ($(hs) hanging nodes), ($(es) edges) and (radius $(r))",
+    )
+end
+
 # -----------------------------------------------------------------------------
 # ------ Functions specific for SphereGraph -----------------------------------
 # -----------------------------------------------------------------------------
