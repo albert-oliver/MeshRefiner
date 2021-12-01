@@ -17,13 +17,14 @@ export
 
 using Printf
 using GLMakie
-using LightXML
 
+import LightXML as XML
 import Images
-import ArchGDAL; const AG = ArchGDAL
+import ArchGDAL as AG
 import MetaGraphs as MG
 import Graphs as Gr
 
+include("persist_graphml.jl")
 
 "Load terrain data (in bytes) as `TerrainMap`"
 function load_data(filename, dims, type=Float64)::TerrainMap
@@ -109,155 +110,6 @@ function saveGML(g, filename)
         write(io, "]\n")
     end
     return nothing
-end
-
-"Save graph `g` as GraphML file."
-function save_GraphML(g, filename)
-    function _prepare_XML(g::HyperGraph)
-        xdoc = XMLDocument()
-        xroot = create_root(xdoc, "graphml")
-        set_attribute(xroot, "xmlns", "http://graphml.graphdrawing.org/xmlns")
-        set_attribute(
-            xroot,
-            "xmlns:xsi",
-            "http://www.w3.org/2001/XMLSchema-instance",
-        )
-        set_attribute(
-            xroot,
-            " xsi:schemaLocation",
-            "http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd",
-        )
-
-        keys = [
-            Dict("id" => "d0", "for" => "node", "attr.name" => "type", "attr.type" => "int")
-            Dict("id" => "d1", "for" => "node", "attr.name" => "x", "attr.type" => "double")
-            Dict("id" => "d2", "for" => "node", "attr.name" => "y", "attr.type" => "double")
-            Dict("id" => "d3", "for" => "node", "attr.name" => "z", "attr.type" => "double")
-            Dict("id" => "d4", "for" => "node", "attr.name" => "value", "attr.type" => "double")
-            Dict("id" => "d5", "for" => "node", "attr.name" => "v1", "attr.type" => "int")
-            Dict("id" => "d6", "for" => "node", "attr.name" => "v2", "attr.type" => "int")
-            Dict("id" => "d7", "for" => "node", "attr.name" => "refine", "attr.type" => "boolean")
-            Dict("id" => "d8", "for" => "edge", "attr.name" => "boundary", "attr.type" => "boolean")
-        ]
-        name_to_id = Dict(map(key -> (key["attr.name"], key["id"]), keys))
-        for key in keys
-            xkey = new_child(xroot, "key")
-            for (attr, value) in key
-                set_attribute(xkey, attr, value)
-            end
-        end
-
-        xgraph = new_child(xroot, "graph")
-        set_attribute(xgraph, "id", "G")
-        set_attribute(xgraph, "edgedefault", "undirected")
-
-        for v in 1:nv(g)
-            xv = new_child(xgraph, "node")
-            set_attribute(xv, "id", v)
-            xattr = new_child(xv, "data")
-            set_attribute(xattr, "key", name_to_id["type"])
-            add_text(xattr, string(get_type(g, v)))
-            if is_vertex(g, v) || is_hanging(g, v)
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["x"])
-                add_text(xattr, string(xyz(g, v)[1]))
-
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["y"])
-                add_text(xattr, string(xyz(g, v)[2]))
-
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["z"])
-                add_text(xattr, string(xyz(g, v)[3]))
-
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["value"])
-                add_text(xattr, string(get_value(g, v)))
-            end
-            if is_hanging(g, v)
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["v1"])
-                add_text(xattr, string(MG.get_prop(g.graph, v, :v1)))
-
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["v2"])
-                add_text(xattr, string(MG.get_prop(g.graph, v, :v2)))
-            end
-            if is_interior(g, v)
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["refine"])
-                add_text(xattr, string(should_refine(g, v)))
-            end
-        end
-
-        egde_id = 1
-        for (v1, v2) in all_edges(g)
-            xv = new_child(xgraph, "edge")
-            set_attribute(xv, "id", egde_id)
-            set_attribute(xv, "source", v1)
-            set_attribute(xv, "target", v2)
-
-            if is_ordinary_edge(g, v1, v2)
-                xattr = new_child(xv, "data")
-                set_attribute(xattr, "key", name_to_id["boundary"])
-                add_text(xattr, string(is_on_boundary(g, v1, v2)))
-            end
-            egde_id += 1
-        end
-
-        xdoc
-    end
-
-    function prepare_XML(g::FlatGraph)
-        xdoc = _prepare_XML(g)
-        xroot = root(xdoc)
-        xgraph = xroot["graph"][1]
-        xtype = new_child(xroot, "type")
-        add_text(xtype, "FlatGraph")
-        xdoc
-    end
-
-    function prepare_XML(g::SphereGraph)
-        xdoc = _prepare_XML(g)
-        xroot = root(xdoc)
-        xgraph = xroot["graph"][1]
-        xtype = new_child(xroot, "type")
-        add_text(xtype, "SphereGraph")
-        xradius = new_child(xroot, "radius")
-        add_text(xradius, string(g.radius))
-        xdoc
-    end
-
-    xdoc = prepare_XML(g)
-    save_file(xdoc, filename)
-end
-
-"Create graph from GraphML file"
-function load_GraphML(filename)
-    xdoc = parse_file(filename)
-    xroot = root(xdoc)
-    g = nothing
-    if xroot["type"][1] == "SphereGraph"
-        radius = parse(Float64, xroot["radius"][1])
-        g = SphereGraph(radius)
-    else
-        g = FlatGraph()
-    end
-    types = Dict("int" => Int64, "boolean" => Bool, "double" => Float64)
-    keys = map(key -> attributes_dict(key), xroot["key"])
-    keys = map(key -> (key["id"], key), keys)
-    keys = Dict(keys)
-
-    tmp_g = MetaGraph()
-    vertex_map = Dict()
-    v_id = 1
-    for v in xroot["graph"][1]["node"]
-        MG.add_vertex!()
-        vertex_map[]
-
-
-        v_id += 1
-    end
 end
 
 "Export graph as OBJ. If flag `include_fun` is set also export function that mesh
@@ -362,22 +214,22 @@ end
 Loads vtu file as graph.
 """
 function load_vtu(filename::String)::FlatGraph
-    xdoc = parse_file(filename)
-    xroot = root(xdoc)
+    xdoc = XML.parse_file(filename)
+    xroot = XML.root(xdoc)
     piece = xroot["UnstructuredGrid"][1]["Piece"][1]
-    points_count = parse(Int64, attribute(piece, "NumberOfPoints"))
-    cells_count = parse(Int64, attribute(piece, "NumberOfCells"))
+    points_count = parse(Int64, XML.attribute(piece, "NumberOfPoints"))
+    cells_count = parse(Int64, XML.attribute(piece, "NumberOfCells"))
 
     points_node = piece["Points"][1]["DataArray"][1]
     parse_float(x) = parse(Float64, x)
-    points = reshape(map(parse_float, split(string(first(child_nodes(points_node))))), 3, :)
+    points = reshape(map(parse_float, split(string(first(XML.child_nodes(points_node))))), 3, :)
 
     cells_node = piece["Cells"][1]["DataArray"][1]
     parse_int(x) = parse(Int64, x)
-    cells = reshape(map(parse_int, split(string(first(child_nodes(cells_node))))), 3, :)
+    cells = reshape(map(parse_int, split(string(first(XML.child_nodes(cells_node))))), 3, :)
     cells = map(x -> x + 1, cells)
 
-    free(xdoc)
+    XML.free(xdoc)
 
     # Create graph
     g = FlatGraph()
