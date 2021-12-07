@@ -144,23 +144,9 @@ end
 Return center of mass of delivered points, or vertices in graph
 
 `points` is array of:
- - 3-element arrays [x, y, z], **or**
- - dictionaries with keys `:x`, `:y`, `:z`
+- 3-element arrays [x, y, z]
 """
 function center_point end
-
-function center_point(points::Array{<:Dict, 1})
-    mean = [0.0, 0.0, 0.0]
-    for point in points
-        mean[1] += point[:x]
-        mean[2] += point[:y]
-        mean[3] += point[:z]
-    end
-    mean[1] /= size(points, 1)
-    mean[2] /= size(points, 1)
-    mean[3] /= size(points, 1)
-    return mean
-end
 
 center_point(points::Matrix) = mean(points, dims=1)
 
