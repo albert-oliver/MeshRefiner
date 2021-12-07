@@ -39,7 +39,7 @@ function custom_z_mesh(g, z_fun, face_filter)
     vmapf(x) = vmap[x]
 
     coords(g, v) = vcat(xyz(g, v)[1:2], z_fun(g, v))
-    vs = hcat([coords(g, v) for v in normal_vertices(g)]...)'
+    vs = hcat([coords(g, v) for v in vertices_except_type(g, INTERIOR)]...)'
 
     triangles = [interiors_vertices(g, i) for i in interiors(g)]
     sorted = map(ids -> sort_cclockwise(ids, vs[vmapf.(ids), :]), triangles)

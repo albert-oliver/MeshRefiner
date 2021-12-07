@@ -484,15 +484,15 @@ end
 """
     vertex_map(g)
 
-Return dictionary that maps id's of all vertices with type `vertex` to number
-starting at 1.
+Return dictionary that maps id's of all vertices with type `vertex` or `hanging`
+to number starting at 1.
 
 # Note
 Removing vertices from graph **will** make previously generated mapping
 deprecated.
 """
 vertex_map(g::HyperGraph) =
-    Dict(v => i for (i, v) in enumerate(normal_vertices(g)))
+    Dict(v => i for (i, v) in enumerate(vertices_except_type(g, INTERIOR)))
 
 include("flatgraph.jl")
 include("spheregraph.jl")

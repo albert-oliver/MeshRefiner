@@ -17,7 +17,7 @@ function draw_makie(g;
     # edges
     list = vcat(edges(g)...)
     coordinates = map(v -> xyz(g, v), list)
-    edge_coords = map(x -> Point3f(x), coordinates)
+    edge_coords = map(x -> Point3f0(x), coordinates)
 
     # To force 3D view
     scene = scatter([0.0, 0.5], [0.0, 0.5], [0.0, 0.5],
