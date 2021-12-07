@@ -12,7 +12,7 @@ export
     transform_p4!,
     transform_p5!,
     transform_p6!,
-    run_transformations!
+    refine!
 
 include("rivara/p1.jl")
 include("rivara/p2.jl")
@@ -46,7 +46,7 @@ more transformations can be executed.
 
 `log` flag tells wheter to log what transformation was executed on which vertex
 """
-function run_transformations!(g::HyperGraph; log=false)
+function refine!(g::HyperGraph; log=false)
     while true
         ran = false
         ran |= run_for_all_triangles!(g, transform_p1!; log=log)

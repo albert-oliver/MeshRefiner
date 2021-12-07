@@ -240,7 +240,7 @@ function adapt_terrain!(
         for interior in to_refine
             set_refine!(g, interior)
         end
-        run_transformations!(g)
+        refine!(g)
         if has_hanging_nodes(g)
             println(
                 "ERROR: Hanging nodes in graph. Transformations don't work correctly",

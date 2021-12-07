@@ -46,7 +46,7 @@ function adapt_fun!(g, fun, iters)
             end
         end
 
-        run_transformations!(g)
+        refine!(g)
         match_to_fun!(g, fun)
     end
 end
