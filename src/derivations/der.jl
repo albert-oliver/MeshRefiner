@@ -50,11 +50,6 @@ function test_sim(steps=4, adapt_steps=10, dt=0.1)
     simulate!(g, steps, dt, (x, y) -> 0)
 end
 
-function test_save()
-    g = simple_graph()
-    saveGML(g, "a.gml")
-end
-
 function test_adapt_fun()
     g = simple_graph()
     ρ = 100

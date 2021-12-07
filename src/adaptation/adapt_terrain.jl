@@ -10,6 +10,12 @@ struct BoundingBox
     max_y::Number
 end
 
+struct RefinementParameters
+    ϵ::Number
+    coastline_lower_bound::Number
+    coastline_upper_bound::Number
+    coastline_min_size::Number
+end
 
 function initial_graph(terrain::TerrainMap)::FlatGraph
     g = FlatGraph()
@@ -77,16 +83,15 @@ function indexes_in_triangle(t::Triangle, terrain::TerrainMap)
     return indexes
 end
 
-"Return approximate error of traingle represented by interior `interior`."
-function approx_error(g::HyperGraph, interior::Integer, terrain::TerrainMap)::Real
+"""
+Return iterator over pairs `(real, approx)` of all the points from `terrain`
+inside traingle represented by `interior`, where `real` is value from `terrain`
+and `approx` is approximated value in graph `g`
+"""
+function zipped_points_inside_triangle(g, interior, terrain)
     v1, v2, v3 = interiors_vertices(g, interior)
     triangle = (coords2D(g, v1), coords2D(g, v2), coords2D(g, v3))
-
     indexes = indexes_in_triangle(triangle, terrain)
-    if isempty(indexes)
-        return 0.0
-    end
-
     points = map(i -> index_to_point(terrain, i[1], i[2]), indexes)
     M = barycentric_matrix(triangle)
     points_br = map(p -> barycentric(M, p), points)
@@ -99,28 +104,89 @@ function approx_error(g::HyperGraph, interior::Integer, terrain::TerrainMap)::Re
     approx_elev = map(approx, points_br)
     real_elev = map(i -> terrain.M[i[1], i[2]], indexes)
 
+    return zip(real_elev, approx_elev)
+end
+
+"Return approximate error of traingle represented by interior `interior`. Error
+is calculated as relative square error over all points from `terrain` iniside
+triangle represented by `interior`."
+function square_rel_error(g::HyperGraph, interior::Integer, terrain::TerrainMap)::Real
+    real_elev, approx_elev = zipped_points_inside_triangle(g, interior, terrain)
+    if isempty(real_elev)
+        return 0.0
+    end
+
     error = sum(map(x -> x^2, approx_elev - real_elev))
     error_rel = error / sum(map(x -> x^2, real_elev))
 
     return error_rel
 end
 
+"""
+    square_rel_error_refinement_criterion(g, interior, terrain, ϵ)
+
+Check if traingle should be refined based on relative square error. Return
+`true` if error is greater than `ϵ`
+
+See also: See also: [`height_difference_refinement_criterion`](@ref)
+"""
+function square_rel_error_refinement_criterion(g, interior, terrain, ϵ)
+    error = square_rel_error(g, interior, terrain)
+    return error > ϵ
+end
+
+"""
+    height_difference_refinement_criterion(g, interior, terrain, ϵ)
+
+Check if traingle should be refined based on height difference. If **any** of
+the points in triangle has error greater than `ϵ` return `true`.
+
+See also: See also: [`height_difference_refinement_criterion`](@ref)
+"""
+function height_difference_refinement_criterion(g, interior, terrain, ϵ)
+    for (real, approx) in zipped_points_inside_triangle(g, interior, terrain)
+        if abs(real - approx) > ϵ
+            return true
+        end
+    end
+    return false
+end
+
+function coastline_refinement_criterion(g, interior, terrain, params)
+
+    lower_bound = params.coastline_lower_bound
+    upper_bound = params.coastline_upper_bound
+
+    vertices = interiors_vertices(g, interior)
+
+    if (projection_area(g, interior) > params.coastline_min_size &&
+
+        # All of these transtales into: not all the nodes above upper bound OR
+        #                               not all the nodes below lower bound
+        (
+        (any([xyz(g, v)[3] <= upper_bound for v in vertices]) &&
+         any([xyz(g, v)[3] > upper_bound for v in vertices]))
+        ||
+        (any([xyz(g, v)[3] <= lower_bound for v in vertices]) &&
+         any([xyz(g, v)[3] > lower_bound for v in vertices]))
+        ||
+        any([lower_bound .<= xyz(g, v)[3] .<= upper_bound for v in vertices])
+        )
+        )
+            return true
+    end
+    return false
+end
+
 "Mark all traingles where error is larger than `ϵ` for refinement."
-function mark_for_refinement(g::HyperGraph, terrain::TerrainMap, ϵ::Number)::Array{Number, 1}
+function mark_for_refinement(g::HyperGraph, terrain::TerrainMap, params)::Array{Number, 1}
     to_refine = []
-    errors = []     # Only used for logging
     for interior in interiors(g)
-        e = approx_error(g, interior, terrain)
-        if e > ϵ
-            set_refine!(g, interior)
+
+        if (height_difference_refinement_criterion(g, interior, terrain, params.ϵ) ||
+              coastline_refinement_criterion(g, interior, terrain, params))
             push!(to_refine, interior)
         end
-        push!(errors, e)    # Only used for logging
-    end
-
-    # Only used for logging
-    if !isempty(errors)
-        println("Avg error: ", mean(errors))
     end
     return to_refine
 end
@@ -159,16 +225,26 @@ after `max_iters` iterations.
 
 See also: [`generate_terrain_mesh`](@ref)
 """
-function adapt_terrain!(g::HyperGraph, terrain::TerrainMap, ϵ::Real, max_iters::Integer)
-    for i in 1:max_iters
-        print("Iteration ", i, ": ")
-        to_refine = mark_for_refinement(g, terrain, ϵ)
+function adapt_terrain!(
+    g::HyperGraph,
+    terrain::TerrainMap,
+    params,
+    max_iters::Integer,
+)
+    for i = 1:max_iters
+        println("Iteration ", i)
+        to_refine = mark_for_refinement(g, terrain, params)
         if isempty(to_refine)
             break
         end
+        for interior in to_refine
+            set_refine!(g, interior)
+        end
         run_transformations!(g)
         if has_hanging_nodes(g)
-            println("ERROR")
+            println(
+                "ERROR: Hanging nodes in graph. Transformations don't work correctly",
+            )
             break
         end
         adjust_elevations!(g, terrain)
@@ -183,9 +259,9 @@ Generate graph (terrain mesh), based on terrain map `terrain`.
 
 See also: [`adapt_terrain`](@ref)
 """
-function generate_terrain_mesh(terrain::TerrainMap, ϵ::Real, max_iters::Integer = 20)
+function generate_terrain_mesh(terrain::TerrainMap, params::RefinementParameters, max_iters::Integer = 20)
     g = initial_graph(terrain)
-    adapt_terrain!(g, terrain, ϵ, max_iters)
-    scale_elevations!(g, terrain)
+    adapt_terrain!(g, terrain, params, max_iters)
+    # scale_elevations!(g, terrain)
     return g
 end
