@@ -195,7 +195,7 @@ end
 function adjust_elevations!(g::HyperGraph, terrain::TerrainMap)
     for v in normal_vertices(g)
         x, y = coords2D(g, v)
-        elev = elevation_norm(terrain, x, y)
+        elev = real_elevation(terrain, x, y)
         set_elevation!(g, v, elev)
     end
 end
