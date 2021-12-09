@@ -1,4 +1,4 @@
-include("../src/MeshRefiner")
+using MeshRefiner
 
 function sin_terrain_graph()
     lat = fill(NaN, 21, 21)
@@ -39,7 +39,7 @@ function sin_terrain_obj()
         for j = 1:size(x, 2)
             idx = j+((i-1)*size(x,2))
             elem[i, j] = idx
-            write(f, "$(idx) $(x[i, j]) $(y[i,j]) $(elev[i,j])\n")
+            write(f, "$(idx) $(x[i, j]) $(y[i,j]) $(t.M[i,j])\n")
         end
     end
 
@@ -93,3 +93,5 @@ function export_inp(g, filename)
         end
     end
 end
+
+sin_terrain_obj()
