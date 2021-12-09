@@ -17,14 +17,14 @@ struct RefinementParameters
     coastline_min_size::Number
 end
 
-function initial_graph(terrain::TerrainMap)::FlatGraph
+function initial_graph(t::TerrainMap)::FlatGraph
     g = FlatGraph()
-    min_x, min_y = index_to_point(terrain, 1, 1)
-    max_x, max_y = index_to_point(terrain, size(terrain.M, 1), size(terrain.M, 2))
-    add_vertex!(g, [min_x, min_y], elevation_norm(terrain, min_x, min_y))
-    add_vertex!(g, [min_x, max_y], elevation_norm(terrain, min_x, max_y))
-    add_vertex!(g, [max_x, max_y], elevation_norm(terrain, max_x, max_y))
-    add_vertex!(g, [max_x, min_y], elevation_norm(terrain, max_x, min_y))
+    min_x, min_y = index_to_point(t, 1, 1)
+    max_x, max_y = index_to_point(t, size(t.M, 1), size(t.M, 2))
+    add_vertex!(g, [min_x, min_y], real_elevation(t, min_x, min_y))
+    add_vertex!(g, [min_x, max_y], real_elevation(t, min_x, max_y))
+    add_vertex!(g, [max_x, max_y], real_elevation(t, max_x, max_y))
+    add_vertex!(g, [max_x, min_y], real_elevation(t, max_x, min_y))
     add_edge!(g, 1, 2; boundary=true)
     add_edge!(g, 2, 3; boundary=true)
     add_edge!(g, 3, 4; boundary=true)
