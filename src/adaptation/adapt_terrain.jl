@@ -19,12 +19,10 @@ end
 
 function initial_graph(t::TerrainMap)::FlatGraph
     g = FlatGraph()
-    min_x, min_y = index_to_point(t, 1, 1)
-    max_x, max_y = index_to_point(t, size(t.M, 1), size(t.M, 2))
-    add_vertex!(g, [min_x, min_y], real_elevation(t, min_x, min_y))
-    add_vertex!(g, [min_x, max_y], real_elevation(t, min_x, max_y))
-    add_vertex!(g, [max_x, max_y], real_elevation(t, max_x, max_y))
-    add_vertex!(g, [max_x, min_y], real_elevation(t, max_x, min_y))
+    add_vertex!(g, [x_min(t),  y_min(t)], real_elevation(t, x_min(t), y_min(t)))
+    add_vertex!(g, [x_min(t), y_max(t)], real_elevation(t, x_min(t), y_max(t)))
+    add_vertex!(g, [x_max(t), y_max(t)], real_elevation(t, x_max(t), y_max(t)))
+    add_vertex!(g, [x_max(t),  y_min(t)], real_elevation(t, x_max(t), y_min(t)))
     add_edge!(g, 1, 2; boundary=true)
     add_edge!(g, 2, 3; boundary=true)
     add_edge!(g, 3, 4; boundary=true)

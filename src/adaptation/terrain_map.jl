@@ -151,7 +151,7 @@ function point_to_index(t::TerrainMap, x::Real, y::Real)
     j = Int(trunc((x - x_min(t)) / Δx(t)))
 
     i = i + 1 == size(t.M, 1) ? i : i + 1
-    j = j + 1 == size(t.M, 1) ? j : j + 1
+    j = j + 1 == size(t.M, 2) ? j : j + 1
 
     return [i, j]
 end

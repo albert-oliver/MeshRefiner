@@ -201,11 +201,16 @@ function load_tiff(filename::String)::TerrainMap
     step_y = gt[6]
     width = AG.width(dataset)
     height = AG.height(dataset)
-    scale = maximum(band) - minimum(band)
-    offset = minimum(band)
-    M = (band .- offset) ./ scale .+ 1
-    M = reverse(transpose(M), dims=1)
-    TerrainMap(M, step_x * height, step_y * width, scale, offset)
+    M = band
+    if step_x < 0
+        step_x = -step_x
+        M = reverse(transpose(M), dims=2)
+    end
+    if step_y < 0
+        step_y = -step_y
+        M = reverse(transpose(M), dims=1)
+    end
+    TerrainMap(M, step_x * height, step_y * width, 1, 0)
 end
 
 """
