@@ -380,7 +380,7 @@ Return 2D coordintes of vertex `v`.
 
 For:
 - `FlatGraph` return `[x, y]`
-- `SphereGraph` return `[lat, lon]`
+- `SphereGraph` return `[lon, lat]`
 """
 function coords2D end
 

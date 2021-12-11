@@ -17,6 +17,23 @@ struct RefinementParameters
     coastline_min_size::Number
 end
 
+function initial_graph_sphere(t::TerrainMap)::SphereGraph
+    g = SphereGraph(100)
+    add_vertex!(g, [y_min(t),  x_min(t)], real_elevation(t, x_min(t), y_min(t)))
+    add_vertex!(g, [y_min(t), x_max(t)], real_elevation(t, x_min(t), y_max(t)))
+    add_vertex!(g, [y_max(t), x_max(t)], real_elevation(t, x_max(t), y_max(t)))
+    add_vertex!(g, [y_max(t),  x_min(t)], real_elevation(t, x_max(t), y_min(t)))
+    add_edge!(g, 1, 2; boundary=true)
+    add_edge!(g, 2, 3; boundary=true)
+    add_edge!(g, 3, 4; boundary=true)
+    add_edge!(g, 4, 1; boundary=true)
+    # diagonal
+    add_edge!(g, 1, 3)
+    add_interior!(g, 1, 2, 3)
+    add_interior!(g, 1, 3, 4)
+    return g
+end
+
 function initial_graph(t::TerrainMap)::FlatGraph
     g = FlatGraph()
     add_vertex!(g, [x_min(t),  y_min(t)], real_elevation(t, x_min(t), y_min(t)))

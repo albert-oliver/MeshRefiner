@@ -141,10 +141,10 @@ function point_to_index end
 
 function point_to_index(t::TerrainMap, x::Real, y::Real)
     if x < x_min(t) || x > x_max(t)
-        throw(DomainError("Point not in terrain map"))
+        throw(DomainError("Point not in terrain map. Input x: $x, min x: $(x_min(t)), max x: $(x_max(t))"))
     end
     if y < y_min(t) || y > y_max(t)
-        throw(DomainError("Point not in terrain map"))
+        throw(DomainError("Point not in terrain map. Input y: $y, min y: $(y_min(t)), max y: $(y_max(t))"))
     end
 
     i = Int(trunc((y - y_min(t)) / Δy(t)))
@@ -178,10 +178,10 @@ function point_to_index_coords end
 
 function point_to_index_coords(t::TerrainMap, x::Real, y::Real)
     if x < x_min(t) || x > x_max(t)
-        throw(DomainError("Point not in terrain map"))
+        throw(DomainError("Point not in terrain map. Input x: $x, min x: $(x_min(t)), max x: $(x_max(t))"))
     end
     if y < y_min(t) || y > y_max(t)
-        throw(DomainError("Point not in terrain map"))
+        throw(DomainError("Point not in terrain map. Input y: $y, min y: $(y_min(t)), max y: $(y_max(t))"))
     end
 
     i = (y - y_min(t)) / Δy(t)
