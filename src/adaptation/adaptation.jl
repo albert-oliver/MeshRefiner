@@ -17,7 +17,7 @@ export
     check_mesh
 
 include("terrain_map.jl")
-include("adapt_fun.jl")
+#include("adapt_fun.jl")
 include("adapt_terrain.jl")
 
 end
