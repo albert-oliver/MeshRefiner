@@ -1,5 +1,3 @@
-import ..Utils: barycentric
-
 """
     TerrainMap(M, x_min, y_min, Δx, Δy, nx, ny)
 

@@ -5,11 +5,29 @@ export
 
     center_point,
     distance,
+    middle_coordinates,
     barycentric_matrix,
     barycentric,
     projection_area,
     approx_function,
-    pyramid_function
+    pyramid_function,
+
+    TerrainMap,
+    real_elevation,
+    index_to_point,
+    point_to_index,
+    point_to_index_coords,
+    x_min,
+    x_max,
+    y_min,
+    y_max,
+    Δx,
+    Δy,
+    nx,
+    ny,
+    width,
+    height
+
 
 using Colors
 using Statistics
@@ -199,5 +217,7 @@ function projection_area(g::HyperGraph, i::Integer)
     a, b, c = interiors_vertices(g, i)
     projection_area(xyz(g, a), xyz(g, b), xyz(g, c))
 end
+
+include("terrain_map.jl")
 
 end #module

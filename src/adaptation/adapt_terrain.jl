@@ -1,5 +1,6 @@
 using ..Utils
 using ..Transformations
+using ..ProjectIO
 
 using Statistics
 
@@ -248,6 +249,7 @@ function adapt_terrain!(
 )
     for i = 1:max_iters
         println("Iteration ", i)
+        export_obj(g, "baltyk_iter_$i.obj")
         to_refine = mark_for_refinement(g, terrain, params)
         if isempty(to_refine)
             break

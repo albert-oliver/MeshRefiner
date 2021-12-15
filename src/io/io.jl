@@ -2,7 +2,6 @@
 from file."
 module ProjectIO
 
-using ..Adaptation
 using ..Utils
 using ..Visualization
 using ..HyperGraphs
