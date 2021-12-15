@@ -3,7 +3,7 @@ module Adaptation
 
 using ..HyperGraphs
 using ..Utils
-using ..Transformations
+# using ..Transformations
 
 export
     TerrainMap,

@@ -1,5 +1,5 @@
 using ..Utils
-using ..Transformations
+# using ..Transformations
 
 using Statistics
 
@@ -230,53 +230,4 @@ function scale_elevations!(g::HyperGraph, terrain)
         elev = get_elevation(g, v)
         set_elevation!(g, v, (elev - 1) * terrain.scale + terrain.offset)
     end
-end
-
-"""
-    adapt_terrain!(g, terrain, ϵ, max_iters)
-
-Adapt graph `g` to terrain map `terrain`. Stop when error is lesser than ϵ, or
-after `max_iters` iterations.
-
-See also: [`generate_terrain_mesh`](@ref)
-"""
-function adapt_terrain!(
-    g::HyperGraph,
-    terrain::TerrainMap,
-    params,
-    max_iters::Integer,
-)
-    for i = 1:max_iters
-        println("Iteration ", i)
-        to_refine = mark_for_refinement(g, terrain, params)
-        if isempty(to_refine)
-            break
-        end
-        for interior in to_refine
-            set_refine!(g, interior)
-        end
-        refine!(g)
-        if has_hanging_nodes(g)
-            println(
-                "ERROR: Hanging nodes in graph. Transformations don't work correctly",
-            )
-            break
-        end
-        adjust_elevations!(g, terrain)
-    end
-    return g
-end
-
-"""
-    generate_terrain_mesh(terrain, ϵ, max_iters=20)
-
-Generate graph (terrain mesh), based on terrain map `terrain`.
-
-See also: [`adapt_terrain`](@ref)
-"""
-function generate_terrain_mesh(terrain::TerrainMap, params::RefinementParameters, max_iters::Integer = 20)
-    g = initial_graph(terrain)
-    adapt_terrain!(g, terrain, params, max_iters)
-    # scale_elevations!(g, terrain)
-    return g
 end
