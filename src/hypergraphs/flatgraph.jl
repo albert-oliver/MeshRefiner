@@ -1,7 +1,6 @@
 import Graphs; const Gr = Graphs
 import MetaGraphs; const MG = MetaGraphs
 import Base: show
-using LinearAlgebra
 
 # -----------------------------------------------------------------------------
 # ------ FlatGraph type definition and constructors ---------------------------
@@ -48,43 +47,20 @@ end
 # ------ Methods for HyperGraph functions -------------------------------------
 # -----------------------------------------------------------------------------
 
-function add_vertex!(
-    g::FlatGraph,
-    coords::AbstractVector{<:Real};
-    value::Real = 0.0,
-)::Integer
-    Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
-    MG.set_prop!(g.graph, nv(g), :value, value)
-    MG.set_prop!(g.graph, nv(g), :xyz, coords[1:3])
-    g.vertex_count += 1
-    return nv(g)
-end
-
-function add_vertex!(
-    g::FlatGraph,
-    coords::AbstractVector{<:Real},
-    elevation::Real;
-    value::Real = 0.0,
-)::Integer
-    Gr.add_vertex!(g.graph)
-    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
-    MG.set_prop!(g.graph, nv(g), :value, value)
-    xyz = vcat(coords[1:2], [elevation])
-    MG.set_prop!(g.graph, nv(g), :xyz, xyz)
-    g.vertex_count += 1
-    return nv(g)
-end
-
-get_elevation(g::FlatGraph, v::Integer) = MG.get_prop(g.graph, v, :xyz)[3]
-
-function set_elevation!(g::FlatGraph, v::Integer, elevation::Real)
-    coords = MG.get_prop(g.graph, v, :xyz)
-    coords[3] = elevation
+function project!(g::FlatGraph, v::Integer, elevation::Real)
+    param_coords = uv(g, v)
+    coords = vcat(param_coords, elevation)
     MG.set_prop!(g.graph, v, :xyz, coords)
 end
 
-coords2D(g::FlatGraph, v::Integer) = xyz(g, v)[1:2]
+"""
+distance(g, v1, v2)
 
-get_value_cartesian(g::FlatGraph, v::Integer) =
-    xyz(g, v) + [0, 0, get_value(g, v)]
+Returns the distance between two vertices of the hypergraph.
+
+#Note:
+ - This method is used to compute the longest edge
+
+"""
+distance(g::FlatGraph, v1, v2) = norm(uv(g, v2) - uv(g, v1))
+

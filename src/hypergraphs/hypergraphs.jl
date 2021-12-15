@@ -43,13 +43,13 @@ export
     unset_hanging!,
     get_cartesian,
     xyz,
-    coords2D,
+    uv,
     get_type,
     is_hanging,
     is_vertex,
     is_interior,
     get_elevation,
-    set_elevation!,
+    project!,
     get_value,
     set_value!,
     get_value_cartesian,
@@ -63,7 +63,8 @@ export
     is_on_boundary,
     set_boundary!,
     unset_boundary!,
-    edge_length,
+    # edge_length,
+    distance,
     has_edge,
 
     # Other
@@ -102,7 +103,9 @@ Vertices are represented by integers starting at 1.
 Two concrete subtypes of `HyperGraph` are `FlatGraph` and `SphereGraph`.
 
 # Properties of vertex by its type
-- `VERTEX` properties depends on graph subtype
+- `VERTEX`:
+    - `u::Real`, `v::Real`: Parametric coordinates (usually in sync with terrainMap)
+    - `x::Real`, `y::Real`, `z::Real`: Physical coordinates of the graph (where the final mesh is located)
 - `HANGING` vertices have same properties as normal vertices, plus:
     - `v1`, `v2`: vertices between which hanging node lies
 - `INTERIOR`:
@@ -142,7 +145,15 @@ Add new vertex to graph `g`. Return its `id`.
     - `elevation = elevation`
     - and calculate `x`, `y`, `z`
 """
-function add_vertex! end
+function add_vertex!(g::HyperGraph, param_coords::AbstractVector{<:Real}; value=0)::Integer
+    Gr.add_vertex!(g.graph)
+    MG.set_prop!(g.graph, nv(g), :type, VERTEX)
+    MG.set_prop!(g.graph, nv(g), :uv, param_coords)
+    MG.set_prop!(g.graph, nv(g), :xyz, [NaN, NaN, NaN])
+    MG.set_prop!(g.graph, nv(g), :value, value)
+    g.vertex_count += 1
+    return nv(g)
+end
 
 """
     add_hanging!(g, v1, v2, elevation; value=0)
@@ -167,19 +178,6 @@ function add_hanging!(
     value::Real = 0.0,
 )
     add_vertex!(g, coords; value = value)
-    set_hanging!(g, nv(g), v1, v2)
-    nv(g)
-end
-
-function add_hanging!(
-    g::HyperGraph,
-    v1::Integer,
-    v2::Integer,
-    coords::AbstractVector{<:Real},
-    elevation::Real;
-    value = 0.0,
-)
-    add_vertex!(g, coords, elevation; value = value)
     set_hanging!(g, nv(g), v1, v2)
     nv(g)
 end
@@ -366,23 +364,36 @@ end
 # ------ Used in mosed functions below ----------------------------------------
 # -----------------------------------------------------------------------------
 
-"Return vector with cartesian coordinates of vertex `v`. Alias: [`xyz`](@ref)"
-get_cartesian(g::HyperGraph, v::Integer) = MG.get_prop(g.graph, v, :xyz)
+"Return vector with Physical coordinates of vertex `v`. Alias: [`xyz`](@ref)"
+get_physical_coordinates(g::HyperGraph, v::Integer) = MG.get_prop(g.graph, v, :xyz)
 
-"Return vector with cartesian coordinates of vertex `v`. Alias of:
-[`get_cartesian`](@ref)"
-const xyz = get_cartesian
+"Return vector with physical coordinates of vertex `v`. Alias of:
+[`get_physical_coordinates`](@ref)"
+const xyz = get_physical_coordinates
 
 """
-    coords2D(g, v)
+    get_parametric_coordinates(g, v)
 
-Return 2D coordintes of vertex `v`.
+Return parametric coordintes of vertex `v`. Alias: [`uv`](@ref)"
 
-For:
-- `FlatGraph` return `[x, y]`
-- `SphereGraph` return `[lon, lat]`
 """
-function coords2D end
+get_parametric_coordinates(g::HyperGraph, v::Integer) = MG.get_prop(g.graph, v, :uv)
+
+"Return vector with parametric coordinates of vertex `v`. Alias of:
+[`get_parametric_coordinates`](@ref)"
+const uv = get_parametric_coordinates
+
+"""
+    get_elevation(g, v)
+
+Return the elevation of the physical coordintes of vertex `v`. Alias: [`z`](@ref)"
+
+"""
+get_elevation(g::HyperGraph, v::Integer) = xyz(g, v)[3]
+
+"Return the elevation of the physical coordinates of vertex `v`. Alias of:
+[`get_elevation`](@ref)"
+const z = get_elevation
 
 get_type(g::HyperGraph, v::Integer)::Integer = MG.get_prop(g.graph, v, :type)
 is_hanging(g::HyperGraph, v::Integer) =
@@ -390,14 +401,10 @@ is_hanging(g::HyperGraph, v::Integer) =
 is_vertex(g::HyperGraph, v::Integer) = MG.get_prop(g.graph, v, :type) == VERTEX
 is_interior(g::HyperGraph, v::Integer) =
     MG.get_prop(g.graph, v, :type) == INTERIOR
-function get_elevation end
-function set_elevation! end
+function project! end
 get_value(g::HyperGraph, v::Integer)::Real = MG.get_prop(g.graph, v, :value)
 set_value!(g::HyperGraph, v::Integer, value::Real) =
     MG.set_prop!(g.graph, v, :value, value)
-
-"Return cartesian coordinates of the point that sits `value` above vertex."
-function get_value_cartesian end
 
 """
     get_all_values(g)
@@ -447,10 +454,10 @@ set_boundary!(g::HyperGraph, v1::Integer, v2::Integer) =
 unset_boundary!(g::HyperGraph, v1::Integer, v2::Integer) =
     MG.set_prop!(g.graph, v1, v2, :boundary, true)
 
-"Return length of edge as euclidean distance between cartesian coordiantes of
-its vertices"
-edge_length(g::HyperGraph, v1::Integer, v2::Integer)::Real =
-    norm(xyz(g, v1) - xyz(g, v2))
+# "Return length of edge as euclidean distance between cartesian coordiantes of
+# its vertices"
+# edge_length(g::HyperGraph, v1::Integer, v2::Integer)::Real =
+#     norm(xyz(g, v1) - xyz(g, v2))
 
 has_edge(g::HyperGraph, v1::Integer, v2::Integer)::Bool =
     Gr.has_edge(g.graph, v1, v2)

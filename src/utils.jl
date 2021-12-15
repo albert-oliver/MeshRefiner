@@ -4,7 +4,6 @@ export
     Triangle,
 
     center_point,
-    distance,
     barycentric_matrix,
     barycentric,
     projection_area,
@@ -159,22 +158,6 @@ end
 function center_point(g, interior::Integer)
     center_point(g, interiors_vertices(g, interior))
 end
-
-"""
-    distance(p1, p2)
-    distance(g, v1, v2)
-
-Return cartesian distance between points `p1` and `p2` (represented as arrays
-[x, y, z]), or vertices `v1` and `v2` in graph `g`.
-
-# Note
-- When `g` is [`FlatGraph`](@ref) return distance in 2D (that is use only `x` and `y` coordinates)
-- When `g` is [`SphereGraph`](@ref) use all three: `x`, `y`, `z`
-"""
-function distance end
-distance(p1::AbstractVector{<:Real}, p2::AbstractVector{<:Real}) = norm(p1 - p2)
-distance(g::FlatGraph, v1, v2) = distance(xyz(g, v1)[1:2], xyz(g, v2)[1:2])
-distance(g::SphereGraph, v1, v2) = distance(xyz(g, v1), xyz(g, v2))
 
 """
     projection_area(g, i)

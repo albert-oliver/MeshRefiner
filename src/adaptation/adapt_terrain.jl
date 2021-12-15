@@ -19,35 +19,43 @@ end
 
 function initial_graph_sphere(t::TerrainMap)::SphereGraph
     g = SphereGraph(100)
-    add_vertex!(g, [y_min(t),  x_min(t)], real_elevation(t, x_min(t), y_min(t)))
-    add_vertex!(g, [y_min(t), x_max(t)], real_elevation(t, x_min(t), y_max(t)))
-    add_vertex!(g, [y_max(t), x_max(t)], real_elevation(t, x_max(t), y_max(t)))
-    add_vertex!(g, [y_max(t),  x_min(t)], real_elevation(t, x_max(t), y_min(t)))
-    add_edge!(g, 1, 2; boundary=true)
-    add_edge!(g, 2, 3; boundary=true)
-    add_edge!(g, 3, 4; boundary=true)
-    add_edge!(g, 4, 1; boundary=true)
+    v1 = add_vertex!(g, [x_min(t),  y_min(t)])
+    project!(g, v1, real_elevation(t, x_min(t), y_min(t)))
+    v2 = add_vertex!(g, [x_min(t), y_max(t)])
+    project!(g, v2, real_elevation(t, x_min(t), y_max(t)))
+    v3 = add_vertex!(g, [x_max(t), y_max(t)])
+    project!(g, v3, real_elevation(t, x_max(t), y_max(t)))
+    v4 = add_vertex!(g, [x_max(t),  y_min(t)])
+    project!(g, v4, real_elevation(t, x_max(t), y_min(t)))
+    add_edge!(g, v1, v2; boundary=true)
+    add_edge!(g, v2, v3; boundary=true)
+    add_edge!(g, v3, v4; boundary=true)
+    add_edge!(g, v4, v1; boundary=true)
     # diagonal
-    add_edge!(g, 1, 3)
-    add_interior!(g, 1, 2, 3)
-    add_interior!(g, 1, 3, 4)
+    add_edge!(g, v1, v3)
+    add_interior!(g, v1, v2, v3)
+    add_interior!(g, v1, v3, v4)
     return g
 end
 
 function initial_graph(t::TerrainMap)::FlatGraph
     g = FlatGraph()
-    add_vertex!(g, [x_min(t),  y_min(t)], real_elevation(t, x_min(t), y_min(t)))
-    add_vertex!(g, [x_min(t), y_max(t)], real_elevation(t, x_min(t), y_max(t)))
-    add_vertex!(g, [x_max(t), y_max(t)], real_elevation(t, x_max(t), y_max(t)))
-    add_vertex!(g, [x_max(t),  y_min(t)], real_elevation(t, x_max(t), y_min(t)))
-    add_edge!(g, 1, 2; boundary=true)
-    add_edge!(g, 2, 3; boundary=true)
-    add_edge!(g, 3, 4; boundary=true)
-    add_edge!(g, 4, 1; boundary=true)
+    v1 = add_vertex!(g, [x_min(t),  y_min(t)])
+    project!(g, v1, real_elevation(t, x_min(t), y_min(t)))
+    v2 = add_vertex!(g, [x_min(t), y_max(t)])
+    project!(g, v2, real_elevation(t, x_min(t), y_max(t)))
+    v3 = add_vertex!(g, [x_max(t), y_max(t)])
+    project!(g, v3, real_elevation(t, x_max(t), y_max(t)))
+    v4 = add_vertex!(g, [x_max(t),  y_min(t)])
+    project!(g, v4, real_elevation(t, x_max(t), y_min(t)))
+    add_edge!(g, v1, v2; boundary=true)
+    add_edge!(g, v2, v3; boundary=true)
+    add_edge!(g, v3, v4; boundary=true)
+    add_edge!(g, v4, v1; boundary=true)
     # diagonal
-    add_edge!(g, 1, 3)
-    add_interior!(g, 1, 2, 3)
-    add_interior!(g, 1, 3, 4)
+    add_edge!(g, v1, v3)
+    add_interior!(g, v1, v2, v3)
+    add_interior!(g, v1, v3, v4)
     return g
 end
 
@@ -105,7 +113,7 @@ and `approx` is approximated value in graph `g`
 """
 function zipped_points_inside_triangle(g, interior, terrain)
     v1, v2, v3 = interiors_vertices(g, interior)
-    triangle = (coords2D(g, v1), coords2D(g, v2), coords2D(g, v3))
+    triangle = (uv(g, v1), uv(g, v2), uv(g, v3))
     indexes = indexes_in_triangle(triangle, terrain)
     points = map(i -> index_to_point(terrain, i[1], i[2]), indexes)
     M = barycentric_matrix(triangle)
@@ -209,9 +217,9 @@ end
 "Adjust elevations of all vertices to fit proper values."
 function adjust_elevations!(g::HyperGraph, terrain::TerrainMap)
     for v in normal_vertices(g)
-        x, y = coords2D(g, v)
+        x, y = uv(g, v)
         elev = real_elevation(terrain, x, y)
-        set_elevation!(g, v, elev)
+        project!(g, v, elev)
     end
 end
 
