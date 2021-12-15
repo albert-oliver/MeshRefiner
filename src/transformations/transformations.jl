@@ -2,6 +2,7 @@
 traingles and removing hanging nodes."
 module Transformations
 
+using ..Adaptation
 using ..HyperGraphs
 using ..Utils
 
@@ -26,12 +27,19 @@ include("rivara/p6.jl")
 
 Run function `fun(g, i)` on all interiors `i` of graph `g`
 """
-function run_for_all_triangles!(g::HyperGraph, fun; log=false)
+function run_for_all_triangles!(g::HyperGraph, interior_set, fun, terrain_map::TerrainMap; log=false)
     ran = false
-    for v in interiors(g)
-        ex = fun(g, v)
-        if ex && log
-            println("Executed: ", String(Symbol(fun)), " on ", v)
+    for v in interior_set
+        ex, new_node = fun(g, v)
+
+        if ex
+            if !isnothing(new_node)
+                Adaptation.adjust_elevations!(g, new_node, terrain_map)
+            end
+
+            if log
+                println("Executed: ", String(Symbol(fun)), " on ", v , [uv(g, kk) for kk in interiors_vertices(g, v)])
+            end
         end
         ran |= ex
     end
@@ -46,15 +54,16 @@ more transformations can be executed.
 
 `log` flag tells wheter to log what transformation was executed on which vertex
 """
-function refine!(g::HyperGraph; log=false)
+function refine!(g::HyperGraph, terrain_map::TerrainMap; log=false)
     while true
         ran = false
-        ran |= run_for_all_triangles!(g, transform_p1!; log=log)
-        ran |= run_for_all_triangles!(g, transform_p2!; log=log)
-        ran |= run_for_all_triangles!(g, transform_p3!; log=log)
-        ran |= run_for_all_triangles!(g, transform_p4!; log=log)
-        ran |= run_for_all_triangles!(g, transform_p5!; log=log)
-        ran |= run_for_all_triangles!(g, transform_p6!; log=log)
+        interior_set = collect(interiors(g))
+        ran |= run_for_all_triangles!(g, interior_set, transform_p1!, terrain_map; log=log)
+        ran |= run_for_all_triangles!(g, interior_set, transform_p2!, terrain_map; log=log)
+        ran |= run_for_all_triangles!(g, interior_set, transform_p3!, terrain_map; log=log)
+        ran |= run_for_all_triangles!(g, interior_set, transform_p4!, terrain_map; log=log)
+        ran |= run_for_all_triangles!(g, interior_set, transform_p5!, terrain_map; log=log)
+        ran |= run_for_all_triangles!(g, interior_set, transform_p6!, terrain_map; log=log)
         if !ran
             return false
         end

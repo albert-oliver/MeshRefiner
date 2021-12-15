@@ -1,4 +1,5 @@
 function check_p4(g::HyperGraph, center::Integer)
+
     if !is_interior(g, center)
         return nothing
     end
@@ -76,7 +77,7 @@ Conditions:
 function transform_p4!(g::HyperGraph, center::Integer)
     mapping = check_p4(g, center)
     if isnothing(mapping)
-        return false
+        return false, nothing
     end
 
     v1, v2, v3, h1, h2 = mapping
@@ -89,5 +90,5 @@ function transform_p4!(g::HyperGraph, center::Integer)
 
     rem_vertex!(g, center)
 
-    return true
+    return true, nothing
 end

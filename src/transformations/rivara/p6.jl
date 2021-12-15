@@ -83,7 +83,7 @@ Conditions:
 function transform_p6!(g::HyperGraph, center::Integer)
     mapping = check_p6(g, center)
     if isnothing(mapping)
-        return false
+        return false, nothing
     end
 
     v1, v2, v3, h1, h2, h3 = mapping
@@ -97,5 +97,5 @@ function transform_p6!(g::HyperGraph, center::Integer)
 
     rem_vertex!(g, center)
 
-    return true
+    return true, nothing
 end

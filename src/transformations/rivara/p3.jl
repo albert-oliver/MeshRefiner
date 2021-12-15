@@ -1,4 +1,5 @@
 function check_p3(g::HyperGraph, center::Integer)
+
     if !is_interior(g, center)
         return nothing
     end
@@ -115,14 +116,14 @@ Conditions:
 function transform_p3!(g::HyperGraph, center::Integer)
     mapping = check_p3(g, center)
     if isnothing(mapping)
-        return false
+        return false, nothing
     end
 
     v1, v2, v3, h = mapping
 
     B3 = is_on_boundary(g, v1, v3)
 
-    v5 = add_vertex!(g, (xyz(g, v1) + xyz(g, v3)) / 2.0)
+    v5 = add_vertex!(g, (uv(g, v1) + uv(g, v3)) / 2.0)
     if !B3
         set_hanging!(g, v5, v1, v3)
     end
@@ -138,5 +139,5 @@ function transform_p3!(g::HyperGraph, center::Integer)
 
     rem_vertex!(g, center)
 
-    return true
+    return true, v5
 end

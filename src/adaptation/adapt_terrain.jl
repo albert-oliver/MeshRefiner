@@ -223,6 +223,13 @@ function adjust_elevations!(g::HyperGraph, terrain::TerrainMap)
     end
 end
 
+"Adjust elevations of a given vertex to fit proper values."
+function adjust_elevations!(g::HyperGraph, v::Integer, terrain::TerrainMap)
+        x, y = uv(g, v)
+        elev = real_elevation(terrain, x, y)
+        project!(g, v, elev)
+end
+
 """
 Scale all elevations in graph `g` to real values.
 

@@ -82,7 +82,7 @@ Conditions:
 function transform_p1!(g::HyperGraph, center::Integer)
     mapping = check_p1(g, center)
     if isnothing(mapping)
-        return false
+        return false, nothing
     end
 
     h, v1, v2 = mapping
@@ -91,7 +91,7 @@ function transform_p1!(g::HyperGraph, center::Integer)
 
     rem_edge!(g, v1, v2)
 
-    v4 = add_vertex!(g, (xyz(g, v1) + xyz(g, v2)) / 2.0)
+    v4 = add_vertex!(g, (uv(g, v1) + uv(g, v2)) / 2.0)
     if !B1
         set_hanging!(g, v4, v1, v2)
     end
@@ -105,5 +105,5 @@ function transform_p1!(g::HyperGraph, center::Integer)
 
     rem_vertex!(g, center)
 
-    return true
+    return true, v4
 end
