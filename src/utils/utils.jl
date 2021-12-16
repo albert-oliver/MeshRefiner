@@ -11,6 +11,7 @@ export
     projection_area,
     approx_function,
     pyramid_function,
+    terrain_map_to_meters!,
 
     TerrainMap,
     real_elevation,
@@ -32,6 +33,7 @@ export
 using Colors
 using Statistics
 using LinearAlgebra
+using Proj4
 
 using ..HyperGraphs
 
@@ -219,5 +221,30 @@ function projection_area(g::HyperGraph, i::Integer)
 end
 
 include("terrain_map.jl")
+
+"""
+    function terrain_map_to_meters(t::TerrainMap, convert_fun)
+
+Convert terrain map with coordinates in degrees (Geographic Coordinate System)
+to maters.
+
+`convert_fun(coords)` is a function that takes 2-element Vector of input coords
+and return 2-element Vector of output coords.
+"""
+function terrain_map_to_meters(t::TerrainMap, convert_fun)
+    trans = Proj4.Transformation("EPSG:4326", "EPSG:2180")
+    new_y_min, new_x_min = trans([y_min(t), x_min(t)])
+    new_y_max, new_x_max = trans([y_max(t), x_max(t)])
+    new_Δy = (new_y_max - new_y_min) / (ny(t) - 1)
+    new_Δx = (new_x_max - new_x_min) / (nx(t) - 1)
+    TerrainMap(t.M, new_x_min, new_y_min, new_Δx, new_Δy, t.nx, t.ny)
+end
+
+"EPSG:2180 is used to convert coords from latitude, longitude (in degrees). Only
+works near Europe."
+function terrain_map_to_meters(t::TerrainMap)
+    trans = Proj4.Transformation("EPSG:4326", "EPSG:2180")
+    terrain_map_to_meters(t, trans)
+end
 
 end #module
