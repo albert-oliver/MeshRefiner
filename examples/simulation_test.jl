@@ -26,3 +26,11 @@ function test_sim(steps=4, adapt_steps=10, dt=0.1)
     # draw_graphplot(g)
     MeshRefiner.simulate!(g, steps, dt, (x, y) -> 0)
 end
+
+"Create function that forms cosine \"donut\" with center in `center`, height
+of `2c` and radius `2/N`"
+function cos_wave(center, N, c)
+    x0, y0 = center
+    r(x, y) = sqrt((x - x0)^2 + (y - y0)^2)
+    f(x, y) = r(x, y) > -2/N && r(x, y) < 2/N ? -c*cos(N * pi * r(x, y)) + c : 0.0
+end

@@ -191,8 +191,6 @@ Loads tiff file as TerrainMap.
 function load_tiff(filename::String)::TerrainMap
     dataset = AG.readraster(filename)
     band = AG.getband(dataset, 1)
-    nan_to_0(M) = map(x -> isnan(x) ? zero(x) : x, M)
-    band = nan_to_0(band)
     gt = AG.getgeotransform(dataset)
     start_x = gt[1]
     start_y = gt[4]
@@ -212,7 +210,6 @@ function load_tiff(filename::String)::TerrainMap
         M = reverse(M, dims=1)
     end
     TerrainMap(M, start_x, start_y, step_x, step_y, nx, ny)
-    # TerrainMap(M, step_x * height, step_y * width, 1, 0)
 end
 
 """

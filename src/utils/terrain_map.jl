@@ -101,6 +101,7 @@ real_elevation(t::TerrainMap, x::Real, y::Real) = real_elevation(t, [x, y])
 
 """
     index_to_point(t, i, j)
+    index_to_point(t, indices)
 
 Return coodrinates of point based on it's indexes in matrix inside terrain
 map `terrain`.
@@ -119,6 +120,9 @@ function index_to_point(t::TerrainMap, i::Integer, j::Integer)
     y = y_min(t) + (i-1) * Δy(t)
     return [x, y]
 end
+
+index_to_point(t::TerrainMap, indices::AbstractVector) =
+    index_to_point(t, indices[1], indices[2])
 
 """
     point_to_index(t, x, y)
