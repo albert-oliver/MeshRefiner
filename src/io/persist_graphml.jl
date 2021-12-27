@@ -2,6 +2,7 @@
 function save_GraphML(g, filename)
     xdoc = prepare_XML(g)
     XML.save_file(xdoc, filename)
+    XML.free(xdoc)
 end
 
 function prepare_XML(g::FlatGraph)

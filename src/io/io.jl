@@ -133,19 +133,19 @@ function export_obj(g, filename, include_fun=false)
             v_id += 1
         end
 
-        if include_fun
-            for v in normal_vertices(g)
-                x, y, z = get_value_cartesian(g, v)
-                write(io, @sprintf("v %f %f %f\n", x, y, z))
-                fun_map[v] = v_id
-                v_id += 1
-            end
-        end
-
         for i in interiors(g)
             v1, v2, v3 = interiors_vertices(g, i)
             write(io, @sprintf("f %d %d %d\n", t_map[v1], t_map[v2], t_map[v3]))
-            if include_fun
+        end
+
+        if include_fun
+            vertices, faces = function_mesh(g)
+            for (i, (x, y, z)) in enumerate(eachrow(vertices))
+                write(io, @sprintf("v %f %f %f\n", x, y, z))
+                fun_map[i] = v_id
+                v_id += 1
+            end
+            for (v1, v2, v3) in eachrow(faces)
                 write(io, @sprintf("f %d %d %d\n", fun_map[v1], fun_map[v2], fun_map[v3]))
             end
         end
