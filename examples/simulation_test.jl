@@ -1,4 +1,4 @@
-include("../src/MeshRefiner.jl")
+using MeshRefiner
 
 function test_sim(steps=4, adapt_steps=10, dt=0.1)
     size = 100

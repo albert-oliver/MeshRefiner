@@ -4,6 +4,7 @@ module Simulation
 export simulate!
 
 using LinearAlgebra
+using SparseArrays
 
 using ..Utils
 using ..HyperGraphs
@@ -88,22 +89,21 @@ that goes down to 0 in neighbour vertices.
 function ee_matrix(g)
     v_map = vertex_map(g)
     vertices_count = length(v_map)
-    M = zeros((vertices_count, vertices_count))
+    I::Array{Int64} = []; J::Array{Int64} = []; V::Array{Float64} = [];
     for interior in interiors(g)
         area = projection_area(g, interior)
         for vᵢ in interiors_vertices(g, interior)
             for vⱼ in interiors_vertices(g, interior)
                 i = v_map[vᵢ]
                 j = v_map[vⱼ]
-                if i == j
-                    M[i, j] += (1/6) * area
-                else
-                    M[i, j] += (1/12) * area
-                end
+                v = i == j ? (1/6) * area : (1/12) * area
+                push!(I, i)
+                push!(J, j)
+                push!(V, v)
             end
         end
     end
-    M
+    sparse(I, J, V, vertices_count, vertices_count)
 end
 
 "Calculate 'physics' of water in graph `g`"
@@ -166,18 +166,17 @@ water level using `adapt_fun!`.
 function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
     result = reshape(map(v -> get_value(g, v), normal_vertices(g)), 1, :)
     v_map = vertex_map(g)
-    vertices_count = length(v_map)
 
     # This matrix doesn't change
     M = ee_matrix(g)
-    inv_M = inv(M)
+    F = lu(M)
 
     for step in 1:steps
 
         # RHS
         # (1)
         aᵗ = map(v -> get_value(g, v), normal_vertices(g))
-        previous_step = M*aᵗ
+        previous_step = M * aᵗ
 
         # (2)
         physics = calculate_physics(g, dt, γ, α, β)
@@ -186,8 +185,8 @@ function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
         source = calculate_source(g, dt, f)
 
         RHS = previous_step + physics + source
-        aᵗ⁺¹ = inv_M * RHS
-        # aᵗ⁺¹ has values close to 0 (ex. 1e-10) and sqrt doesn't work
+        aᵗ⁺¹ = F \ RHS
+        # aᵗ⁺¹ has negative values close to 0 (ex. -1e-10) and sqrt doesn't work
         aᵗ⁺¹ = map(x -> x < 0.0 ? 0.0 : x, aᵗ⁺¹)
         result = vcat(result, aᵗ⁺¹')
         set_all_values!(g, aᵗ⁺¹)
