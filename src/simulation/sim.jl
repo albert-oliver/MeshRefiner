@@ -107,12 +107,12 @@ function ee_matrix(g)
 end
 
 "Calculate 'physics' of water in graph `g`"
-function calculate_physics(g, dt, γ, α, β)
-    norm_∇u_abs = gradient_norm(g)
+function calculate_physics(g, dt, aᵗ⁻¹, aᵗ⁻², earth_acc)
+    # norm_∇u_abs = gradient_norm(g)
     v_map = vertex_map(g)
     physics = zeros(length(v_map))
 
-    Threads.@threads for vᵢ in collect(normal_vertices(g))
+    for vᵢ in collect(normal_vertices(g))
         i = v_map[vᵢ]
         for interior in triangles_with_vertex(g, vᵢ)
             xs, ys = center_point(g, interior)[1:2]
@@ -120,15 +120,22 @@ function calculate_physics(g, dt, γ, α, β)
 
             # Part that calculates diffusion
             ϵ = rel_triangle_ϵ(g, interior)
-            value_func(g, v) = get_value(g, v) + get_elevation(g, v)
+            function value_func(g, v)
+                elev = get_elevation(g, v)
+                j = v_map[v]
+                2 * (aᵗ⁻¹[j] + elev) - (aᵗ⁻²[j] + elev)
+            end
+            # value_func(g, v) = get_value(g, v) + get_elevation(g, v)
             u = approx_function(g, interior, value_func)
             ∇u = gradient(u, [xs, ys]; ϵ=ϵ)
             e = pyramid_function(g, interior, vᵢ)
             ∇e = gradient(e, [xs, ys]; ϵ=ϵ)
 
-            u_min_z = approx_function(g, interior)
+            only_water_value_func(g, v) = aᵗ⁻¹[v_map[v]]
+            u_min_z = approx_function(g, interior, only_water_value_func)
             # Part that includes terrain to calculatin
-            k = γ * ((u_min_z([xs, ys])^α) / norm_∇u_abs^β)
+            # k = γ * ((u_min_z([xs, ys])^α) / norm_∇u_abs^β)
+            k = earth_acc * u_min_z([xs, ys])
 
             physics[i] += k * dot(∇u, ∇e) * area
         end
@@ -154,6 +161,22 @@ function calculate_source(g, dt, f)
     source
 end
 
+function get_initial_values(g, initial_values)::Matrix{Float64}
+    result = initial_values
+    if isnothing(result)
+        result = map(v -> get_value(g, v), normal_vertices(g))
+    end
+    if typeof(result) <: AbstractVector
+        result = transpose(hcat(result, result))
+    elseif typeof(result) <: AbstractMatrix && size(result, 1) == 1
+        result = vcat(result, result)
+    end
+    if size(result, 2) != length(vertex_map(g))
+        throw(DomainError("Argument initial_values is different size than number of graph vertices"))
+    end
+    result
+end
+
 """
     simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
 
@@ -163,8 +186,8 @@ step is `dt`.
 Note that graph `g` should have been adapted to function representing starting
 water level using `adapt_fun!`.
 """
-function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
-    result = reshape(map(v -> get_value(g, v), normal_vertices(g)), 1, :)
+function simulate!(g, steps, dt, f; initial_values=nothing, γ=1.0, α=5/3, β=0.5, earth_acc=9.81)
+    result = get_initial_values(g, initial_values)
     v_map = vertex_map(g)
 
     # This matrix doesn't change
@@ -175,21 +198,22 @@ function simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
 
         # RHS
         # (1)
-        aᵗ = map(v -> get_value(g, v), normal_vertices(g))
-        previous_step = M * aᵗ
+        aᵗ⁻² = result[step, :]
+        aᵗ⁻¹ = result[step + 1, :]
+        previous_step = M * aᵗ⁻¹
 
         # (2)
-        physics = calculate_physics(g, dt, γ, α, β)
+        physics = calculate_physics(g, dt, aᵗ⁻¹,aᵗ⁻², earth_acc)
 
         # (3)
         source = calculate_source(g, dt, f)
 
         RHS = previous_step + physics + source
-        aᵗ⁺¹ = F \ RHS
-        # aᵗ⁺¹ has negative values close to 0 (ex. -1e-10) and sqrt doesn't work
-        aᵗ⁺¹ = map(x -> x < 0.0 ? 0.0 : x, aᵗ⁺¹)
-        result = vcat(result, aᵗ⁺¹')
-        set_all_values!(g, aᵗ⁺¹)
+        aᵗ = F \ RHS
+        # aᵗ has negative values close to 0 (ex. -1e-10) and sqrt doesn't work
+        aᵗ = map(x -> x < 0.0 ? 0.0 : x, aᵗ)
+        result = vcat(result, aᵗ')
+        set_all_values!(g, aᵗ)
     end
 
     result

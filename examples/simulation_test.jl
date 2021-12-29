@@ -53,6 +53,12 @@ function add_f_to_values(g, f)
     end
 end
 
-f = cos_wave([467589, 1274456], 0.000031, 200)
+f1 = cos_wave([467589, 1274456], 0.000031, 2000)
+f2 = cos_wave([467589, 1274456], 0.00002, 1960)
 set_values_to_0(g)
-add_f_to_values(g, f)
+add_f_to_values(g, f1)
+v1 = MeshRefiner.HyperGraphs.get_all_values(g)
+set_values_to_0(g)
+add_f_to_values(g, f2)
+v2 = MeshRefiner.HyperGraphs.get_all_values(g)
+initital_values = transpose(hcat(v1, v2))
