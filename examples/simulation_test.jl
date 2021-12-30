@@ -53,8 +53,15 @@ function add_f_to_values(g, f)
     end
 end
 
-f1 = cos_wave([467589, 1274456], 0.000031, 2000)
-f2 = cos_wave([467589, 1274456], 0.00002, 1960)
+g = MeshRefiner.ProjectIO.load_GraphML("output/baltyk_iter15.xml")
+f1(x, y) = cos_wave([467589, 1274456], 0.000031, 600)(x, y)
+f1(p) = f1(p[1], p[2])
+f2(x,y) = cos_wave([467589, 1274456], 0.000030, 590)(x, y)
+f2(p) = f2(p[1], p[2])
+
+MeshRefiner.Adaptation.adapt_fun!(g, f1, 6)
+MeshRefiner.Adaptation.adapt_fun!(g, f2, 6)
+
 set_values_to_0(g)
 add_f_to_values(g, f1)
 v1 = MeshRefiner.HyperGraphs.get_all_values(g)
@@ -62,3 +69,8 @@ set_values_to_0(g)
 add_f_to_values(g, f2)
 v2 = MeshRefiner.HyperGraphs.get_all_values(g)
 initital_values = transpose(hcat(v1, v2))
+
+vs = collect(MeshRefiner.HyperGraphs.normal_vertices(g))
+vs = filter(x -> MeshRefiner.HyperGraphs.coords2D(g,x)[2] > 1691694, vs)
+vs = filter(x -> MeshRefiner.HyperGraphs.coords2D(g,x)[1] < 135304, vs)
+condition(v) = v in vs

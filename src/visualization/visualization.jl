@@ -59,8 +59,8 @@ Return tuple `(vertices, faces)` with mesh representing terrain.
 - `vertices` is matrix where each row is `x`, `y` and `z` coordinates of vertex
 - `faces` is matrix where each row is three vertex indexes
 """
-function terrain_mesh(g)
-    custom_z_mesh(g, (g, v) -> get_elevation(g, v), (g, vs) -> true)
+function terrain_mesh(g; z_scale=1.0)
+    custom_z_mesh(g, (g, v) -> get_elevation(g, v) * z_scale, (g, vs) -> true)
 end
 
 """
@@ -74,9 +74,9 @@ where `z` is in fact `z` coordinate of vertex in graph + its `:value` property
 No face is generated if all vertices of triangle have `:value` property equal
 to 0.
 """
-function function_mesh(g)
+function function_mesh(g; z_scale=1.0)
     face_filter(g, vs) = !([get_value(g, v) for v in vs] ≈ [0.0, 0.0, 0.0])
-    vs, f = custom_z_mesh(g, (g, v) -> get_value(g, v) + get_elevation(g, v), face_filter)
+    vs, f = custom_z_mesh(g, (g, v) -> z_scale * (get_value(g, v) + get_elevation(g, v)), face_filter)
     (vs, f)
 end
 

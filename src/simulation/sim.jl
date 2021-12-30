@@ -107,7 +107,7 @@ function ee_matrix(g)
 end
 
 "Calculate 'physics' of water in graph `g`"
-function calculate_physics(g, dt, aᵗ⁻¹, aᵗ⁻², earth_acc)
+function calculate_physics(g, dt, aᵗ⁻¹, earth_acc)
     # norm_∇u_abs = gradient_norm(g)
     v_map = vertex_map(g)
     physics = zeros(length(v_map))
@@ -123,7 +123,7 @@ function calculate_physics(g, dt, aᵗ⁻¹, aᵗ⁻², earth_acc)
             function value_func(g, v)
                 elev = get_elevation(g, v)
                 j = v_map[v]
-                2 * (aᵗ⁻¹[j] + elev) - (aᵗ⁻²[j] + elev)
+                aᵗ⁻¹[j] + elev
             end
             # value_func(g, v) = get_value(g, v) + get_elevation(g, v)
             u = approx_function(g, interior, value_func)
@@ -140,7 +140,7 @@ function calculate_physics(g, dt, aᵗ⁻¹, aᵗ⁻², earth_acc)
             physics[i] += k * dot(∇u, ∇e) * area
         end
     end
-    physics *= (-dt)
+    physics *= (-dt^2)
     physics
 end
 
@@ -177,6 +177,34 @@ function get_initial_values(g, initial_values)::Matrix{Float64}
     result
 end
 
+function disable_matrix_vertex!(M, i)
+    for j in 1:size(M, 2)
+        M[i, j] = 0
+    end
+    M[i, i] = 1
+end
+
+function disable_matrix_if!(M, g, condtion_fun)
+    v_map = vertex_map(g)
+    for v in normal_vertices(g)
+        if condtion_fun(v)
+            i = v_map[v]
+            disable_matrix_vertex!(M, i)
+        end
+    end
+end
+
+function disable_rhs_if!(RHS, g, condtion_fun)
+    v_map = vertex_map(g)
+    for v in normal_vertices(g)
+        if condtion_fun(v)
+            i = v_map[v]
+            elev = get_elevation(g, v)
+            RHS[i] = elev < 0 ? -elev : 0
+        end
+    end
+end
+
 """
     simulate!(g, steps, dt, f; γ=1.0, α=5/3, β=0.5)
 
@@ -186,29 +214,42 @@ step is `dt`.
 Note that graph `g` should have been adapted to function representing starting
 water level using `adapt_fun!`.
 """
-function simulate!(g, steps, dt, f; initial_values=nothing, γ=1.0, α=5/3, β=0.5, earth_acc=9.81)
+function simulate!(
+    g,
+    steps,
+    dt,
+    f;
+    initial_values = nothing,
+    γ = 1.0,
+    α = 5 / 3,
+    β = 0.5,
+    earth_acc = 9.81,
+    disable_condition = (v) -> false
+)
     result = get_initial_values(g, initial_values)
     v_map = vertex_map(g)
 
     # This matrix doesn't change
     M = ee_matrix(g)
+    disable_matrix_if!(M, g, disable_condition)
     F = lu(M)
 
-    for step in 1:steps
+    for step = 1:steps
 
         # RHS
         # (1)
         aᵗ⁻² = result[step, :]
-        aᵗ⁻¹ = result[step + 1, :]
-        previous_step = M * aᵗ⁻¹
+        aᵗ⁻¹ = result[step+1, :]
+        previous_step = M * aᵗ⁻¹ #(2 * aᵗ⁻¹ - aᵗ⁻²)
 
         # (2)
-        physics = calculate_physics(g, dt, aᵗ⁻¹,aᵗ⁻², earth_acc)
+        physics = calculate_physics(g, dt, aᵗ⁻¹, earth_acc)
 
         # (3)
         source = calculate_source(g, dt, f)
 
         RHS = previous_step + physics + source
+        disable_rhs_if!(RHS, g, disable_condition)
         aᵗ = F \ RHS
         # aᵗ has negative values close to 0 (ex. -1e-10) and sqrt doesn't work
         aᵗ = map(x -> x < 0.0 ? 0.0 : x, aᵗ)
