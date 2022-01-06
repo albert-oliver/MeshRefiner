@@ -17,7 +17,8 @@ function draw_makie(g;
     transparent_fun=true,
     shading_fun=false,
     show_axis=false,
-    z_scale=1.0)
+    z_scale=1.0,
+    function_ϵ=1e-10)
 
     # edges
     list = vcat(edges(g)...)
@@ -26,7 +27,7 @@ function draw_makie(g;
 
     # To force 3D view
     scene = scatter([0.0, 0.5], [0.0, 0.5], [0.0, 0.5],
-        markersize=0.001, figure = (resolution = (1280, 720),), show_axis = show_axis)
+        markersize=0.001, figure = (resolution = (1920, 1080),), show_axis = show_axis)
 
     if show_edges
         linesegments!(edge_coords)
@@ -40,7 +41,7 @@ function draw_makie(g;
 
     # function
     if !wireframe & include_fun
-        vertices, faces = function_mesh(g; z_scale=z_scale)
+        vertices, faces = function_mesh(g; z_scale=z_scale, ϵ=function_ϵ)
         if !isempty(faces)
             mesh!(vertices, faces, color=:lightblue,
                 shading=shading_fun, transparency=transparent_fun)

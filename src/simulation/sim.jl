@@ -240,7 +240,7 @@ function simulate!(
         # (1)
         aᵗ⁻² = result[step, :]
         aᵗ⁻¹ = result[step+1, :]
-        previous_step = M * aᵗ⁻¹ #(2 * aᵗ⁻¹ - aᵗ⁻²)
+        previous_step = M * (2 * aᵗ⁻¹ - aᵗ⁻²)
 
         # (2)
         physics = calculate_physics(g, dt, aᵗ⁻¹, earth_acc)

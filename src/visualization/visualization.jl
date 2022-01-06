@@ -74,8 +74,8 @@ where `z` is in fact `z` coordinate of vertex in graph + its `:value` property
 No face is generated if all vertices of triangle have `:value` property equal
 to 0.
 """
-function function_mesh(g; z_scale=1.0)
-    face_filter(g, vs) = !([get_value(g, v) for v in vs] ≈ [0.0, 0.0, 0.0])
+function function_mesh(g; z_scale=1.0, ϵ=1e-10)
+    face_filter(g, vs) = !all([get_value(g, v) for v in vs] .< [ϵ, ϵ, ϵ])
     vs, f = custom_z_mesh(g, (g, v) -> z_scale * (get_value(g, v) + get_elevation(g, v)), face_filter)
     (vs, f)
 end

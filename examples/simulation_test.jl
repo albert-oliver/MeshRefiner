@@ -56,7 +56,7 @@ end
 g = MeshRefiner.ProjectIO.load_GraphML("output/baltyk_iter15.xml")
 f1(x, y) = cos_wave([467589, 1274456], 0.000031, 600)(x, y)
 f1(p) = f1(p[1], p[2])
-f2(x,y) = cos_wave([467589, 1274456], 0.000030, 590)(x, y)
+f2(x,y) = cos_wave([467589, 1274456], 0.000020, 590)(x, y)
 f2(p) = f2(p[1], p[2])
 
 MeshRefiner.Adaptation.adapt_fun!(g, f1, 6)

@@ -113,7 +113,7 @@ end
 
 "Export graph as OBJ. If flag `include_fun` is set also export function that mesh
 approximates (requires `value` property set)."
-function export_obj(g, filename, include_fun=false)
+function export_obj(g, filename; include_fun=false, function_ϵ=1e-10)
     open(filename, "w") do io
         v_id = 1
         t_map = Dict()
@@ -139,7 +139,7 @@ function export_obj(g, filename, include_fun=false)
         end
 
         if include_fun
-            vertices, faces = function_mesh(g)
+            vertices, faces = function_mesh(g; ϵ=function_ϵ)
             for (i, (x, y, z)) in enumerate(eachrow(vertices))
                 write(io, @sprintf("v %f %f %f\n", x, y, z))
                 fun_map[i] = v_id
@@ -157,11 +157,17 @@ end
 
 Export simulation as video. Values is matrix returned from [`simulate`](@ref).
 """
-function export_simulation(g, values; filename="sim.mp4", fps=24,
-    transparent_fun=false, shading_fun=true, show_axis=false, z_scale=1)
+function export_simulation(g, values;
+    filename="sim.mp4",
+    fps=24,
+    transparent_fun=false,
+    shading_fun=true,
+    show_axis=false,
+    z_scale=1,
+    function_ϵ=1e-10)
     set_all_values!(g, values[1,:])
     scene = draw_makie(g; include_fun=false, show_axis=show_axis, z_scale=z_scale)
-    vertices, faces = function_mesh(g, z_scale=z_scale)
+    vertices, faces = function_mesh(g, z_scale=z_scale, ϵ=function_ϵ)
 
     # Makie can't draw empty meshes - so if it should I just draw single trinagle
     if isempty(faces)
@@ -171,7 +177,7 @@ function export_simulation(g, values; filename="sim.mp4", fps=24,
 
     record(scene, filename, 1:size(values)[1]; framerate=fps) do i
         set_all_values!(g, values[i,:])
-        vertices, faces = function_mesh(g; z_scale=100)
+        vertices, faces = function_mesh(g; z_scale=z_scale, ϵ=function_ϵ)
         current_mesh[1] = vertices
 
         # Same here
