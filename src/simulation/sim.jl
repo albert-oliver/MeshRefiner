@@ -224,7 +224,8 @@ function simulate!(
     α = 5 / 3,
     β = 0.5,
     earth_acc = 9.81,
-    disable_condition = (v) -> false
+    disable_condition = (v) -> false,
+    log_every=nothing
 )
     result = get_initial_values(g, initial_values)
     v_map = vertex_map(g)
@@ -235,6 +236,10 @@ function simulate!(
     F = lu(M)
 
     for step = 1:steps
+
+        if !isnothing(log_every) && step % log_every == 0
+            println("Step: ", step)
+        end
 
         # RHS
         # (1)

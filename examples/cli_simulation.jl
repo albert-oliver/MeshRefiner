@@ -1,30 +1,14 @@
-function test_sim(steps=4, adapt_steps=10, dt=0.1)
-    size = 100
-    half = size/2
-    g = MeshRefiner.simple_graph(size)
-    for step in 1:adapt_steps
-        for i in MeshRefiner.HyperGraphs.interiors(g)
-            MeshRefiner.HyperGraphs.set_refine!(g, i)
-        end
-        MeshRefiner.Transformations.refine!(g)
-    end
-    best_v = 0
-    best_x = 1
-    best_y = 1
-    for v in MeshRefiner.HyperGraphs.normal_vertices(g)
-        x, y, z = MeshRefiner.HyperGraphs.xyz(g, v)
-        if abs(x - half) < best_x && abs(y - half) < best_y
-            best_x = abs(x - half)
-            best_y = abs(y - half)
-            best_v = v
-        end
-        MeshRefiner.HyperGraphs.set_value!(g, v, 1)
-    end
-    MeshRefiner.HyperGraphs.set_value!(g, best_v, 100)
-    # draw_graphplot(g)
-    MeshRefiner.simulate!(g, steps, dt, (x, y) -> 0)
-end
+using MeshRefiner
+using Dates
 
+refinements = parse(Int64, ARGS[1])
+steps = parse(Int64, ARGS[2])
+dt = parse(Float64, ARGS[3])
+waves = parse(Int64, ARGS[4])
+N = parse(Float64, ARGS[5])
+C = parse(Float64, ARGS[6])
+save_next_row = parse(Int64, ARGS[7])
+filename = string("output/simulation/", now())
 
 "Set all values, so that water level is on the z=0 plane"
 function set_values_to_0(g)
@@ -68,27 +52,26 @@ function set_f_to_values(g, f)
 end
 
 g = MeshRefiner.ProjectIO.load_GraphML("output/baltyk_iter15.xml")
-# f1(x, y) = cos_wave([467589, 1274456], 0.000031, 600)(x, y)
-# f1(p) = f1(p[1], p[2])
-# f2(x,y) = cos_wave([467589, 1274456], 0.000020, 590)(x, y)
-# f2(p) = f2(p[1], p[2])
-waves = 1
-f1(x, y) = cos_wave_2([467589, 1274456], 0.00007, 0.018 / waves, waves)(x, y)
-f1(p) = f1(p[1], p[2])
+# f(x, y) = cos_wave([467589, 1274456], N, C)(x, y)
+f(x, y) = cos_wave_2([467589, 1274456], N, C / waves, waves)(x, y)
+f(p) = f(p[1], p[2])
 
-MeshRefiner.Adaptation.adapt_fun!(g, f1, 7)
-# MeshRefiner.Adaptation.adapt_fun!(g, f2, 4)
-
-set_values_to_0(g)
-set_f_to_values(g, f1)
-v1 = MeshRefiner.HyperGraphs.get_all_values(g)
-# set_values_to_0(g)
-# add_f_to_values(g, f2)
-# v2 = MeshRefiner.HyperGraphs.get_all_values(g)
-# initital_values = transpose(hcat(v1, v2))
-initital_values = v1
+MeshRefiner.Adaptation.adapt_fun!(g, f, refinements)
+set_f_to_values(g, f)
+initial_values = MeshRefiner.HyperGraphs.get_all_values(g)
 
 vs = collect(MeshRefiner.HyperGraphs.normal_vertices(g))
 vs = filter(x -> MeshRefiner.HyperGraphs.coords2D(g,x)[2] > 1691694, vs)
 vs = filter(x -> MeshRefiner.HyperGraphs.coords2D(g,x)[1] < 135304, vs)
 condition(v) = v in vs
+
+s = MeshRefiner.Simulation.simulate!(
+    g,
+    steps,
+    dt,
+    (x, y) -> 0;
+    initial_values=initial_values,
+    disable_condition=condition)
+
+MeshRefiner.ProjectIO.save_matrix(s, string(filename, ".txt"), next_row=save_next_row)
+MeshRefiner.ProjectIO.save_GraphML(g, string(filename, ".xml"))

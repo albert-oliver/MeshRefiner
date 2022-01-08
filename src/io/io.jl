@@ -24,6 +24,7 @@ import MetaGraphs as MG
 import Graphs as Gr
 
 include("persist_graphml.jl")
+include("persist_matrix.jl")
 
 "Load terrain data (in bytes) as `TerrainMap`"
 function load_data(filename, dims, type=Float64)::TerrainMap
