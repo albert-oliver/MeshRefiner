@@ -4,8 +4,10 @@
 Rectangle made of two triangles.
 
 # Arguments
-- `dims`: Dimensions of rectangle. Is either number or tuple of two dimensions.
-Single number `num` is equivalent to tuple `(num, num)`.
+- `dims`: Dimensions of rectangle. Can be:
+    - `(start_x, start_y, stop_x, stop_y)`
+    - `(stop_x, stop_y)` - rectangle starts at `0`
+    - `a::Real` - square with starting at `(0, 0)` with side length `a`
 
 v---v
 |\\  |
@@ -13,17 +15,33 @@ v---v
 |  \\|
 v---v
 """
-function simple_graph(dims::Union{Real, Tuple{<:Real, <:Real}} = (1.0, 1.0))
+function simple_graph(
+    dims::Union{Real, Tuple{<:Real, <:Real}, Tuple{<:Real, <:Real, <:Real, <:Real}} = 1.0
+    )
     if typeof(dims) <: Real
         dims = (dims, dims)
     end
 
+    start_x = 0
+    start_y = 0
+    stop_x = 0
+    stop_y = 0
+    if length(dims) == 2
+        stop_x = dims[1]
+        stop_y = dims[2]
+    else    # length(dims) == 4
+        start_x = dims[1]
+        start_y = dims[2]
+        stop_x = dims[3]
+        stop_y = dims[4]
+    end
+
     g = FlatGraph()
 
-    add_vertex!(g, [0.0, 0.0, 0.0])                 # 1
-    add_vertex!(g, [1.0*dims[1], 0.0, 0.0])           # 2
-    add_vertex!(g, [0.0, 1.0*dims[2], 0.0])           # 3
-    add_vertex!(g, [1.0*dims[1], 1.0*dims[2], 0.0])   # 4
+    add_vertex!(g, [start_x, start_y, 0.0])  # 1
+    add_vertex!(g, [stop_x, start_y, 0.0])    # 2
+    add_vertex!(g, [start_x, stop_y, 0.0])   # 3
+    add_vertex!(g, [stop_x, stop_y, 0.0])    # 4
 
     add_interior!(g, 1, 3, 4)
     add_interior!(g, 1, 2, 4)

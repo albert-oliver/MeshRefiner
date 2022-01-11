@@ -7,12 +7,21 @@ function regular_flat_mesh(; subdivisions::Integer=10, dims=(1.0, 1.0))
         for interior in interiors(g)
             set_refine!(g, interior)
         end
-        Adaptation.run_transformations!(g)
+        Adaptation.refine!(g)
     end
 
-    zero_fun(x, y) = 0.0
+    zero_fun(p) = 0.0
     match_to_fun!(g, zero_fun)
 
+    g
+end
+
+function regular_pool_mesh(; subdivisions::Integer=10, dims=1.0, depth::Real=0.5)
+    g = regular_flat_mesh(subdivisions=subdivisions, dims=dims)
+    for v in normal_vertices(g)
+        set_elevation!(g, v, -depth)
+        set_value!(g, v, depth)
+    end
     g
 end
 

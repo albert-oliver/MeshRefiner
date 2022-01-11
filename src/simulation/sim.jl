@@ -112,7 +112,7 @@ function calculate_physics(g, dt, aᵗ⁻¹, earth_acc)
     v_map = vertex_map(g)
     physics = zeros(length(v_map))
 
-    for vᵢ in collect(normal_vertices(g))
+    Threads.@threads for vᵢ in collect(normal_vertices(g))
         i = v_map[vᵢ]
         for interior in triangles_with_vertex(g, vᵢ)
             xs, ys = center_point(g, interior)[1:2]

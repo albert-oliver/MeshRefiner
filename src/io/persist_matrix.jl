@@ -11,19 +11,19 @@ function save_matrix(M, filename; next_row=1)
 end
 
 function load_matrix(filename)
-    open(filename, "r") do io
-        w, h = parseInt.(split(readline(io)))
-        M = zeros(w, h)
-        i = 1
-        for line in eachline(io)
-            j = 1
-            for el in parseFloat64.(split(line))
-                M[i, j] = el
-                j += 1
-            end
-            i += 1
+    io = open(filename, "r")
+    w, h = parseInt.(split(readline(io)))
+    M = zeros(w, h)
+    i = 1
+    for line in eachline(io)
+        j = 1
+        for el in parseFloat64.(split(line))
+            M[i, j] = el
+            j += 1
         end
+        i += 1
     end
+    close(io)
     M
 end
 

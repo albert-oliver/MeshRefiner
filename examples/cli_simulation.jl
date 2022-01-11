@@ -52,11 +52,12 @@ function set_f_to_values(g, f)
 end
 
 g = MeshRefiner.ProjectIO.load_GraphML("output/baltyk_iter15.xml")
+g = MeshRefiner.GraphCreator.regular_pool_mesh(subdivisions=13, dims=(0, 800, 900, 1700), depth=0.1)
 # f(x, y) = cos_wave([467589, 1274456], N, C)(x, y)
-f(x, y) = cos_wave_2([467589, 1274456], N, C / waves, waves)(x, y)
+f(x, y) = cos_wave([467, 1274], 0.021, 0.6)(x, y)
 f(p) = f(p[1], p[2])
 
-MeshRefiner.Adaptation.adapt_fun!(g, f, refinements)
+# MeshRefiner.Adaptation.adapt_fun!(g, f, refinements)
 set_f_to_values(g, f)
 initial_values = MeshRefiner.HyperGraphs.get_all_values(g)
 
@@ -70,8 +71,7 @@ s = MeshRefiner.Simulation.simulate!(
     steps,
     dt,
     (x, y) -> 0;
-    initial_values=initial_values,
-    disable_condition=condition)
+    initial_values=initial_values)
 
 MeshRefiner.ProjectIO.save_matrix(s, string(filename, ".txt"), next_row=save_next_row)
 MeshRefiner.ProjectIO.save_GraphML(g, string(filename, ".xml"))
