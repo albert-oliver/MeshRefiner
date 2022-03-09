@@ -5,6 +5,8 @@
 
 *.mp4
 *.obj
+*.blend
+*.blend1
 
 .idea/*
 .vscode/*

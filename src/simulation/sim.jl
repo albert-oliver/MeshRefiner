@@ -220,9 +220,12 @@ function simulate!(
     dt,
     f;
     initial_values = nothing,
+    c1 = 1.0,
+    c2 = 1.0,
     γ = 1.0,
     α = 5 / 3,
     β = 0.5,
+    ϵ = 0.0,
     earth_acc = 9.81,
     disable_condition = (v) -> false,
     log_every=nothing
@@ -245,7 +248,7 @@ function simulate!(
         # (1)
         aᵗ⁻² = result[step, :]
         aᵗ⁻¹ = result[step+1, :]
-        previous_step = M * (2 * aᵗ⁻¹ - aᵗ⁻²)
+        previous_step = M * (aᵗ⁻¹ + c1*(aᵗ⁻¹ - aᵗ⁻²))
 
         # (2)
         physics = calculate_physics(g, dt, aᵗ⁻¹, earth_acc)
@@ -253,11 +256,11 @@ function simulate!(
         # (3)
         source = calculate_source(g, dt, f)
 
-        RHS = previous_step + physics + source
+        RHS = previous_step + c2*physics + source
         disable_rhs_if!(RHS, g, disable_condition)
         aᵗ = F \ RHS
         # aᵗ has negative values close to 0 (ex. -1e-10) and sqrt doesn't work
-        aᵗ = map(x -> x < 0.0 ? 0.0 : x, aᵗ)
+        aᵗ = map(x -> x < ϵ ? 0.0 : x, aᵗ)
         result = vcat(result, aᵗ')
         set_all_values!(g, aᵗ)
     end

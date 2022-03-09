@@ -88,3 +88,10 @@ coords2D(g::FlatGraph, v::Integer) = xyz(g, v)[1:2]
 
 get_value_cartesian(g::FlatGraph, v::Integer) =
     xyz(g, v) + [0, 0, get_value(g, v)]
+
+function scale_graph(g::FlatGraph, scale::Real)
+    for v in normal_vertices(g)
+        new_xyz = xyz(g, v) * scale
+        MG.set_prop!(g.graph, v, :xyz, new_xyz)
+    end
+end

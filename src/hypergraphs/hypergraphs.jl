@@ -70,6 +70,7 @@ export
     has_hanging_nodes,
     get_hanging_node_between,
     vertex_map,
+    scale_graph,
 
     # SphereGraph only
     gcs,
@@ -493,6 +494,10 @@ deprecated.
 """
 vertex_map(g::HyperGraph) =
     Dict(v => i for (i, v) in enumerate(vertices_except_type(g, INTERIOR)))
+
+"Scales all coordinates of graph `g` by `scale`. In case of `SphereGraph` also
+scales radius"
+function scale_graph end
 
 include("flatgraph.jl")
 include("spheregraph.jl")

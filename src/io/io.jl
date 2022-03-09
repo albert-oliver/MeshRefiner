@@ -26,6 +26,14 @@ import Graphs as Gr
 include("persist_graphml.jl")
 include("persist_matrix.jl")
 
+"Splits filename to base and extension"
+function split_filename(filename)
+    splitted = split(filename, ".")
+    file_base = join(splitted[1:length(splitted)-1])
+    extenstion = splitted[length(splitted)]
+    return file_base, extenstion
+end
+
 "Load terrain data (in bytes) as `TerrainMap`"
 function load_data(filename, dims, type=Float64)::TerrainMap
     bytes_data =  open(f->read(f), filename)
@@ -114,40 +122,67 @@ end
 
 "Export graph as OBJ. If flag `include_fun` is set also export function that mesh
 approximates (requires `value` property set)."
-function export_obj(g, filename; include_fun=false, function_ϵ=1e-10)
-    open(filename, "w") do io
+function export_obj(
+    g,
+    filename;
+    include_terrain=true,
+    include_fun = false,
+    fun_seperate_file = false,
+    function_ϵ = 1e-10,
+    z_scale = 1.0
+)
+    v_id = 1
+    if include_terrain
+        open(filename, "w") do io
+            t_map = Dict()
+            for v in normal_vertices(g)
+                x, y, z = xyz(g, v)
+                write(io, @sprintf("v %f %f %f\n", x, y, z * z_scale))
+                t_map[v] = v_id
+                v_id += 1
+            end
+
+            # TODO remove
+            for v in hanging_nodes(g)
+                x, y, z = xyz(g, v)
+                write(io, @sprintf("v %f %f %f\n", x, y, z * z_scale))
+                t_map[v] = v_id
+                v_id += 1
+            end
+
+            for i in interiors(g)
+                v1, v2, v3 = interiors_vertices(g, i)
+                write(io, @sprintf("f %d %d %d\n", t_map[v1], t_map[v2], t_map[v3]))
+            end
+        end
+    end
+
+    open_type = "a"
+    if fun_seperate_file || !include_terrain
+        file_base, ext = split_filename(filename)
+        filename = join([file_base, "_fun.", ext])
+        open_type = "w"
         v_id = 1
-        t_map = Dict()
-        fun_map = Dict()
-        for v in normal_vertices(g)
-            x, y, z = xyz(g, v)
-            write(io, @sprintf("v %f %f %f\n", x, y, z))
-            t_map[v] = v_id
-            v_id += 1
-        end
-
-        # TODO remove
-        for v in hanging_nodes(g)
-            x, y, z = xyz(g, v)
-            write(io, @sprintf("v %f %f %f\n", x, y, z))
-            t_map[v] = v_id
-            v_id += 1
-        end
-
-        for i in interiors(g)
-            v1, v2, v3 = interiors_vertices(g, i)
-            write(io, @sprintf("f %d %d %d\n", t_map[v1], t_map[v2], t_map[v3]))
-        end
-
+    end
+    open(filename, open_type) do io
         if include_fun
-            vertices, faces = function_mesh(g; ϵ=function_ϵ)
+            fun_map = Dict()
+            vertices, faces = function_mesh(g; ϵ = function_ϵ)
             for (i, (x, y, z)) in enumerate(eachrow(vertices))
-                write(io, @sprintf("v %f %f %f\n", x, y, z))
+                write(io, @sprintf("v %f %f %f\n", x, y, z * z_scale))
                 fun_map[i] = v_id
                 v_id += 1
             end
             for (v1, v2, v3) in eachrow(faces)
-                write(io, @sprintf("f %d %d %d\n", fun_map[v1], fun_map[v2], fun_map[v3]))
+                write(
+                    io,
+                    @sprintf(
+                        "f %d %d %d\n",
+                        fun_map[v1],
+                        fun_map[v2],
+                        fun_map[v3]
+                    )
+                )
             end
         end
     end

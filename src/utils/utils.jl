@@ -241,11 +241,27 @@ function terrain_map_to_meters(t::TerrainMap, convert_fun)
     TerrainMap(t.M, new_x_min, new_y_min, new_Δx, new_Δy, t.nx, t.ny)
 end
 
+"Adjust shoreline triangles, so that there is no partially submerged ones"
+function adjust_shore(g)
+    for interior in interiors(g)
+        vs = interiors_vertices(g, interior)
+        elevs = map(v -> get_elevation(g, v), vs)
+        if any(elevs .> 0) && any(elevs .< 0)
+            for v in vs
+                if get_elevation(g, v) > 0
+                    set_elevation!(g, v, 0.0)
+                end
+            end
+        end
+    end
+end
+
 "EPSG:2180 is used to convert coords from latitude, longitude (in degrees). Only
 works near Europe."
 function terrain_map_to_meters(t::TerrainMap)
-    trans = Proj4.Transformation("EPSG:4326", "EPSG:2180")
-    terrain_map_to_meters(t, trans)
+    trans = Proj4.Transformation("EPSG:4326
+    ", "EPSG:2180")
+    new_t = terrain_map_to_meters(t, trans)
 end
 
 function kriging_nan(t::TerrainMap)

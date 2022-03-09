@@ -13,7 +13,7 @@ using LinearAlgebra
 Can represent Earth's surface where elevation above (or below) sea level is
 set using `elevation` property.
 
-# Verticex properties
+# Vertices properties
 All properties are the same as in `HyperGraph` except for the following:
 - `VERTEX` type vertices:
     - `xyz` - cartesian coordinates of vertex, include `elevation`
@@ -168,4 +168,13 @@ function get_value_cartesian(g::SphereGraph, v::Integer)
     coords = get_spherical(g, v)
     coords[1] += get_value(g, v)
     return spherical_to_cartesian(coords)
+end
+
+function scale_graph(g::SphereGraph, scale::Real)
+    for v in normal_vertices(g)
+        new_xyz = xyz(g, v) * scale
+        g.radius = g.radius * scale
+        MG.set_prop!(g.graph, v, :xyz, new_xyz)
+        recalculate_spherical!(g)
+    end
 end
