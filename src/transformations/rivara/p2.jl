@@ -1,4 +1,4 @@
-function check_p2(g::HyperGraph, center::Integer)
+function check_p2(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -71,7 +71,7 @@ One edge with hanging node that is the longest edge.
 Conditions:
 - Breaks triangle if hanging node is on the longes edge
 """
-function transform_p2!(g::HyperGraph, center::Integer)
+function transform_p2!(g::MeshGraph, center::Integer)
     mapping = check_p2(g, center)
     if isnothing(mapping)
         return false

@@ -1,4 +1,4 @@
-function check_p1(g::HyperGraph, center::Integer)
+function check_p1(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     elseif !should_refine(g, center)
@@ -79,7 +79,7 @@ Conditions:
     - It's vertices are not hanging nodes **AND** other two egdes are not same
     length and on the boundary
 """
-function transform_p1!(g::HyperGraph, center::Integer)
+function transform_p1!(g::MeshGraph, center::Integer)
     mapping = check_p1(g, center)
     if isnothing(mapping)
         return false

@@ -1,3 +1,5 @@
+import MeshGraphs
+
 g = MeshRefiner.GraphCreator.regular_flat_mesh(; subdivisions=8, dims=(10.0, 10.0))
 r = MeshRefiner.Simulation.simulate!(g, 2, 0.002, (x, y) -> 1.0)
 MeshRefiner.Visualization.draw_makie(g, include_fun=true)

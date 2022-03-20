@@ -1,6 +1,8 @@
 using MeshRefiner
 using Dates
 
+import MeshGraphs
+
 refinements = parse(Int64, ARGS[1])
 steps = parse(Int64, ARGS[2])
 dt = parse(Float64, ARGS[3])
@@ -12,8 +14,8 @@ filename = string("output/simulation/", now())
 
 "Set all values, so that water level is on the z=0 plane"
 function set_values_to_0(g)
-    for v in MeshRefiner.HyperGraphs.normal_vertices(g)
-        MeshRefiner.HyperGraphs.set_value!(g, v, MeshRefiner.HyperGraphs.get_elevation(g, v) < 0 ? -MeshRefiner.HyperGraphs.get_elevation(g, v) : 0.0)
+    for v in MeshGraphs.normal_vertices(g)
+        MeshGraphs.set_value!(g, v, MeshGraphs.get_elevation(g, v) < 0 ? -MeshGraphs.get_elevation(g, v) : 0.0)
     end
 end
 
@@ -33,21 +35,21 @@ function cos_wave_2(center, N, C, waves=1)
 end
 
 function add_f_to_values(g, f)
-    for v in MeshRefiner.HyperGraphs.normal_vertices(g)
-        value = MeshRefiner.HyperGraphs.get_value(g, v)
-        x, y = MeshRefiner.HyperGraphs.xyz(g, v)[1:2]
+    for v in MeshGraphs.normal_vertices(g)
+        value = MeshGraphs.get_value(g, v)
+        x, y = MeshGraphs.xyz(g, v)[1:2]
         new_value = f(x, y) + value
-        MeshRefiner.HyperGraphs.set_value!(g, v, new_value)
+        MeshGraphs.set_value!(g, v, new_value)
     end
 end
 
 function set_f_to_values(g, f)
-    for v in MeshRefiner.HyperGraphs.normal_vertices(g)
-        x, y = MeshRefiner.HyperGraphs.xyz(g, v)[1:2]
-        elev = MeshRefiner.HyperGraphs.get_elevation(g, v)
+    for v in MeshGraphs.normal_vertices(g)
+        x, y = MeshGraphs.xyz(g, v)[1:2]
+        elev = MeshGraphs.get_elevation(g, v)
         value = f(x, y)  - elev
         value = value >= 0 ? value : 0.0
-        MeshRefiner.HyperGraphs.set_value!(g, v, value)
+        MeshGraphs.set_value!(g, v, value)
     end
 end
 
@@ -59,11 +61,11 @@ f(p) = f(p[1], p[2])
 
 # MeshRefiner.Adaptation.adapt_fun!(g, f, refinements)
 set_f_to_values(g, f)
-initial_values = MeshRefiner.HyperGraphs.get_all_values(g)
+initial_values = MeshGraphs.get_all_values(g)
 
-vs = collect(MeshRefiner.HyperGraphs.normal_vertices(g))
-vs = filter(x -> MeshRefiner.HyperGraphs.coords2D(g,x)[2] > 1691694, vs)
-vs = filter(x -> MeshRefiner.HyperGraphs.coords2D(g,x)[1] < 135304, vs)
+vs = collect(MeshGraphs.normal_vertices(g))
+vs = filter(x -> MeshGraphs.coords2D(g,x)[2] > 1691694, vs)
+vs = filter(x -> MeshGraphs.coords2D(g,x)[1] < 135304, vs)
 condition(v) = v in vs
 
 s = MeshRefiner.Simulation.simulate!(

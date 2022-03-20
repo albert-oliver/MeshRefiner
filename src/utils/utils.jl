@@ -36,7 +36,7 @@ using LinearAlgebra
 using Proj4
 using GeoStats
 
-using ..HyperGraphs
+using MeshGraphs
 
 "Holds three 3-elemnt arrays [x, y, z] that represent each vertex of triangle"
 const Triangle = Tuple{Array{<:Real, 1}, Array{<:Real, 1}, Array{<:Real, 1}}
@@ -74,7 +74,7 @@ function barycentric_matrix(triangle::Triangle)
     barycentric_matrix(triangle[1], triangle[2], triangle[3])
 end
 
-function barycentric_matrix(g::HyperGraph, interior::Integer)
+function barycentric_matrix(g::MeshGraph, interior::Integer)
     v1, v2, v3 = interiors_vertices(g, interior)
 
     barycentric_matrix(xyz(g, v1), xyz(g, v2), xyz(g, v3))
@@ -111,7 +111,7 @@ function barycentric(triangle::Triangle, p::Array{<:Real, 1})::Array{<:Real, 1}
     (M*vcat(p,1))[1:2]
 end
 
-function barycentric(g::HyperGraph, interior::Integer, p::Array{<:Real, 1})
+function barycentric(g::MeshGraph, interior::Integer, p::Array{<:Real, 1})
     M = barycentric_matrix(g, interior)
     (M*vcat(p,1))[1:2]
 end
@@ -216,7 +216,7 @@ function projection_area(triangle::Triangle)
     projection_area(a, b, c)
 end
 
-function projection_area(g::HyperGraph, i::Integer)
+function projection_area(g::MeshGraph, i::Integer)
     a, b, c = interiors_vertices(g, i)
     projection_area(xyz(g, a), xyz(g, b), xyz(g, c))
 end
@@ -284,7 +284,7 @@ function kriging_nan(t::TerrainMap)
     𝒟 = georef(props, coords_filled)
     𝒢 = PointSet(coords_nan_as_points)
     𝒫 = EstimationProblem(𝒟, 𝒢, :Z)
-    S = Kriging()
+    S = Kriging(:Z => (maxneighbors=20,))
     sol = solve(𝒫, S)
     values_nan = map(x -> x[:Z], values(sol))
     M = t.M

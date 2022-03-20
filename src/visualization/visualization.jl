@@ -2,7 +2,7 @@
 module Visualization
 
 using ..Utils
-using ..HyperGraphs
+using MeshGraphs
 
 export draw_makie, draw_graphplot, terrain_mesh, function_mesh
 

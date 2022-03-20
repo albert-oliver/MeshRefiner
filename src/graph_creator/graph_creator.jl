@@ -12,7 +12,7 @@ export
     block_fun
 
 using ..Utils
-using ..HyperGraphs
+using MeshGraphs
 
 include("functions.jl")
 include("example_graphs.jl")

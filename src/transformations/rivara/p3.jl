@@ -1,4 +1,4 @@
-function check_p3(g::HyperGraph, center::Integer)
+function check_p3(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -112,7 +112,7 @@ Conditions:
     - It's vertices are not hanging nodes **AND** other egde is not same
     length and on the boundary
 """
-function transform_p3!(g::HyperGraph, center::Integer)
+function transform_p3!(g::MeshGraph, center::Integer)
     mapping = check_p3(g, center)
     if isnothing(mapping)
         return false

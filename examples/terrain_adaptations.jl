@@ -1,4 +1,6 @@
-function terrain_graph()
+import MeshGraphs
+
+unction terrain_graph()
     lat = fill(NaN, 17, 35)
     lon = copy(lat)
     elev = copy(lon)

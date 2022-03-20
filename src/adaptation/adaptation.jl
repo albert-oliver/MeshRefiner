@@ -1,7 +1,7 @@
 "Most important module responsible for adaptaion of the mesh."
 module Adaptation
 
-using ..HyperGraphs
+using MeshGraphs
 using ..Utils
 using ..Transformations
 
@@ -11,7 +11,7 @@ export
     generate_terrain_mesh,
     match_to_fun!,
     check_mesh
-    
+
 include("adapt_fun.jl")
 include("adapt_terrain.jl")
 

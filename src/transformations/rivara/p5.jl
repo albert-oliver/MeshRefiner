@@ -1,4 +1,4 @@
-function check_p5(g::HyperGraph, center::Integer)
+function check_p5(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -80,7 +80,7 @@ Conditions:
 - Breaks *longest edge* (note that it is the one without hanging node)
 - It's vertices are not hanging nodes
 """
-function transform_p5!(g::HyperGraph, center::Integer)
+function transform_p5!(g::MeshGraph, center::Integer)
     mapping = check_p5(g, center)
     if isnothing(mapping)
         return false

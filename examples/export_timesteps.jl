@@ -2,6 +2,8 @@
 
 using Dates
 
+import MeshGraphs
+
 T_START = 10
 T_END = 100
 DT = 10
@@ -33,7 +35,7 @@ MeshRefiner.ProjectIO.export_obj(g, land_filename; z_scale=Z_SCALE, function_ϵ=
 
 t_end = isnothing(T_END) ? size(s, 1) : T_END
 for t in T_START:DT:t_end
-    MeshRefiner.HyperGraphs.set_all_values!(g, s[t, :])
+    MeshGraphs.set_all_values!(g, s[t, :])
     filename = join_filename(water_filename, lpad(t,4,"0"))
     MeshRefiner.ProjectIO.export_obj(g, filename; include_terrain=false, include_fun=true, z_scale=Z_SCALE, function_ϵ=1e-5)
 end

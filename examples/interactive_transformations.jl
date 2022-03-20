@@ -1,7 +1,9 @@
 include("../src/MeshRefiner.jl")
 
 using Compose
-import Cairo, Fontconfig
+import Cairo, Fontconfig, MeshGraphs
+
+
 
 "Mark traingles to refine (seperated by space) and run transformations.
 Graphs are saved as png in `graphs/`"
@@ -18,7 +20,7 @@ function interactive_test()
         splitted = split(s)
         for svertex in splitted
             v = parse(Int64, svertex)
-            MeshRefiner.HyperGraphs.set_refine!(g, v)
+            MeshGraphs.set_refine!(g, v)
         end
         MeshRefiner.Transformations.refine!(g; log=true)
         i += 1

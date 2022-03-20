@@ -126,7 +126,7 @@ end
 "Return approximate error of traingle represented by interior `interior`. Error
 is calculated as relative square error over all points from `terrain` iniside
 triangle represented by `interior`."
-function square_rel_error(g::HyperGraph, interior::Integer, terrain::TerrainMap)::Real
+function square_rel_error(g::MeshGraph, interior::Integer, terrain::TerrainMap)::Real
     real_elev, approx_elev = zipped_points_inside_triangle(g, interior, terrain)
     if isempty(real_elev)
         return 0.0
@@ -195,7 +195,7 @@ function coastline_refinement_criterion(g, interior, terrain, params)
 end
 
 "Mark all traingles where error is larger than `ϵ` for refinement."
-function mark_for_refinement(g::HyperGraph, terrain::TerrainMap, params)::Array{Number, 1}
+function mark_for_refinement(g::MeshGraph, terrain::TerrainMap, params)::Array{Number, 1}
     to_refine = []
     for interior in interiors(g)
 
@@ -208,7 +208,7 @@ function mark_for_refinement(g::HyperGraph, terrain::TerrainMap, params)::Array{
 end
 
 "Adjust elevations of all vertices to fit proper values."
-function adjust_elevations!(g::HyperGraph, terrain::TerrainMap)
+function adjust_elevations!(g::MeshGraph, terrain::TerrainMap)
     for v in normal_vertices(g)
         x, y = coords2D(g, v)
         elev = real_elevation(terrain, x, y)
@@ -226,7 +226,7 @@ Before calling this function all elevations are in range [0, 1].
 Real life values cause overflow when calculating error for large triangles (as
 it is relative error it requires division by sum of squeres of elevations).
 """
-function scale_elevations!(g::HyperGraph, terrain)
+function scale_elevations!(g::MeshGraph, terrain)
     for v in normal_vertices(g)
         elev = get_elevation(g, v)
         set_elevation!(g, v, (elev - 1) * terrain.scale + terrain.offset)
@@ -242,7 +242,7 @@ after `max_iters` iterations.
 See also: [`generate_terrain_mesh`](@ref)
 """
 function adapt_terrain!(
-    g::HyperGraph,
+    g::MeshGraph,
     terrain::TerrainMap,
     params,
     max_iters::Integer,

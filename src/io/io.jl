@@ -4,7 +4,7 @@ module ProjectIO
 
 using ..Utils
 using ..Visualization
-using ..HyperGraphs
+using MeshGraphs
 
 export
     load_data,

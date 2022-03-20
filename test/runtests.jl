@@ -1,7 +1,6 @@
 using MeshRefiner
 using Test
 
-include("hypergraphs/hypergraphs.jl")
 include("utils/utils.jl")
 include("transformations/transformations.jl")
 include("adaptation/adaptation.jl")

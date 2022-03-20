@@ -6,7 +6,7 @@ using Statistics
 
 "Return relative error of approximation of traingle represented by interior `i`
 to function `fun`"
-function error_rel(g::HyperGraph, fun, i)
+function error_rel(g::MeshGraph, fun, i)
     v1, v2, v3 = interiors_vertices(g, i)
     center = mean([coords2D(g, v1), coords2D(g, v2), coords2D(g, v3)])
     uh = mean(fun.(map(x -> coords2D(g, x), [v1, v2, v3])))

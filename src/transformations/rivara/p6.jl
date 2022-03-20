@@ -1,4 +1,4 @@
-function check_p6(g::HyperGraph, center::Integer)
+function check_p6(g::MeshGraph, center::Integer)
     if !is_interior(g, center)
         return nothing
     end
@@ -80,7 +80,7 @@ Three hanging nodes, any edge can be the longest-edge.
 Conditions:
 - Breaks *longest edge*
 """
-function transform_p6!(g::HyperGraph, center::Integer)
+function transform_p6!(g::MeshGraph, center::Integer)
     mapping = check_p6(g, center)
     if isnothing(mapping)
         return false

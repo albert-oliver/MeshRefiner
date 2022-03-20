@@ -7,7 +7,7 @@ using LinearAlgebra
 using SparseArrays
 
 using ..Utils
-using ..HyperGraphs
+using MeshGraphs
 
 """
     common_triangles(h, i, j)

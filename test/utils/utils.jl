@@ -1,7 +1,8 @@
 using MeshRefiner.Utils
-using MeshRefiner.HyperGraphs
 
 using MeshRefiner.Adaptation
+
+using MeshGraphs
 
 @testset verbose = true "Utils" begin
 

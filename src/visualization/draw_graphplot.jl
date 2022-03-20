@@ -12,7 +12,7 @@ Not recommended for large graphs.
 If `vid` (vertex id) is set to true each vertex is labeled after it's id. If not
 label represents vertex type ('V', 'H', or 'I')
 """
-function draw_graphplot(g::HyperGraph; vid=false, edge_lengths=false)
+function draw_graphplot(g::MeshGraph; vid=false, edge_lengths=false)
     function position_layout(sub_graph)
         x:: Array{Float64} = []
         y:: Array{Float64} = []

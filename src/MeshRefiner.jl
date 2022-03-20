@@ -1,6 +1,5 @@
 module MeshRefiner
 
-include("hypergraphs/hypergraphs.jl")
 include("utils/utils.jl")
 include("visualization/visualization.jl")
 include("io/io.jl")
@@ -9,7 +8,6 @@ include("adaptation/adaptation.jl")
 include("graph_creator/graph_creator.jl")
 include("simulation/sim.jl")
 
-using .HyperGraphs
 using .Utils
 using .Transformations
 using .Adaptation
@@ -19,10 +17,6 @@ using .ProjectIO
 using .Simulation
 
 export
-    # HyperGraphs
-    SphereGraph,
-    FlatGraph,
-
     # Terrain adaptation
     generate_terrain_mesh,
     adapt_terrain!,

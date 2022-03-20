@@ -25,7 +25,7 @@ function prepare_XML(g::SphereGraph)
     xdoc
 end
 
-function _prepare_XML(g::HyperGraph)
+function _prepare_XML(g::MeshGraph)
     xdoc = XML.XMLDocument()
     xroot = XML.create_root(xdoc, "graphml")
     XML.set_attribute(xroot, "xmlns", "http://graphml.graphdrawing.org/xmlns")

@@ -1,5 +1,7 @@
 using MeshRefiner
 
+import MeshGraphs
+
 function sin_terrain_graph()
     lat = fill(NaN, 21, 21)
     lon = copy(lat)
@@ -63,12 +65,12 @@ function export_inp(g, filename)
         t_map = Dict()
         fun_map = Dict()
         counter = 0
-        list_nv = collect(MeshRefiner.HyperGraphs.normal_vertices(g))
-        list_hv = collect(MeshRefiner.HyperGraphs.hanging_nodes(g))
-        list_interiors = collect(MeshRefiner.HyperGraphs.interiors(g))
+        list_nv = collect(MeshGraphs.normal_vertices(g))
+        list_hv = collect(MeshGraphs.hanging_nodes(g))
+        list_interiors = collect(MeshGraphs.interiors(g))
         write(io, @sprintf("%d %d 0 0 0\n", length(list_nv) + length(list_hv), length(list_interiors)))
         for v in list_nv
-            x, y, z = MeshRefiner.HyperGraphs.xyz(g, v)
+            x, y, z = MeshGraphs.xyz(g, v)
             counter = counter + 1
             write(io, @sprintf("%d %f %f %f\n", counter, x, y, z))
             t_map[v] = v_id
@@ -77,7 +79,7 @@ function export_inp(g, filename)
 
         # TODO remove
         for v in list_hv
-            x, y, z = MeshRefiner.HyperGraphs.xyz(g, v)
+            x, y, z = MeshGraphs.xyz(g, v)
             counter = counter + 1
             write(io, @sprintf("%d %f %f %f\n", counter, x, y, z))
             t_map[v] = v_id
@@ -87,7 +89,7 @@ function export_inp(g, filename)
         counter = 0
 
         for i in list_interiors
-            v1, v2, v3 = MeshRefiner.HyperGraphs.interiors_vertices(g, i)
+            v1, v2, v3 = MeshGraphs.interiors_vertices(g, i)
             counter = counter + 1
             write(io, @sprintf("%d 0 tri %d %d %d\n", counter, t_map[v1], t_map[v2], t_map[v3]))
         end
